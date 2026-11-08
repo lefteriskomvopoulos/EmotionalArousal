@@ -1,0 +1,45 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S21_own4, own4_p0_k14_f3: 4551 samples, 11 windows, 4 starts each
+window 1/11: tau 1.124 / 6.249 s, 22 impulses, R2 0.998, authors, 224 s
+window 2/11: tau 1.287 / 5.192 s, 19 impulses, R2 0.995, authors, 212 s
+window 3/11: tau 1.145 / 5.008 s, 25 impulses, R2 0.998, fallback_unconverged, 210 s
+window 4/11: tau 1.088 / 5.131 s, 23 impulses, R2 0.998, authors, 216 s
+window 5/11: tau 1.357 / 4.089 s, 23 impulses, R2 0.997, fallback_unconverged, 223 s
+window 6/11: tau 0.973 / 6.298 s, 19 impulses, R2 0.997, authors, 201 s
+window 7/11: tau 1.436 / 4.307 s, 21 impulses, R2 0.995, fallback_unconverged, 213 s
+window 8/11: tau 1.520 / 3.980 s, 22 impulses, R2 0.998, fallback_unconverged, 260 s
+window 9/11: tau 1.193 / 6.420 s, 22 impulses, R2 0.999, fallback_unconverged, 293 s
+window 10/11: tau 1.043 / 5.960 s, 26 impulses, R2 0.996, authors, 202 s
+window 11/11: tau 0.990 / 5.883 s, 18 impulses, R2 0.998, fallback_unconverged, 107 s
+S21_own4 own4_p0_k14_f3 done: 134 impulses (7.1/min), R2 0.999, median tau 1.14 / 5.19 s, 5/11 by the rule, 2360 s
+>> 

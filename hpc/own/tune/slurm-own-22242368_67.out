@@ -1,0 +1,46 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S34_own, p100_k14_f3: 2569 samples, 12 windows, 4 starts each
+window 1/12: tau 0.831 / 2.531 s, 40 impulses, R2 0.995, authors, 47 s
+window 2/12: tau 0.705 / 3.001 s, 47 impulses, R2 0.998, authors, 44 s
+window 3/12: tau 0.712 / 2.901 s, 40 impulses, R2 0.999, authors, 39 s
+window 4/12: tau 0.643 / 2.794 s, 37 impulses, R2 0.998, authors, 45 s
+window 5/12: tau 0.685 / 2.185 s, 40 impulses, R2 0.996, authors, 46 s
+window 6/12: tau 0.891 / 2.556 s, 44 impulses, R2 0.999, authors, 39 s
+window 7/12: tau 0.605 / 2.321 s, 40 impulses, R2 0.996, authors, 41 s
+window 8/12: tau 1.085 / 2.300 s, 51 impulses, R2 0.996, authors, 31 s
+window 9/12: tau 0.620 / 2.763 s, 34 impulses, R2 0.998, authors, 26 s
+window 10/12: tau 1.016 / 2.622 s, 37 impulses, R2 0.993, authors, 23 s
+window 11/12: tau 0.977 / 2.178 s, 36 impulses, R2 0.993, authors, 32 s
+window 12/12: tau 0.725 / 2.128 s, 32 impulses, R2 0.992, authors, 19 s
+S34_own p100_k14_f3 done: 274 impulses (12.8/min), R2 1.000, median tau 0.72 / 2.54 s, 12/12 by the rule, 432 s
+>> 

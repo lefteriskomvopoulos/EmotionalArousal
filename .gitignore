@@ -38,6 +38,7 @@ __pycache__/
 !/hpc/synth/
 !/hpc/results/
 !/hpc/logs_pp/
+!/hpc/own/
 /hpc/**/*.mat
 /hpc/**/*.zip
 

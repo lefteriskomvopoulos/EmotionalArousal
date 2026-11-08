@@ -1,0 +1,55 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+[Warning: Directory already exists.] 
+[> In parallel.cluster.Local>mkdirIfNeeded (line 656)
+In parallel.cluster.Local>iBuildDirectoryForDataLoc (line 637)
+In parallel.cluster.Local>iChooseDataLocation (line 629)
+In parallel.cluster/Local (line 555)
+In parcluster (line 91)
+In parallel.internal.pool.argumentsParser>iGetClusterAndNumWorkers (line 139)
+In parallel.internal.pool.argumentsParser (line 46)
+In parallel.internal.pool.doParpool (line 17)
+In parpool (line 116)] 
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S3_own, p10_k14_f4: 2206 samples, 11 windows, 4 starts each
+window 1/11: tau 0.715 / 2.940 s, 25 impulses, R2 0.997, authors, 23 s
+window 2/11: tau 0.685 / 2.891 s, 21 impulses, R2 0.995, authors, 29 s
+window 3/11: tau 0.696 / 2.950 s, 23 impulses, R2 0.996, authors, 28 s
+window 4/11: tau 0.705 / 2.904 s, 45 impulses, R2 1.000, authors, 29 s
+window 5/11: tau 0.677 / 2.965 s, 36 impulses, R2 0.999, authors, 37 s
+window 6/11: tau 0.764 / 3.068 s, 36 impulses, R2 0.996, authors, 18 s
+window 7/11: tau 0.881 / 3.175 s, 48 impulses, R2 0.998, authors, 12 s
+window 8/11: tau 0.834 / 3.111 s, 43 impulses, R2 1.000, authors, 31 s
+window 9/11: tau 0.715 / 2.935 s, 27 impulses, R2 0.996, authors, 34 s
+window 10/11: tau 0.721 / 2.962 s, 24 impulses, R2 0.997, authors, 20 s
+window 11/11: tau 0.659 / 2.809 s, 11 impulses, R2 0.996, authors, 8 s
+S3_own p10_k14_f4 done: 186 impulses (10.1/min), R2 1.000, median tau 0.71 / 2.95 s, 11/11 by the rule, 268 s
+>> 

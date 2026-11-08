@@ -1,0 +1,45 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S26_own, p10_k14_f3: 2339 samples, 11 windows, 4 starts each
+window 1/11: tau 0.855 / 2.443 s, 50 impulses, R2 0.982, authors, 39 s
+window 2/11: tau 0.660 / 2.059 s, 52 impulses, R2 0.991, authors, 28 s
+window 3/11: tau 0.922 / 1.553 s, 51 impulses, R2 0.977, authors, 32 s
+window 4/11: tau 0.971 / 1.558 s, 56 impulses, R2 0.980, authors, 30 s
+window 5/11: tau 0.646 / 1.867 s, 51 impulses, R2 0.989, authors, 44 s
+window 6/11: tau 0.597 / 2.190 s, 37 impulses, R2 0.986, authors, 21 s
+window 7/11: tau 0.577 / 1.763 s, 44 impulses, R2 0.978, authors, 24 s
+window 8/11: tau 0.954 / 2.005 s, 53 impulses, R2 0.972, authors, 42 s
+window 9/11: tau 0.809 / 2.020 s, 56 impulses, R2 0.976, authors, 40 s
+window 10/11: tau 0.892 / 2.524 s, 47 impulses, R2 0.986, authors, 45 s
+window 11/11: tau 0.872 / 2.556 s, 48 impulses, R2 0.990, authors, 30 s
+S26_own p10_k14_f3 done: 302 impulses (15.5/min), R2 0.988, median tau 0.85 / 2.02 s, 11/11 by the rule, 374 s
+>> 

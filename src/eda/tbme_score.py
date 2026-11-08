@@ -54,9 +54,10 @@ def match(true_t, est_t, tol=None):
 
 
 def truth_file(name):
-    """S13_m2 -> truth of S13; the _pp sessions have their own (capped, filtered) truth."""
+    """S13_m2 -> truth of S13; _pp, _own and _own4 sessions have their own (capped, filtered) truth."""
     base = name.split("_")[0]
-    return ts.TRUTH_DIR / f"{base}_pp.npz" if name.endswith("_pp") else ts.TRUTH_DIR / f"{base}.npz"
+    tag = next((t for t in ("_pp", "_own", "_own4") if name.endswith(t)), "")
+    return ts.TRUTH_DIR / f"{base}{tag}.npz"
 
 
 def score_session(name, out_dir=OUTPUT):
@@ -555,11 +556,12 @@ def tonic_metrics(name, out_dir=OUTPUT):
     true_phasic = np.interp(sig.time_s, tr["t2"], tr["phasic2"])
     tonic = sig.tonic.to_numpy() - np.median(sig.y - true_tonic - true_phasic)
     err = tonic - true_tonic
+    fs = round(1 / float(np.median(np.diff(sig.time_s))))      # 2 Hz, or 4 Hz for _own4
     return {"tonic_rmse_uS": np.sqrt(np.mean(err ** 2)),
             "phasic_sd_uS": true_phasic.std(),
             "phasic_taken": np.cov(err, true_phasic)[0, 1] / max(true_phasic.var(), 1e-30),
-            "fast_share_est": fast_share(tonic), "fast_share_true": fast_share(true_tonic),
-            "fast_share_signal": fast_share(sig.y.to_numpy())}
+            "fast_share_est": fast_share(tonic, fs), "fast_share_true": fast_share(true_tonic, fs),
+            "fast_share_signal": fast_share(sig.y.to_numpy(), fs)}
 
 
 def tonic_test(out_dir=OUTPUT, real_dir=REAL_RUNS):

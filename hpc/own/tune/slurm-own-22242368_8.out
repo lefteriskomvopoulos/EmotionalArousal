@@ -1,0 +1,45 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S27_own, p100_k14_f4: 2329 samples, 11 windows, 4 starts each
+window 1/11: tau 1.629 / 5.485 s, 38 impulses, R2 0.999, fallback_unconverged, 53 s
+window 2/11: tau 1.098 / 4.796 s, 37 impulses, R2 0.993, authors, 38 s
+window 3/11: tau 1.212 / 4.050 s, 39 impulses, R2 0.997, fallback_unconverged, 41 s
+window 4/11: tau 1.700 / 3.585 s, 42 impulses, R2 0.998, fallback_unconverged, 50 s
+window 5/11: tau 1.398 / 4.365 s, 31 impulses, R2 0.996, fallback_unconverged, 39 s
+window 6/11: tau 1.832 / 3.782 s, 32 impulses, R2 0.997, authors, 40 s
+window 7/11: tau 1.508 / 4.402 s, 39 impulses, R2 0.998, authors, 38 s
+window 8/11: tau 1.704 / 3.883 s, 33 impulses, R2 0.997, authors, 39 s
+window 9/11: tau 1.400 / 3.932 s, 36 impulses, R2 0.997, authors, 38 s
+window 10/11: tau 1.684 / 3.684 s, 36 impulses, R2 0.996, authors, 33 s
+window 11/11: tau 1.538 / 3.812 s, 38 impulses, R2 0.994, authors, 23 s
+S27_own p100_k14_f4 done: 224 impulses (11.5/min), R2 0.998, median tau 1.54 / 3.93 s, 7/11 by the rule, 432 s
+>> 

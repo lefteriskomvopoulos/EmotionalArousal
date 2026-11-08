@@ -1,0 +1,46 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S22_own4, own4_p1000_k14_f3: 5007 samples, 12 windows, 4 starts each
+window 1/12: tau 0.473 / 3.046 s, 30 impulses, R2 0.995, authors, 95 s
+window 2/12: tau 0.535 / 2.781 s, 33 impulses, R2 0.992, authors, 107 s
+window 3/12: tau 0.473 / 3.084 s, 24 impulses, R2 0.985, authors, 193 s
+window 4/12: tau 0.483 / 2.921 s, 18 impulses, R2 0.982, authors, 77 s
+window 5/12: tau 0.474 / 3.106 s, 25 impulses, R2 0.995, authors, 104 s
+window 6/12: tau 0.474 / 3.378 s, 27 impulses, R2 0.992, authors, 92 s
+window 7/12: tau 0.492 / 3.008 s, 25 impulses, R2 0.985, authors, 116 s
+window 8/12: tau 0.483 / 3.106 s, 24 impulses, R2 0.995, authors, 123 s
+window 9/12: tau 0.511 / 3.484 s, 26 impulses, R2 0.995, authors, 191 s
+window 10/12: tau 0.497 / 3.262 s, 26 impulses, R2 0.989, authors, 150 s
+window 11/12: tau 0.395 / 3.539 s, 26 impulses, R2 0.987, authors, 156 s
+window 12/12: tau 0.381 / 3.403 s, 16 impulses, R2 0.985, authors, 49 s
+S22_own4 own4_p1000_k14_f3 done: 160 impulses (7.7/min), R2 0.995, median tau 0.48 / 3.11 s, 12/12 by the rule, 1454 s
+>> 

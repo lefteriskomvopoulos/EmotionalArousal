@@ -12,6 +12,20 @@ Data
     profile            model-free description of every usable participant + their 2 Hz inputs
                        -> data/profile_study6*.csv/.npz, data/tbme_input/P*.mat
 
+Our own deconvolution (src/own/), branch own-deconvolution
+    raw-atlas          all 119 participants + 18 tuning sessions, unprocessed, ~6 min
+                       -> results/figures/raw_atlas_*.png, data/raw_overview.csv
+    preprocess-stages  every preprocessing step, 5 real + 5 tuning sessions, ~2 min
+                       -> results/figures/stages_*.png, data/preprocess_stages.csv
+    own-check          all 119 through prepare: roughness, jumps, gaps + the filter's response, ~8 min
+                       -> data/input_check.csv, data/filter_response.csv, results/figures/filter_response.png
+    own-score          the cluster runs in hpc/own/tune/output/<setting>, against the truth
+                       -> data/own_tune_scores.csv
+    own-export         needs own-check.  The inputs through own_preprocess.prepare: 36 synthetic + 5 real
+                       -> data/tbme_input/*_own.mat, data/tbme_synth/*_own.npz
+    own4-export        the same at 1 Hz low-pass, 4 Hz, noise matched to the sources at that rate
+                       -> data/input_check_own4.csv, data/tbme_input/*_own4.mat, data/tbme_synth/*_own4.npz
+
 Current pipeline: Amin & Faghih (IEEE TBME 2021), authors' MATLAB solver unmodified, see src/tbme/
     paper-export       the paper's preprocessing on 5 real + 8 synthetic -> data/tbme_input/*_pp.mat
     paper-test         earlier inputs vs the paper's preprocessing -> data/tbme_paper_*.csv
@@ -86,6 +100,7 @@ from . import tbme_synth
 from . import tbme_score
 from . import tau_measure
 from . import tau_shared
+from . import own_preprocess
 from . import preprocess_view
 from . import tbme_real
 from . import tbme_export
@@ -306,6 +321,12 @@ COMMANDS = {
     "tau-shared": lambda pid: tau_shared.run(),
     "preprocess-view": lambda pid: preprocess_view.run(),
     "paper-check": lambda pid: preprocess_view.paper_input_check(),
+    "raw-atlas": lambda pid: own_preprocess.atlas(),
+    "preprocess-stages": lambda pid: own_preprocess.stages(),
+    "own-check": lambda pid: own_preprocess.check_inputs(),
+    "own-export": lambda pid: own_preprocess.export(),
+    "own4-export": lambda pid: own_preprocess.export(suffix="own4"),
+    "own-score": lambda pid: own_preprocess.score(),
     "paper-export": lambda pid: ([tbme_export.paper_export(p) for p in tbme_score.PAPER_REAL_IDS],
                                  tbme_synth.paper_inputs()),
     "paper-test": lambda pid: tbme_score.paper_test(),

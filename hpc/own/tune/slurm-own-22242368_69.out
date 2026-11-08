@@ -1,0 +1,49 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+[Warning: Unable to load Toolbox Path Cache
+/home/ek4538/.matlab/R2025b/toolbox_cache-25.2.0-3195078065-glnxa64.xml. The
+cache file is not in the correct format. It will be regenerated upon quitting
+MATLAB.] 
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 4
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S4_own, p10_k14_f3: 2333 samples, 11 windows, 4 starts each
+window 1/11: tau 0.629 / 2.726 s, 8 impulses, R2 0.984, authors, 33 s
+window 2/11: tau 0.630 / 2.758 s, 10 impulses, R2 0.991, authors, 12 s
+window 3/11: tau 0.660 / 2.843 s, 15 impulses, R2 0.994, authors, 32 s
+window 4/11: tau 0.648 / 2.818 s, 12 impulses, R2 0.994, authors, 21 s
+window 5/11: tau 0.628 / 2.773 s, 15 impulses, R2 0.991, authors, 11 s
+window 6/11: tau 0.704 / 2.751 s, 23 impulses, R2 0.987, authors, 12 s
+window 7/11: tau 0.671 / 2.660 s, 16 impulses, R2 0.985, authors, 12 s
+window 8/11: tau 0.622 / 2.738 s, 10 impulses, R2 0.993, authors, 15 s
+window 9/11: tau 0.743 / 2.777 s, 15 impulses, R2 0.982, authors, 17 s
+window 10/11: tau 0.717 / 2.600 s, 15 impulses, R2 0.983, authors, 15 s
+window 11/11: tau 0.644 / 2.741 s, 7 impulses, R2 0.983, authors, 6 s
+S4_own p10_k14_f3 done: 82 impulses (4.2/min), R2 0.996, median tau 0.65 / 2.75 s, 11/11 by the rule, 186 s
+>> 
