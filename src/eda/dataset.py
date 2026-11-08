@@ -35,8 +35,8 @@ def load(pid, every=None):
 
     Keys: t (seconds), eda (uS), affect (1-10 slider), marker (block code as a string).
     `every` is the decimation factor applied to the 1000 Hz file; it simply keeps every n-th
-    sample, which is fine for plotting.  Analysis uses signal.to_deconv_rate instead, which
-    low-pass filters first.
+    sample, which is fine for profiling and plotting.  The deconvolution's input is built from
+    every sample (every=1) by own_preprocess.prepare, which low-pass filters first.
     """
     every = int(1000 // cfg.FS) if every is None else every
     df = pd.read_csv(cfg.RAW / f"S6_P{pid}_All.csv", comment="#",

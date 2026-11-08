@@ -1,16 +1,17 @@
 function own_run(name, algorithm, varargin)
 % One session through our own deconvolution, windows and random starts included.
 %
-%   own_run('S4_pp')                                       amin2021, starting settings
-%   own_run('S4_pp', 'faghih2014')                         the Data Challenge algorithm
-%   own_run('S4_pp', 'amin2021', 'tag', 'prior01', ...
+%   own_run('S4_own4')                                     amin2021, starting settings
+%   own_run('S4_own4', 'faghih2014')                       the Data Challenge algorithm
+%   own_run('S4_own4', 'amin2021', 'tag', 'prior01', ...
 %           'prior_lambda', [0.01; 0.01], 'knot_s', 10)    any own_config setting
 %
-% Input   input/<name>.mat (fs, y, t, marker), the same files as src/tbme/tbme_run.m
-% Output  output/<tag>/<name>.mat, _events.csv, _windows.csv, _signals.csv.  The csv files have the
-%         same columns as tbme_run.m, so src/eda/tbme_score.py scores them unchanged.
+% Input   input/<name>.mat (fs, y, t, marker), written by src/eda/tbme_export.save
+% Output  output/<tag>/<name>.mat, _events.csv, _windows.csv, _signals.csv, scored by
+%         src/eda/tbme_score.py.  The columns are those of the black box's run script
+%         (black-box branch), so the two can be compared directly.
 %
-% Selection and joining follow tbme_run.m: lowest residual among converged starts with tau_rise
+% Selection and joining as in that script: lowest residual among converged starts with tau_rise
 % off its limits, falling back (flagged) when no start qualifies, and half the overlap dropped
 % on each side of a window.
 

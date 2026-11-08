@@ -1,4 +1,4 @@
-# Allow-list: only what is named here is shared.  Everything else stays local.
+# Branch `own`.  Allow-list: only what is named here is shared.  Everything else stays local.
 /*
 !/.gitignore
 !/README.md
@@ -7,37 +7,38 @@
 # Code
 !/src/
 /src/tools/
+/src/tbme/
+/src/eda/archive/
 __pycache__/
 *.pyc
 
-# Docs
+# Docs: the experiment log and the metadata workbook the quality screen reads
 !/docs/
 /docs/*
 !/docs/EXPERIMENTS.md
-!/docs/proposal_methods.md
-!/docs/literature_review_notes.md
 !/docs/dataset_check/
 
-# Every result table, and the synthetic truth needed to re-score
+# Result tables, and the synthetic truth needed to re-score (our input variants only)
 !/data/
 /data/*
 !/data/*.csv
 !/data/tbme_synth/
+/data/tbme_synth/*
+!/data/tbme_synth/*_own.npz
+!/data/tbme_synth/*_own4.npz
 
-# Every figure
+# Our figures
 !/results/
 /results/*
 !/results/figures/
-!/results/tbme_smoke/
-/results/tbme_smoke/*.mat
+/results/figures/*
+!/results/figures/stages_*.png
+!/results/figures/raw_atlas_*.png
+!/results/figures/filter_response.png
 
 # Cluster output: csv and logs.  The .mat files repeat the csv and nothing reads them.
 !/hpc/
 /hpc/*
-!/hpc/real/
-!/hpc/synth/
-!/hpc/results/
-!/hpc/logs_pp/
 !/hpc/own/
 /hpc/**/*.mat
 /hpc/**/*.zip

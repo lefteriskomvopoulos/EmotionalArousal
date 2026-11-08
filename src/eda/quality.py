@@ -79,34 +79,3 @@ def run_screen(verbose=True):
         print(q.groupby("group").usable.agg(usable="sum", total="count"))
         print("saved", cfg.QUALITY_CSV)
     return q
-
-
-def usable_table():
-    """The quality table filtered to usable participants (raises if the screen has not been run)."""
-    if not cfg.QUALITY_CSV.exists():
-        raise FileNotFoundError(f"{cfg.QUALITY_CSV} not found - run `python -m eda.run quality` first")
-    q = pd.read_csv(cfg.QUALITY_CSV)
-    return q[q.usable]
-
-
-def choose_participants(per_group=None, ids=None):
-    """Who to plot: an explicit list if given, else the first few usable people of each group."""
-    per_group = cfg.PLOT_PER_GROUP if per_group is None else per_group
-    ids = cfg.PLOT_IDS if ids is None else ids
-    q = pd.read_csv(cfg.QUALITY_CSV)
-    if ids:
-        return [(pid, q.loc[q.id == pid, "group"].item()) for pid in ids]
-    usable = q[q.usable].sort_values("id")
-    return [(int(r.id), r.group)
-            for g in cfg.GROUPS
-            for r in usable[usable.group == g].head(per_group).itertuples()]
-
-
-def extreme_responders():
-    """The weakest and strongest responder in each group, used by the lambda sweeps."""
-    u = usable_table()
-    picks = []
-    for g in cfg.GROUPS:
-        s = u[u.group == g].sort_values("burst_med_uS")
-        picks += [(int(s.iloc[0].id), f"{g} low"), (int(s.iloc[-1].id), f"{g} high")]
-    return picks

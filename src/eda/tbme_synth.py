@@ -1,12 +1,12 @@
 """
-Synthetic sessions drawn from the real cohort, for testing the Amin & Faghih (2021) code.
+Synthetic sessions drawn from the real cohort: the known truth our deconvolution is tuned on.
 
 N_SESSIONS sessions (S1, S2, ...), each built from the measured profile of one usable
 participant picked at random (cohort_profile.py; no deconvolution involved).  Taking a whole
 profile at once keeps traits that go together (large SCRs with a high tonic level, say)
-together.  Each session is built at 100 Hz like our load and decimated to 2 Hz exactly as the
-real export, so the published code receives the same kind of input it receives for a real
-participant:
+together.  Each session is built at 100 Hz like our load.  run() also saves its plain 2 Hz
+samples (S<k>.mat), which rebuilt() checks every rebuilt session against; the deconvolution's
+input is made from the 100 Hz session by own_preprocess (S<k>_own.mat, S<k>_own4.mat):
 
     x(t) = tonic(t) + sum_i a_i h(t - t_i) + noise(t),  rounded to the
            participant's quantisation step, with the participant's gaps put back
@@ -35,7 +35,7 @@ Artefacts are left out.  The jump rule that counts them (cohort_profile.jumps) a
 SCR onsets, and far more often on ours (1.2/min from SCRs alone) than on the real recordings
 (0.26/min in total): the Bateman response starts rising at full speed, real SCRs start more
 gently.  The count is therefore not comparable between real and synthetic; it is still
-reported.  The shape difference is invisible at the 2 Hz the published code works at.
+reported.  The shape difference is invisible at the 2 Hz the published method works at.
 Large real jumps (P99, 1126 s) are left for a separate stress test.
 
 The time constants are the one thing raw data cannot give, so they are set by design.  The
@@ -47,7 +47,7 @@ cohort:
 
 The check: the same model-free measures on the synthetic sessions next to the 119 real ones.
 
-Saved: data/tbme_input/S<k>.mat (cluster input), data/tbme_synth/S<k>.npz (the truth),
+Saved: data/tbme_input/S<k>.mat (plain 2 Hz), data/tbme_synth/S<k>.npz (the truth),
 data/tbme_synth_cohort.csv (one row per session: source participant, settings, measures),
 data/tbme_synth_check.csv (real vs synthetic distributions).
 """
@@ -181,7 +181,8 @@ def run():
 
     TRUTH_DIR.mkdir(parents=True, exist_ok=True)
     for f in list(tx.OUT.glob("S*.mat")) + list(TRUTH_DIR.glob("S*.npz")):
-        f.unlink()                                         # no stale sessions from an older draw
+        if f.stem[1:].isdigit():                           # plain S<k> only: _own/_own4 stay
+            f.unlink()                                     # no stale sessions from an older draw
     rows = []
     for k, row, g, tr, td, t, mk, s, m in final:
         t2 = t[::tx.STEP]
@@ -225,41 +226,6 @@ def run():
     return c
 
 
-# ------------------------------------------------------------------ preprocessing test: level
-SHIFT_TARGETS = {"m0": 0.0, "m2": 2.0}     # suffix -> minimum of the shifted signal, uS
-LOW_LEVEL_uS = 0.4                         # the 8 sessions below this were the 8 least stable
-
-
-def shift_inputs():
-    """S<k>_m0.mat / S<k>_m2.mat for every session copied from a low-level participant.
-
-    Same signal, shifted by a constant so its minimum is 0 uS (offset removed) or 2 uS (a
-    physiological level); the truth file is shared, the cluster runs them as new sessions.
-    """
-    c = pd.read_csv(COHORT_CSV)
-    low = c[c.real_level_uS < LOW_LEVEL_uS].sort_values("real_level_uS")
-    names = []
-    for r in low.itertuples():
-        S = loadmat(tx.OUT / f"{r.session}.mat")
-        y, t = S["y"].ravel(), S["t"].ravel()
-        mk = np.where(np.isnan(S["marker"].ravel()), "none",
-                      np.char.mod("%d", np.nan_to_num(S["marker"].ravel()).astype(int)))
-        for suf, target in SHIFT_TARGETS.items():
-            ys, shift = tx.set_floor(y, target)
-            tx.save(f"{r.session}_{suf}", ys, t, mk, int(S["filled"].item()))
-            names.append(f"{r.session}_{suf}")
-        print(f"{r.session} (source P{r.source_id}, level {r.real_level_uS:.2f} uS, "
-              f"min {y.min():.2f} uS): shifted copies {', '.join(SHIFT_TARGETS)}")
-    print(f"saved {len(names)} inputs in {tx.OUT.name}/: {' '.join(names)}")
-    return names
-
-
-# ------------------------------------------------------------------ preprocessing test: rate
-RATE_SESSIONS = {"far": ("S9", "S15", "S24", "S33"),     # same four as the window test
-                 "prior": None}                          # filled by rate_inputs: 4, level >= 0.4
-RATE_FSY = 4                                             # Hz, twice the published 2 Hz
-
-
 def rebuilt(wanted=None, amp_caps=None):
     """Yield the 100 Hz sessions: (name, profile row, tau group, tau_r, tau_d, t, mk, build dict).
 
@@ -288,55 +254,3 @@ def rebuilt(wanted=None, amp_caps=None):
                       c.c_rate, c.c_amp, c.c_noise, SEED + k, amp_cap=amp_caps[pid])
         yield sname, row, g, tr, td, t, mk, s
 
-
-def rate_inputs(fsy=RATE_FSY, n_prior=4):
-    """S<k>_f<fsy>.mat: chosen sessions rebuilt and sampled at fsy instead of 2 Hz.
-
-    Preprocessing step 1 applies as for real data: a negative minimum is shifted to 0.
-    """
-    cohort = pd.read_csv(COHORT_CSV).set_index("session")
-    prior = cohort[(cohort.tau_group == "prior") & (cohort.real_level_uS >= LOW_LEVEL_uS)]
-    wanted = set(RATE_SESSIONS["far"]) | set(prior.sort_values("real_scr_pm").index[
-        np.linspace(0, len(prior) - 1, n_prior).round().astype(int)])
-    step = int(cfg.FS // fsy)
-    names = []
-    for sname, row, g, tr, td, t, mk, s in rebuilt(wanted):
-        pid = int(row.id)
-        yf, gaps = tx.fill(s["x"][::step], t[::step])
-        if yf.min() < 0:
-            yf, _ = tx.set_floor(yf, 0.0)
-        tx.save(f"{sname}_f{fsy}", yf, t[::step], mk[::step], gaps.sum(), fs=fsy)
-        names.append(f"{sname}_f{fsy}")
-        print(f"{sname} ({g}, tau {tr:.2f} / {td:.2f} s, source P{pid}): {len(yf)} samples "
-              f"at {fsy} Hz, matches the saved 2 Hz session")
-    print(f"saved {len(names)} inputs in {tx.OUT.name}/: {' '.join(names)}")
-    return names
-
-
-# ------------------------------------------------------------------ the paper's preprocessing
-PAPER_SESSIONS = ("S4", "S16", "S25", "S34", "S9", "S15", "S24", "S33")   # 4 prior, 4 far
-
-
-def paper_inputs(sessions=PAPER_SESSIONS):
-    """S<k>_pp.mat + truth: sessions through tbme_export.paper_preprocess, real and synthetic alike.
-
-    Response sizes are capped at the largest SCR counted on the source participant, because the
-    uncapped log-normal tail reached 15 uS against at most ~4 uS in real inputs.  Tonic and
-    phasic truth go through the same filter, so they stay comparable with the input; event
-    times do not move, the filter having no delay.
-    """
-    peaks = pd.read_csv(cp.PEAKS_CSV)
-    caps = peaks.groupby("id").amp_uS.max().to_dict()
-    for sname, row, g, tr, td, t, mk, s in rebuilt(set(sessions), caps):
-        y100, n_jumps = tx.paper_preprocess(s["x"], t)
-        y2, t2, mk2 = y100[::tx.STEP], t[::tx.STEP], mk[::tx.STEP]
-        shift = 0.0
-        if y2.min() < 0:
-            y2, shift = tx.set_floor(y2, 0.0)
-        tx.save(f"{sname}_pp", y2, t2, mk2, np.isnan(s["x"][::tx.STEP]).sum())
-        np.savez_compressed(TRUTH_DIR / f"{sname}_pp.npz", ev_t=s["ev_t"], ev_a=s["ev_a"],
-                            tonic2=tx.low_pass(s["tonic"])[::tx.STEP] + shift,
-                            phasic2=tx.low_pass(s["phasic"])[::tx.STEP],
-                            tau_rise=tr, tau_decay=td, t2=t2, source_id=int(row.id))
-        print(f"{sname}_pp ({g}, source P{int(row.id)}): {n_jumps} jumps, largest size "
-              f"{s['ev_a'].max():.2f} uS (cap {caps[int(row.id)]:.2f}), shifted +{shift:.3f} uS")

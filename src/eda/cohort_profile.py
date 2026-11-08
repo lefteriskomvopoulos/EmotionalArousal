@@ -1,8 +1,8 @@
 """
 What the usable recordings look like, measured without any deconvolution.
 
-The synthetic test of the Amin & Faghih (2021) code must look like OUR cohort, not like one or
-two participants, and it must not be built from the output of the method it is testing.  So
+The synthetic sessions our deconvolution is tuned on must look like OUR cohort, not like one or
+two participants, and they must not be built from the output of the method they test.  So
 every participant is described by model-free numbers taken on exactly the segment the method
 sees (baseline start to last film, see tbme_export.segment):
 
@@ -26,7 +26,8 @@ Everything is saved:
   data/profile_study6.csv         one row per participant
   data/profile_study6_peaks.csv   every detected SCR: pid, time, size, block
   data/profile_study6_curves.npz  per participant: the 2 Hz floor and the 100 Hz gap positions
-and the 2 Hz input file for the cluster is written in the same pass (data/tbme_input/P<pid>.mat).
+and the plain 2 Hz file is written in the same pass (data/tbme_input/P<pid>.mat): the synthetic
+sessions copy its time axis and block codes (tbme_synth.timeline).
 """
 import numpy as np
 import pandas as pd

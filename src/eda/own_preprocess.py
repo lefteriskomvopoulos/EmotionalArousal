@@ -15,7 +15,7 @@ sampling frequency", with the single down-sampling last.
   6 down-sample    to 2 Hz: the only rate change.  Step 4 leaves nothing above 1 Hz to fold back
   7 shift          a constant, only if the 2 Hz signal goes below 0
 
-Why this order, against the first version (tbme_export.paper_preprocess):
+Why this order, against the first version (paper_preprocess, black-box branch):
   - the first version dropped to 100 Hz with no filter before everything else, so content above
     50 Hz folded back and jumps were looked for on a thinned signal.  Now there is no such step.
   - it cut the segment before filtering, so the filter's edges fell on the data and were padded
@@ -27,7 +27,8 @@ Tonic removal for 'faghih2014' is not a step yet.  In the 2019 paper it comes af
 and before resampling.
 
 Synthetic sessions run the same prepare() from step 2 at their own 100 Hz, with the largest
-responses capped as in tbme_synth.paper_inputs.  They exist only inside the segment, so their
+responses capped at the largest SCR counted on the source participant (the uncapped log-normal
+tail reached 15 uS against at most ~4 uS in real inputs).  They exist only inside the segment, so their
 filter edges are padded with end values: this touches the first and last 3.2 s.
 
 Their noise needs one correction.  White noise matched to the real signal at 100 Hz is mostly
@@ -62,7 +63,8 @@ from . import figures
 from . import tbme_export as tx
 from . import tbme_synth as ts
 from .dataset import baseline_mask, film_mask, load
-from .tau_measure import REAL_IDS
+
+REAL_IDS = (53, 115, 26, 3, 80)                  # the 5 real participants shown and exported
 
 SPLIT_CSV = cfg.ROOT / "data" / "own_split.csv"
 STAGES_CSV = cfg.ROOT / "data" / "preprocess_stages.csv"
@@ -272,8 +274,11 @@ def real_session(pid):
     p = prepare(x, t, RAW_FS, (i0, i1))
     first = {"label": "1 raw 1000 Hz", "t": t, "x": x, "change": None, "seg": (t[i0], t[i1]),
              "note": f"{len(x) / RAW_FS / 60:.1f} min, grey = kept ({(i1 - i0) / RAW_FS / 60:.1f} min)"}
-    m = loadmat(tx.OUT / f"P{pid}_pp.mat")
-    old = np.interp(p["t2"], m["t"].ravel(), m["y"].ravel())    # the two 2 Hz grids differ slightly
+    first_version = tx.OUT / f"P{pid}_pp.mat"    # written on the black-box branch (paper-export)
+    old = None
+    if first_version.exists():                   # compared only where that file is present
+        m = loadmat(first_version)
+        old = np.interp(p["t2"], m["t"].ravel(), m["y"].ravel())   # the two 2 Hz grids differ slightly
     return picture(f"P{pid}", x, t, RAW_FS, p, first, old)
 
 

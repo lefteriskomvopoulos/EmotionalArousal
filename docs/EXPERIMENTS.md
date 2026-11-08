@@ -1,359 +1,260 @@
-# Experiment log
+# Experiment log — branch `own`
 
-The full record of this project so far: what we tried, why, what each test showed, and what we
-decided. Read it top to bottom. Every result table, figure and cluster log is in this repository;
-["Where everything is"](#where-everything-is) at the end shows how to find them.
-
-Numbers come from those saved tables. The few marked *(run log)* were only printed when the test
-ran, so the table behind them doesn't show them directly.
+What we built, how we tested it, what each tuning round showed, and what we decided. Read it top
+to bottom. Every number comes from a saved table: `data/own_tune_scores.csv` (one row per setting
+and session) unless another file is named.
 
 ## The short version
 
-1. Our own deconvolution missed more than half of the true impulses, and its settings could not be
-   chosen in a way that works for everyone. **Dropped.**
-2. cvxEDA worked only when given the true response shape, which real data doesn't provide.
-   **Dropped.**
-3. The published Amin & Faghih (2021) solver passed our synthetic test. **Adopted**, unmodified.
-4. Its weakness is that it always returns its built-in response shape, whatever the truth. When a
-   person's true shape is far from that prior, about 46% of each response leaks into the baseline
-   and sizes become unreliable. Real participants look like this mismatched case.
-5. Every attempt to work around this failed its checks. **The prior stays**, and we report the
-   problem instead of hiding it.
-6. Adding the paper's missing preprocessing removes many false events, but it doesn't fix point 4.
-
-**Status:** the pipeline is ready to freeze, pending the decisions listed near the end. Only 5 real
-participants have been run so far, and nothing about our hypotheses has been tested yet.
+1. The published solver (branch `black-box`) could not be tuned: its τ always stayed at its
+   built-in prior. So we **implemented the same algorithm ourselves** (Amin & Faghih, IEEE TBME
+   2021), and checked it against the black box: same model, same output.
+2. We rebuilt the **preprocessing** as one chain in one order, following the papers, and made the
+   synthetic sessions as noisy as the real recordings.
+3. We **tuned on 18 synthetic sessions** with known pulses and τ, four rounds so far. Median F1
+   went from 0.47–0.61 (paper-like settings) to **0.84**, and τ now follows the truth.
+4. The 18 **test sessions** are still unseen. They come once the settings are frozen, then the
+   real participants.
 
 ## Terms
 
 | Term | Meaning |
 |---|---|
 | τ rise, τ decay | How fast a skin conductance response rises and falls: the response *shape* |
-| Prior | The solver's built-in preference for τ = 0.65 s rise, 2.77 s decay. It's inside the authors' encrypted code, so we can't change it |
-| Tonic / phasic | The slow baseline / the fast responses on top of it |
-| λ | Sparsity weight: higher means fewer impulses |
-| F1, recall, precision | Scores for finding known impulses, matched one to one within 1 s. Recall: share of true impulses found. Precision: share of returned events that are real |
-| Absorption | Share of each true response that the estimated tonic wrongly takes in (`phasic_taken`). Ideal is 0 |
-| Prior / moderate / far groups | Synthetic sessions by true τ: drawn around the prior; 0.4/2.0 or 1.0/4.0; and 1.2/5.0 s (±10%) |
+| Prior | A penalty λ/(2σ²)(τ − μ)² that pulls τ toward the paper's μ = 0.65 s (rise), 2.77 s (decay), σ = 0.21 / 0.52 s |
+| Tonic / phasic | The slow baseline (a cubic B-spline) / the fast responses on top of it |
+| u | The impulses (sudomotor nerve bursts) that drive the responses |
+| FOCUSS+, GCV-FOCUSS+ | The sparse solvers for u. Phase 1 keeps at most (peaks + 20) impulses; phase 2 picks the sparsity weight λ2 by generalized cross-validation (GCV) |
+| F1, recall, precision | Scores for finding known impulses, matched one to one within 1 s. Recall: share of true impulses found. Precision: share of returned impulses that are real |
+| Absorption | `phasic_taken`: share of each true response that the estimated tonic wrongly takes in. Ideal 0 |
+| τ groups | Synthetic sessions by true τ: `prior` (drawn from the prior), `moderate` (around 0.4/2.0 or 1.0/4.0 s), `far` (around 1.2/5.0 s), ±10% |
 
-## Part 0: where we started
+## Part 1: why our own implementation
 
-**Data.** We first looked at a POPANE free sample
-([dataset check](dataset_check/README.md)) and at
-[Study 5](../results/figures/study5_step2_raw_3participants.png), then settled on Study 6: 187
-adults, a five-minute baseline, then six two-minute films in one of four sets.
+On the `black-box` branch the authors' encrypted solver passed our synthetic test, but its τ never
+left the prior (0.65 / 2.77 s) whatever the true τ was. When the truth was far from the prior, about
+46% of each response leaked into the tonic. Its prior strength, timing and limits are inside the
+encrypted code, so none of this could be changed. Every workaround (measuring τ per person, a shared
+τ, a finer rate) failed its checks.
 
-**Screening.** The dataset authors' own flags plus our automatic criteria, fixed before any analysis,
-removed 68 participants for electrode noise, missing data, or almost no responses. That left 119:
-neutral 29, negative 29, positive 32, mixed 29. Details are in the [proposal](proposal_methods.md).
+So we wrote the algorithm ourselves. The rule: **keep the algorithm, tune its settings on our
+data.** No new method is invented, and the paper's numbers are starting points, not targets.
 
-**Plan from the proposal.** Stage 1 deconvolves skin conductance into impulses. Stage 2 estimates a
-hidden arousal state from those impulses. Hypotheses H1–H6 then test that state. Background reading
-is in the [literature notes](literature_review_notes.md).
+## Part 2: what we implemented (`src/own/`)
 
-![Raw signals of 8 participants](../results/figures/study6_raw_8participants.png)
+The model of Amin & Faghih (2021): each response obeys τr·τd·y″ + (τr + τd)·y′ + y = u, so a window
+of the signal is y = a·y0 + B(τ)·u + C·q + noise, with the tonic C·q a cubic B-spline. The cost:
 
-*Raw skin conductance (blue) and affect slider (orange) for 8 participants, two per group. Levels
-differ widely and some signals go negative, which matters in Part 3.*
+  ½‖y − a·y0 − B u − C q‖² + λ1‖q‖² + λ2‖u‖ₚᵖ + prior on τr + prior on τd
 
-The first demonstration used our own method on one 120 s window:
+under u ≥ 0, C q ≤ y, 0 ≤ y0 ≤ y1 and τ limits. It is solved by block coordinate descent
+(supplement, section D) in each 200 s window, every 100 s:
 
-![One window through our first pipeline](../results/figures/study6_demo_P99.png)
+- **Phase 1**, 30 times: u by FOCUSS+ from all ones, then τ and y0 (interior point), then q.
+- **Phase 2**, until nothing moves: u by GCV-FOCUSS+ from the last u, then τ and y0, then λ1 by GCV
+  and q.
+- 4 random starts per window; the lowest-residual converged start whose τ rise is off its limits
+  is kept.
 
-*P99 through our first pipeline: signal and tonic, phasic part, impulses, and the check that the
-impulses rebuild the phasic part. Other participants:
-[P5](../results/figures/study6_demo_P5.png),
-[P6](../results/figures/study6_demo_P6.png),
-[P34](../results/figures/study6_demo_P34.png).*
+`own_config.m` lists every setting and where it comes from (paper, Data Challenge code, or ours).
+It also holds the Data Challenge algorithm (Faghih 2014: same solver, no tonic, no prior), not
+tuned yet.
 
-And stage 2 on a whole session:
+**Checks.**
 
-![Arousal state for P99](../results/figures/study6_state_P99.png)
-
-*P99 from impulses to estimated arousal, with the slider on the right axis. This is a demonstration
-on one person, built on the deconvolution we later dropped. It tests nothing.*
-
-## Part 1: our own deconvolution
-
-**Method:** percentile baseline, L1 sparse deconvolution solved with FISTA, kernel fitted per
-participant.
-
-**Choosing λ.** We first chose λ by sweeping it until the impulse rate looked physiological, because
-the fit barely changes with λ and so can't choose it. That gave λ = 1.6.
-
-![λ across weak and strong responders](../results/figures/study6_lambda_across_subjects.png)
-
-*Impulse rate (left, shaded = physiological range) and fit (right) across λ for 8 participants. The
-[same sweep on P6](../results/figures/study6_lambda_sweep_P6.png) stays at R² 0.9 or above while
-the rate falls from 44 to 10 per minute.*
-
-**Fitting the kernel.** τ could not be fitted reliably per person: 42 of 119 participants had a τ
-stuck at a limit.
-
-![Fitted τ vs burst size](../results/figures/study6_kernel_boundaries.png)
-
-*Fitted τ across participants. Points on the dashed lines are stuck at a limit, and τ decay ranges
-from 3 to 20 s.*
-
-Then we built simulated sessions with a known answer and tested properly:
-
-| Test | Result | Verdict |
-|---|---|---|
-| Fixed λ = 1.6, 20 sessions | Recall 0.42, precision 0.93, F1 0.58; τ decay 73% too long | Finds too few impulses |
-| Sweep λ across burst sizes | λ giving the right τ decay: below 0.2 for 0.03 µS bursts, about 0.3 for 0.06, about 0.8 for 0.12 | No single λ works; a global λ would bias group comparisons |
-| λ by GCV, as in the proposal | Picked the lowest grid value in 21 of 30 sessions; τ decay 39–47% too short for medium and large bursts | Failed |
-| λ proportional to measured burst scale (`synth-scale`) | The scale measure didn't track true burst size, r = −0.1 *(run log)* | Failed |
-
-**Verdict:** dropped. These tests also showed a pattern that kept returning: without outside
-information, response shape can't be separated from the impulses.
-
-![Our deconvolution on P99](../results/figures/study6_deconv_P99.png)
-
-*Our method on all of P99: τ 0.71/6.48 s, 387 impulses, R² 0.99. Compare with cvxEDA in Part 2.
-[P6, earlier settings](../results/figures/study6_deconv_P6.png).*
-
-## Part 2: cvxEDA
-
-Greco et al. (2016), authors' code unmodified.
-
-| Test | Result | Verdict |
-|---|---|---|
-| Default settings, 20 realistic sessions | Recall 0.95, precision 0.25, F1 0.39 | Far too many false events |
-| True τ, tuned α = 0.0128 | F1 0.74 | Good, but needs the true τ |
-| τ found by an outer loop | τ decay ran to the 20 s limit; true median 8 s | τ cannot be identified from the data alone |
-
-![cvxEDA on P99](../results/figures/study6_deconv_cvxeda_P99.png)
-
-*cvxEDA defaults on the same P99: 534 impulses against our 387, R² 1.00, and a tonic that follows
-the responses more closely. Same signal, very different answer, and both fit well. A good fit
-doesn't tell you which is right.*
-
-**Verdict:** dropped. The method needs a τ we don't have, so we moved to a method with
-physiological priors on τ.
-
-## Part 3: the published method
-
-Amin & Faghih (IEEE TBME 2021). We run the authors' code unmodified on the Torch cluster, in the
-form their scripts use: 2 Hz signal, 4 Hz impulses, 200 s windows every 100 s, τ limits
-0.1–1.5 / 1.5–6 s.
-
-First we checked it reproduces a sensible result on their own data: R² 0.994, τ 0.89/2.96 s
-*(run log)*.
-
-![Authors' code on their own participant 11](../results/tbme_smoke/tbme_smoke_s11.png)
-
-*The authors' code on their own participant. Notice the tonic (yellow) rising after each response
-even here. Part 4 shows why that matters.*
-
-Synthetic sessions are built from the profiles of the 119 usable participants: 36 sessions, 12 per
-τ group. The earlier simulated sessions had τ decay of 4–12 s, far from the literature value of
-about 2.8 s, so these were redrawn.
-
-| Test | Result | Verdict |
-|---|---|---|
-| Pass rule set in advance: median F1 ≥ 0.7 in prior and moderate | F1 0.76 prior, 0.72 moderate, 0.65 far (far is reported, not required). Timing error about 0.17 s | **Passed. Adopted** |
-| Negative signal values | τ decay varied 3.2 s between windows. A constant shift to a floor of 0 or 2 µS cut that to 0.014 s; F1 unchanged (0.69) | Shift if the minimum is below 0 |
-| What are the false events? | 30% of returned events. Of those, 71% isolated, 25% duplicates, 3.5% off-time | Mostly small and isolated |
-| Size cut-off, chosen on half and checked on the other half | Cut 0.5: F1 +0.05, precision 0.70→0.80, recall 0.79→0.71 | Kept then. Needs a re-check, see Part 5 |
-| Merging close events | No held-out F1 gain *(run log)* | Rejected |
-| "Pulse importance" score instead of size | Better AUC (0.83 vs 0.78), no better held-out F1 *(run log)* | Rejected |
-| First 5 real participants (P53, P115, P26, P3, P80) | R² 0.991–1.000; 54 of 55 windows pass the authors' rule. Kept events vs SCRs counted directly: 1.20, 1.58, 1.91, 0.44, 1.21 times | Runs properly on real data |
-
-Figures for those 5, unfiltered input: [P53](../results/figures/tbme_real_P53.png),
-[P115](../results/figures/tbme_real_P115.png), [P26](../results/figures/tbme_real_P26.png),
-[P3](../results/figures/tbme_real_P3.png), [P80](../results/figures/tbme_real_P80.png). They were
-redrawn on Nov 3 from the same runs.
-
-## Part 4: the τ problem
-
-In all three groups the solver returned τ near 0.65/2.78 s, even in the far group where the truth
-is 1.2/5.0 s. A good fit therefore doesn't mean the response shape was recovered.
-
-| Test | Result | Verdict |
-|---|---|---|
-| Longer windows, 400 s | τ unchanged at about 80 minutes per window, mostly unconverged | Rejected |
-| Faster sampling, 4 Hz | τ stayed at the prior; F1 fell in the 3 finished sessions (0.74→0.54, 0.76→0.69, 0.71→0.62); about 10× slower | Rejected |
-| Does a wrong τ leave a mark in the pulses? | Tail pulses don't track the true decay, r = −0.18 | Rejected |
-| How much does mismatch cost? | Absorption −1% prior, 9% moderate, 46% far | Far sessions lose sizes to the tonic |
-| Do real participants look mismatched? | Fast share of tonic vs signal: 0.08 prior, 0.14 moderate, 0.38 far; real 0.27–0.56 | They look like far, or worse |
-| Force τ to the truth by narrowing the limits | Far: F1 0.67→0.71, precision 0.70→0.80, size ranking 0.87→0.94, absorption 45%→19%. Prior: F1 0.76→0.88 | τ mismatch is a real cause, but not the only one: true τ still leaves 19% |
-| Measure τ from single isolated responses | Synthetic passed (decay error 11%, rank 0.93, but only 15 of 36 sessions usable). Real failed: 0 of 5 accepted, because fits hit the limits | Failed |
-
-## Part 5: preprocessing
-
-Before going further, we checked that the real signals were being treated properly and compared
-them with the synthetic ones.
-
-![Real vs synthetic inputs](../results/figures/preprocess_compare.png)
-
-*Real (left) and synthetic (right) inputs, whole sessions, before the paper's filter, with their
-spectra below. Noise matches (0.003–0.008 vs 0.005–0.007 µS). Synthetic sessions had oversized
-spikes, up to 15 µS in S10 with jumps up to 2.98 µS against at most 0.11 µS in real data, so later
-synthetic sessions cap response sizes. Before and after the 2 Hz step:
-[real](../results/figures/preprocess_real.png),
-[synthetic](../results/figures/preprocess_synth.png).*
-
-We had been feeding the solver a plain 2 Hz sample of the signal. The paper's supplement (section C)
-describes more: remove large jumps, fill them with a cubic B-spline, low-pass at 0.5 Hz, then
-down-sample to 2 Hz.
-
-**The published code doesn't do this.** The authors' published "preprocessed" file has no low-pass:
-it has power all the way up to 50 Hz, and the file from their readme link is byte-identical to it.
-Their scripts only call `downsample`. A cluster probe (`src/tbme/probe/`) showed that the solver
-doesn't filter either. It logged every call to their filter function during one window, and there
-were none:
-
-```
-largest |r.y - input| = 0 uS
-probe finished: tau 0.665 / 2.777, 30 impulses
-```
-
-![Spectrum of the authors' input and ours](../results/figures/paper_input_spectrum.png)
-
-*Authors' file (black) against ours. Theirs keeps its power up to 50 Hz, so it wasn't low-passed.
-The orange curve is our filter at order 64, before we changed to 640: it only starts falling hard
-near 1 Hz, not at the dotted 0.5 Hz line, which is why we raised the order. This plot hasn't been
-redrawn at order 640.*
-
-**Our decision:** follow the supplement's text, since that is the stated method, and disclose the
-mismatch. The paper gives no filter order, so order 640 is our choice. It comes from a calculation;
-its response hasn't been plotted yet.
-
-**Results,** 5 real and 8 synthetic sessions, median over 4 sessions per group:
-
-| | Prior, before | Prior, after | Far, before | Far, after |
-|---|---:|---:|---:|---:|
-| F1 | 0.76 | 0.84 | 0.67 | 0.70 |
-| F1 with the 0.5 cut-off | 0.78 | 0.78 | 0.67 | 0.68 |
-| Precision | 0.77 | 0.94 | 0.70 | 0.87 |
-| Recall | 0.82 | 0.76 | 0.70 | 0.57 |
-| Size ranking (Spearman) | 0.95 | 0.94 | 0.87 | 0.84 |
-| Timing error (s) | 0.20 | 0.32 | 0.16 | 0.25 |
-| Absorption | | | 45% | 46% |
-
-- Every window passed the authors' rule: 147 of 147, including P80's window that failed before.
-- No session had a jump large enough to remove, so these changes come from the low-pass alone.
-- Real participants: four of five moved closer to the directly counted SCRs (1.20→1.13, 1.58→1.46,
-  1.91→1.50, 1.21→1.11), but P3 moved further away (0.44→0.37). The tonic's fast share didn't
-  improve (0.35–0.64).
-- One session got clearly worse: S24, F1 0.66→0.57.
-
-**Verdict:** keep it, because it's the paper's method and removes false events. It works much like
-the size cut-off and costs recall. It doesn't fix absorption.
-
-Limits of this test: 8 synthetic sessions, and those sessions also had their largest responses
-capped, so the change isn't due to filtering alone.
-
-![P53 after the paper's preprocessing](../results/figures/tbme_real_P53_pp.png)
-
-*P53 after preprocessing. The fit is excellent, yet the orange tonic rises into the responses. A
-high R² doesn't rule out absorption.*
-
-![P80 after the paper's preprocessing](../results/figures/tbme_real_P80_pp.png)
-
-*P80, the noisiest of the five, where it's easier to see: the tonic follows most large responses,
-and dips sharply near 590 s to fit the jump after it. Others after preprocessing:
-[P115](../results/figures/tbme_real_P115_pp.png), [P26](../results/figures/tbme_real_P26_pp.png),
-[P3](../results/figures/tbme_real_P3_pp.png).*
-
-## Part 6: one τ per person (post-hoc retry)
-
-One τ fitted across all of a person's isolated responses, with wider limits (rise up to 3 s, decay
-up to 12 s). This was designed after seeing the Part 4 failure, so it must be disclosed as post-hoc.
-
-| Check | Limit | Result |
-|---|---|---|
-| Decay error, known τ | ≤ 15% | **44%, failed** |
-| Rank correlation | ≥ 0.7 | 0.73 |
-| Far vs prior AUC | ≥ 0.9 | 0.95 |
-| Real participants accepted | ≥ 3 of 5 | **1 of 5, failed** |
-
-Rise and decay collapsed toward each other: about 2.1/2.4 s in far sessions whose truth is
-1.1/4.9 s. The likely cause is measuring on the filtered signal, because filtering stretches the
-rise. That explanation is untested.
-
-**Verdict:** failed, and we stop here. Another attempt would be tuned to results already seen. The
-prior stays.
-
-## Current pipeline
-
-Proposed for freezing; see "Decisions we need" below.
-
-| Step | Source |
+| Check | Result |
 |---|---|
-| Keep the baseline and films as one segment | Ours |
-| Fill gaps by interpolation | Ours; the paper doesn't cover gaps |
-| Remove jumps (prominence 0.1 on the absolute difference), cubic B-spline over a 0.5 s patch | Paper |
-| Low-pass at 0.5 Hz | Paper; the order 640 FIR is ours |
-| Down-sample to 2 Hz | Paper |
-| Shift up if the signal goes below 0 | Ours |
-| Authors' solver, unmodified, 200 s windows every 100 s | Paper |
-| Lowest-residual converged start with τ rise off its limits | Authors' rule |
+| `own_test.m`, made-up data | All passed: DC gain 1, response matches the ODE, 13 of 13 pulses found, converged |
+| Against the black box's own output (P53, paper preprocessing): its phasic part rebuilt from its saved τ and u with our matrices | R² 1.00000, gain 1.000, u shifted by +2 samples (an indexing difference, not physics). Its tonic rebuilt with our basis: R² 0.997–0.9999 |
+| `own_diagnose.m`, made-up windows | A weaker prior moved a far window's τ to 1.18 / 4.79 s (true 1.20 / 5.00) |
 
-## What the report must disclose
+Our implementation is the black box's model, but we now control every setting. (The script of the
+second check needs the black box's output files, so it stays out of this branch.)
 
-- τ is set by the prior, so we won't report τ per person. Event timing and rate are more trustworthy
-  than response sizes.
-- The prior group is our best case and the far group our worst. Real participants resemble the
-  worst case.
-- 4 random starts per window, where the paper uses 8. Going to 8 would take much less than double
-  the time, because starts run in parallel, but this hasn't been measured.
-- The authors' published code and data skip the low-pass their supplement describes. We follow the
-  supplement.
-- Our additions: filter order 640, gap filling, the negative shift, a flagged fallback when no start
-  passes their rule, and joining each output separately because their script builds all three from
-  `y` by mistake.
-- The shared-τ test (Part 6) was post-hoc and failed.
+## Part 3: the solver's input (`src/eda/own_preprocess.py`)
 
-## Decisions we need
+All steps run at the recording's own rate, with a single down-sampling at the end. Amin & Faghih
+(IEEE Access 2019): "We perform all the preprocessing in the original sampling frequency".
 
-1. **Freeze the pipeline above?** Recommended: yes.
-2. **Keep the 0.5 cut-off?** It was chosen on unfiltered inputs. After filtering, F1 is higher
-   without it (0.84 vs 0.78 prior, 0.70 vs 0.68 far), so it likely needs to go or be re-chosen.
-3. **4 or 8 starts?** 4 keeps these runs comparable with all the earlier ones.
+| Step | What |
+|---|---|
+| 1 raw | 1000 Hz recording |
+| 2 gaps | linear interpolation (the steps below need a gap-free signal) |
+| 3 jumps | peaks of prominence 0.1 µS on the 10 ms change; 0.5 s around each replaced by a cubic B-spline (2021 supplement), drawn through 0.1 s means (ours) |
+| 4 low-pass | zero-delay FIR, Hamming, 6.4 s long; 0.5 Hz (2021 supplement) or 1 Hz (variant `own4`) |
+| 5 cut | first baseline sample to last film sample, after the filter, so its edges fall outside |
+| 6 down-sample | to 2 Hz (`own`) or 4 Hz (`own4`): the only rate change |
+| 7 shift | a constant, only if the signal goes below 0 µS (an amplifier offset) |
+
+`own-check` ran all 119 usable participants through it: no jump inside any kept segment, gaps
+under 12 s, at least 42 s of recording before each segment (`data/input_check.csv`). The 0.5 Hz
+filter keeps half the signal at 0.5 Hz and 0.1% at 1 Hz (`data/filter_response.csv`).
+
+Figures: `results/figures/stages_<name>.png` (every step, 5 real + 5 tuning sessions) and
+`raw_atlas_*.png` (all 119 participants and the 18 tuning sessions, unprocessed).
+
+## Part 4: the synthetic sessions and the test scheme
+
+36 sessions (`tbme_synth.py`), each copied from the measured profile of one real participant:
+their tonic floor, SCR rate and sizes, noise, gaps and timeline, with impulses and τ we know. Sizes
+are capped at the largest SCR counted on the source participant.
+
+**Noise had to be matched.** White noise matched at 100 Hz is mostly removed by the low-pass, while
+real signals keep slow disturbances, so the first synthetic inputs were 3.5× smoother than real
+ones. `matched()` adds slow noise until each session is as rough as its source participant, after
+the same chain: 0.0026 vs 0.0028 µS at 2 Hz, and 0.0017 vs 0.0016 µS at 4 Hz
+(`data/input_check_own4.csv`). The true pulses do not change.
+
+**Split, drawn once** (`data/own_split.csv`): 18 tuning + 18 test sessions, 6 + 6 per τ group.
+
+| | prior | moderate | far |
+|---|---|---|---|
+| tune | S1 S4 S22 S25 S28 S34 | S2 S11 S17 S23 S26 S32 | S3 S6 S21 S27 S30 S36 |
+| test | S7 S10 S13 S16 S19 S31 | S5 S8 S14 S20 S29 S35 | S9 S12 S15 S18 S24 S33 |
+
+Settings are chosen on the tuning sessions only. Once frozen, they run once on the test sessions,
+and only then on real participants. Tuning is judged on the known truth, never on fit alone: the
+project showed repeatedly that a good fit can hide a wrong τ.
+
+## Part 5: the tuning rounds
+
+Each round changes one thing. Tags name the setting (`hpc/own/tune/output/<tag>/`):
+`p1` / `p10` / `p100` / `p1000` = prior weight 0.1 (paper) / 0.01 / 0.001 / 0.0001; `k6`, `k14` =
+tonic knots every 6 or 14 s; `f3`, `f4` = phase-1 λ limit 10⁻³, 10⁻⁴ (default 10⁻²); `own4` = the
+1 Hz / 4 Hz input. The exact arguments of each round are in `src/own/make_own_bundle.sh` and its
+comments. All numbers below are medians over the 18 tuning sessions, or over a group's 6.
+
+### Round 1: prior strength × knot spacing (6 settings, 108 jobs)
+
+| Setting | F1 | Recall | Precision | Far-group decay error |
+|---|---|---|---|---|
+| p1_k6 | 0.47 | 0.31 | 1.00 | −43% |
+| p10_k6 | 0.49 | 0.32 | 1.00 | −37% |
+| p100_k6 | 0.46 | 0.30 | 1.00 | −14% |
+| p1_k14 | 0.61 | 0.44 | 0.98 | −39% |
+| p10_k14 | 0.59 | 0.42 | 1.00 | −27% |
+| p100_k14 | 0.58 | 0.41 | 1.00 | −9% |
+
+- **Knots every 14 s beat 6 s** (F1 about 0.60 vs 0.47): with 6 s knots the tonic swallows the slow
+  far-group responses (absorption 0.28–0.47 vs 0.13–0.25). Kept 14 s.
+- **A weaker prior frees τ** in the far group, but it overestimated decay in the prior group
+  (+37% at p100).
+- **The real problem: too few pulses.** Precision was about 1.00 but only about half of the pulses
+  ≥ 0.02 µS were found. Two causes in the code. In FOCUSS+ a zero never comes back, so phase 1 sets
+  the upper limit for phase 2, and phase 1's λ limit (10⁻², our own guess: the paper gives none) was
+  100× the phase-2 limit. And GCV sat at its upper limit in about 90% of windows.
+
+### Round 2: phase-1 λ limit (4 settings, 72 jobs)
+
+| Setting | F1 | Recall | Precision |
+|---|---|---|---|
+| p100_k14 (round 1, 10⁻²) | 0.58 | 0.41 | 1.00 |
+| p100_k14_f3 (10⁻³) | **0.81** | 0.80 | 0.86 |
+| p100_k14_f4 (10⁻⁴) | 0.77 | 0.84 | 0.74 |
+| p10_k14_f3 | 0.79 | 0.81 | 0.77 |
+| p10_k14_f4 | 0.71 | 0.86 | 0.64 |
+
+- **10⁻³ fixed the missed pulses.** 10⁻⁴ starts finding false ones. p100 beats p10 on precision and
+  on far-group decay (−22% vs −36%).
+- **τ was still wrong in a telling way.** τ rise had a floor near 0.6 s: true rises of 0.3–0.4 s
+  came out at 0.6–1.0 s. And decay was pulled toward the middle from both sides. Likely cause: the
+  0.5 Hz filter and 2 Hz sampling smear each response by about a second, and the fit reads the
+  smear as a slower response.
+
+### Round 3: the input, 1 Hz low-pass at 4 Hz (1 setting, 18 jobs)
+
+Same algorithm on the `own4` input. Impulses stay at 4 Hz, so u means the same as before. Twice the
+samples doubles the data term, so every penalty weight is doubled to keep its balance with the fit
+(prior, both sparsity limits, tonic limit).
+
+| | p100_k14_f3 (2 Hz) | own4_p100_k14_f3 (4 Hz) |
+|---|---|---|
+| F1 | 0.81 | **0.85** |
+| Recall | 0.80 | 0.86 |
+| Precision | 0.86 | 0.92 |
+| Timing error | 0.25 s | 0.17 s |
+| Amplitude rank correlation | 0.93 | 0.96 |
+| Rise error: far / moderate / prior | +8 / +41 / +35% | −2 / +19 / +10% |
+| Decay error: far / moderate / prior | −22 / −4 / +15% | −23 / +3 / +14% |
+
+- **The 4 Hz input wins on every detection measure.** F1 rose in 16 of 18 sessions, and precision
+  rose rather than fell.
+- **The rise floor dropped** to about 0.45–0.55 s. Only true rises of 0.3–0.4 s are still
+  overestimated, near the resolution of a 4 Hz signal.
+- **Decay did not change**, so the filter was not its cause. Both errors pointed at 2.77 s, the
+  prior's mean.
+- A session takes 7–39 min on the cluster (2 Hz: up to 15 min).
+
+### Round 4: prior weaker or off (2 settings, 36 jobs)
+
+| Setting (4 Hz) | F1 | Rise error | Decay error | Worst decay | Far decay | Prior-group decay |
+|---|---|---|---|---|---|---|
+| own4_p100_k14_f3 (round 3) | 0.85 | 8% | 14% | 29% | −23% | +14% |
+| **own4_p1000_k14_f3** | 0.84 | **6%** | **10%** | 34% | **−4%** | +20% |
+| own4_p0_k14_f3 (no prior) | 0.83 | 8% | 16% | 81% | +6% | +24% |
+
+Rise and decay error: median of the absolute error over the 18 sessions.
+
+- **p1000 is the best so far.** Far-group decay error went from −23% to −4%, and the rise bias is
+  gone, for almost no F1.
+- **No prior at all is unstable:** one far session's decay went to 9.5 s (true 5.2), and in the far
+  group a median of only 64% of windows met the selection rule. The prior is needed, just much
+  weaker than in the paper.
+- **What's left:** without the prior's pull, decays of about 2–4 s come out 10–35% too long (S28
+  3.71 vs 3.04 s, S11 4.23 vs 3.70 s). Two dense sessions with short decays (S26, S32) are right.
+  So this is a separate upward bias, which the prior was partly hiding.
+
+## Current status
+
+**Best setting: `own4_p1000_k14_f3`.** 4 Hz input with a 1 Hz low-pass; prior weight 2·10⁻⁴;
+knots every 14 s; phase-1 λ limit 2·10⁻³; GCV limits 2·10⁻⁴ (λ2) and 2·10⁻⁴ (λ1); one impulse per
+signal sample (4 Hz); everything else as in `own_config.m`. By τ group, F1 is 0.85 (prior), 0.87
+(moderate) and 0.80 (far). On the `black-box` branch the published solver reached 0.65–0.76 by
+group (0.70–0.84 with the paper's preprocessing), on smoother synthetic inputs, so the numbers are
+not like-for-like.
+
+Open problems:
+
+1. Decays of about 2–4 s come out 10–35% too long (round 4).
+2. Very dense sessions stay poor: S36 (25 pulses a minute, many within 1 s of each other) has F1
+   about 0.5 in every setting.
+3. True rises under about 0.45 s are still overestimated, near what a 4 Hz signal can resolve.
+4. The Data Challenge algorithm (Faghih 2014) is implemented but not tuned. It needs a tonic-free
+   input; in the 2019 paper the tonic is removed after the low-pass, before resampling.
 
 ## Next steps
 
-1. Run `paper-check` again so the spectrum figure shows the order 640 filter.
-2. Extend `paper-export` to all 119 participants. It currently covers the 13 test sessions.
-3. Run all 119 on the cluster, about 15 minutes each, as a job array.
-4. Move stage 2 onto these events. `state.py` still reads the archived deconvolution, and two older
-   problems remain open: EM is unstable on one recording (`SR_FIXED` and `G1_MAX` are provisional),
-   and 5 s bins lose impulses when a bin holds more than one.
-5. Test the hypotheses:
-   - H1: films raise arousal above rest.
-   - H2: emotional films raise it more than neutral ones.
-   - H3 (primary): arousal reflects intensity alone, so negative and positive both exceed neutral
-     and don't differ.
-   - H4 (the alternative): negative exceeds positive, within person, in the mixed group.
-   - H5: emotions within a valence don't separate.
-   - H6: the decoded state tracks the participant's own affect slider.
-6. Write the report and slides, due November 25.
+1. **Round 5: knot spacing** at the best setting, 10 and 20 s (14 s exists). Knot 14 was chosen in
+   round 1, when recall was 0.4 and τ was stuck at the prior. A too-stiff tonic leaves slow drift
+   that a longer decay absorbs, which could explain open problem 1.
+2. Freeze the settings and run them **once on the 18 test sessions**.
+3. **Real participants**: the 5 exported (`P*_own4`), then all 119.
+4. Stage 2 (impulses → arousal state) and hypotheses H1–H6. That code is on `black-box`
+   (`state.py`) and comes over when we get there.
+5. Report and slides.
+
+## How to run a round
+
+1. Local: export the inputs (`own4-export`), set the round's settings in
+   `src/own/make_own_bundle.sh`, run it. It writes `hpc/own_bundle.zip`.
+2. Upload the zip to `~/Project/own/` on Torch. There: `unzip -o own_bundle.zip`,
+   `cd own_bundle`, `sbatch run_own.sbatch`. One job per session and setting.
+3. Download `output/` into `hpc/own/tune/output/`, then
+   `PYTHONPATH=src python -m eda.run own-score`. It scores every setting found there and saves
+   `data/own_tune_scores.csv`.
+
+Before any code change: `own_test` in MATLAB (`addpath src/own; own_test`).
 
 ## Where everything is
 
-| Part | Code | Result tables in `data/` | Cluster output |
-|---|---|---|---|
-| 0 | `dataset.py`, `quality.py`, `cohort_profile.py` | `quality_study6`, `profile_study6*` | |
-| 1 | `archive/deconvolution.py`, `archive/experiments.py`, `archive/synthetic.py`, `archive/validation.py` | `synthetic_validation`, `_lambda_sweep`, `_fixes`, `_robustness`, `_gcv`, `_scale`, `kernels_study6` | |
-| 2 | `archive/cvx.py`, `archive/validation.py` | `synthetic_cvxeda`, `_params`, `_alpha`, `_tau`, `cvxeda_real_configs` | |
-| 3 | `tbme_export.py`, `tbme_synth.py`, `tbme_score.py`, `tbme_real.py`, `src/tbme/` | `tbme_synth_cohort`, `_check`, `_scores`, `_shift_scores`, `_false_events`, `_cutoff`, `_importance*`, `tbme_real_summary`, `tbme_input_shifts` | `hpc/synth/`, `hpc/real/output/`, `hpc/results/` |
-| 4 | `tbme_score.py`, `tau_measure.py` | `tbme_synth_window400_partial`, `_rate_scores`, `_fixed_tau`, `tbme_tail_fingerprint`, `tbme_tonic_check`, `tbme_tau_measure`, `tbme_tau_responses` | `hpc/synth/` |
-| 5 | `preprocess_view.py`, `tbme_export.py`, `src/tbme/probe/` | `preprocess_compare`, `paper_input_check`, `paper_input_spectrum`, `tbme_paper_test`, `tbme_paper_real` | `hpc/real/output_pp/`, `hpc/logs_pp/` |
-| 6 | `tau_shared.py` | `tbme_tau_shared`, `tbme_tau_shared_responses` | |
-
-**Cluster runs in `hpc/synth/output/`.** Each run has `_events`, `_windows` and `_signals` csv files.
-Its name says what was tested:
-
-| Name | Meaning | Part |
-|---|---|---|
-| `S4` | Session 4 as first run | 3 |
-| `S4_m0`, `S4_m2` | Shifted to a floor of 0 or 2 µS | 3 |
-| `S4_f4_w200` | Rebuilt at 4 Hz | 4 |
-| `S9_t127_514` | τ forced to 1.27/5.14 s | 4 |
-| `S9_t65_277` | τ forced to the prior | 4 |
-| `S4_pp` | Paper's preprocessing | 5 |
-
-`hpc/synth/logs*/` and `hpc/real/logs/` hold the slurm logs for these runs, and `hpc/results/` holds
-the very first real run, P5 and P99, used as an engineering check. The ground truth for every
-synthetic session is in `data/tbme_synth/`.
+| What | Where |
+|---|---|
+| Scores of every tuning setting, per session | `data/own_tune_scores.csv` |
+| Cluster output and logs, every round | `hpc/own/tune/output/<tag>/`, `hpc/own/tune/slurm-own-*.out` |
+| Settings of each round | `src/own/make_own_bundle.sh` (comments), `src/own/own_config.m` |
+| Tuning / test split | `data/own_split.csv` |
+| Truth of each synthetic input | `data/tbme_synth/S<k>_own.npz`, `S<k>_own4.npz` |
+| Synthetic cohort (source participant, τ, measures) | `data/tbme_synth_cohort.csv`, `data/tbme_synth_check.csv` |
+| Input checks | `data/input_check.csv`, `data/input_check_own4.csv`, `data/filter_response.csv`, `data/preprocess_stages.csv`, `data/raw_overview.csv` |
+| Participant screen and profiles | `data/quality_study6.csv`, `data/profile_study6.csv`, `data/profile_study6_peaks.csv` |
+| Figures | `results/figures/stages_*.png`, `raw_atlas_*.png`, `filter_response.png` |

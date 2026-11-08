@@ -3,9 +3,3 @@ scipy>=1.10
 pandas>=2.0
 matplotlib>=3.7
 openpyxl>=3.1          # reads the POPANE metadata workbook
-
-# Only for the archived cvxEDA comparison (src/eda/archive/cvx.py).  cvxeda itself is installed
-# from the pinned clone:
-#   git clone https://github.com/lciti/cvxEDA.git external/cvxEDA   (commit 7f518fe)
-#   .venv/bin/pip install ./external/cvxEDA
-cvxopt>=1.3.1
