@@ -2,6 +2,8 @@
 /*
 !/.gitignore
 !/README.md
+!/AGENTS.md
+!/CLAUDE.md
 !/requirements.txt
 
 # Code
@@ -35,6 +37,12 @@ __pycache__/
 !/results/figures/stages_*.png
 !/results/figures/raw_atlas_*.png
 !/results/figures/filter_response.png
+!/results/figures/*_deconv.pdf
+!/results/figures/tune50_vs_real.pdf
+!/results/figures/tune50_preview_vs_real.pdf
+!/results/figures/tune50_preview/
+/results/figures/tune50_preview/*
+!/results/figures/tune50_preview/INSPECTION.md
 
 # Cluster output: csv and logs.  The .mat files repeat the csv and nothing reads them.
 !/hpc/
@@ -42,5 +50,15 @@ __pycache__/
 !/hpc/own/
 /hpc/**/*.mat
 /hpc/**/*.zip
+/hpc/**/*.tar.gz
+# Per-sample signals (*_signals.csv, 260 MB in all) only where they are needed from the repository:
+# the final run's 50 real participants (stage 2, figures) and its 50 test sessions, and the
+# re-synthesis (re-scoring the reported accuracy needs them).  Every other run keeps its events,
+# windows and logs; its signals come back by re-running its bundle.  Rounds 1-4's signals were
+# committed before this rule and stay.
+/hpc/**/*_signals.csv
+!/hpc/own/final/output/own4_p1000_k14_f3_s8/P*_signals.csv
+!/hpc/own/final/output/own4_p1000_k14_f3_s8/V*_signals.csv
+!/hpc/own/resynth/output/own4_p1000_k14_f3_s8/R*_signals.csv
 
 .DS_Store

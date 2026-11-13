@@ -1,0 +1,3 @@
+source,n_windows,rise_mean_s,rise_sd_s,decay_mean_s,decay_sd_s,note
+paper (Amin & Faghih 2021),,0.650571,0.212443,2.77325,0.521739,normal fit to their previous study's estimates
+real 50 (final run own4_p1000_k14_f3_s8),481,1.169,0.384,3.384,1.447,normal fit to our estimates on the 50 real participants, windows by the authors' rule

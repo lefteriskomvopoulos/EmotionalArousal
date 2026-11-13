@@ -1,0 +1,23 @@
+job 22595324_28 on cs736.hpc.nyu.edu, Tue Nov 10 17:03:36 EST 2026
+matlab: /share/apps/matlab/2025b/bin/matlab
+own_run('S22_own4','amin2021','tag','own4_p1000_k20_f3','u_per_y',1,'lambda2_max_focuss',2e-3,'lambda2_max_gcv',2e-4,'lambda1_max',2e-4,'knot_s',20,'prior_lambda',[0.0002;0.0002])
+[Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 4 workers.
+S22_own4, own4_p1000_k20_f3: 5007 samples, 12 windows, 4 starts each
+window 1/12: tau 0.486 / 2.930 s, 31 impulses, R2 0.996, authors, 59 s
+window 2/12: tau 0.510 / 2.882 s, 33 impulses, R2 0.991, authors, 70 s
+window 3/12: tau 0.436 / 3.730 s, 23 impulses, R2 0.982, authors, 108 s
+window 4/12: tau 0.462 / 3.142 s, 20 impulses, R2 0.982, authors, 87 s
+window 5/12: tau 0.479 / 3.232 s, 26 impulses, R2 0.995, authors, 78 s
+window 6/12: tau 0.459 / 3.392 s, 26 impulses, R2 0.990, authors, 73 s
+window 7/12: tau 0.493 / 3.000 s, 27 impulses, R2 0.990, authors, 61 s
+window 8/12: tau 0.503 / 2.929 s, 25 impulses, R2 0.995, authors, 52 s
+window 9/12: tau 0.503 / 3.474 s, 25 impulses, R2 0.992, authors, 111 s
+window 10/12: tau 0.489 / 3.243 s, 26 impulses, R2 0.990, authors, 94 s
+window 11/12: tau 0.398 / 3.360 s, 26 impulses, R2 0.984, authors, 94 s
+window 12/12: tau 0.356 / 3.741 s, 15 impulses, R2 0.982, authors, 28 s
+S22_own4 own4_p1000_k20_f3 done: 165 impulses (7.9/min), R2 0.995, median tau 0.48 / 3.24 s, 12/12 by the rule, 916 s
+matlab exit status 0, Tue Nov 10 17:19:21 EST 2026

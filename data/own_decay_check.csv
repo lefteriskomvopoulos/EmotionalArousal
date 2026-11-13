@@ -1,0 +1,7 @@
+setting,trait,column,spearman_rho,p_value
+own4_p1000_k14_f3,"source tonic drift, uS",real_drift_uS,0.15170278637770898,0.5479006675946312
+own4_p1000_k14_f3,"source tonic level, uS",real_level_uS,0.32301341589267285,0.19106788357348967
+own4_p1000_k14_f3,"true pulse rate, /min",rate_true_pm,-0.24664602683178533,0.32380881293776365
+own4_p1000_k14_f3,"true decay, s",tau_decay,-0.6697626418988648,0.0023600851881755407
+own4_p1000_k14_f3,recall,recall,0.007223942208462332,0.9773044881689206
+own4_p1000_k14_f3,share of responses taken by the tonic,phasic_taken,-0.6491228070175438,0.003558373943300945

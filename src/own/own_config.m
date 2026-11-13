@@ -5,7 +5,12 @@ function c = own_config(algorithm)
 %            'faghih2014'  Faghih et al., PLOS ONE 9:e85204, 2014 (the Data Challenge algorithm):
 %                          no tonic and no priors, so its input must already be phasic
 %
-% The values are starting points, not targets: all of them are tuned on the 18 tuning sessions.
+% The values are starting points, not targets: they are tuned on synthetic tuning sessions, and
+% every run passes the tuned ones as arguments.  They are not changed here, so earlier rounds stay
+% reproducible.  The frozen setting (after round 5) is in src/own/make_own_final_bundle.sh: own4
+% input (4 Hz, u_per_y 1), knots every 14 s, prior 2e-4, lambda2 limits 2e-3 / 2e-4, lambda1 2e-4;
+% round 6 (make_own_bundle.sh) tested the scale (y_gain) and froze the setting again with 8 starts:
+% own4_p1000_k14_f3_s8, i.e. the above plus 'n_starts',8, in uS (y_gain 1), lambda2 limit 2e-4.
 % "paper" = stated in the paper.  "DC" = Data Challenge code.  "black box" = read from its output.
 % "ours" = the paper is silent or the value is our choice.
 
@@ -17,6 +22,9 @@ c.fsy = 2;                  % Hz, signal rate (paper); own_run reads it from the
 c.u_per_y = 2;              % impulses per signal sample: 4 Hz u on a 2 Hz y (paper)
 c.window_s = 200;           % s (authors' scripts)
 c.n_starts = 4;             % random starts per window (ours; the paper uses 8)
+c.y_gain = 1;               % the solver sees y x y_gain; settings in uS and every output are
+                            % scaled back, so only the penalties see the change (own_run).
+                            % 1 = plain uS.  Round 6: s_ref / the session's typical SCR size
 
 % Response model
 c.input_model = 'zoh';      % 'zoh': u held over one u sample, as in DC.  Rebuilds the black box's
@@ -35,7 +43,8 @@ c.prior_lambda = [0.1; 0.1];           % lambda3, lambda4 (paper).  First thing 
 
 % Tonic: a cubic B-spline with knots every knot_s
 c.use_tonic = true;
-c.knot_s = 6;               % s (paper: the longest decay it allows).  Tested at 6 and 14 s
+c.knot_s = 6;               % s (paper: the longest decay it allows).  Tested at 6, 10, 14 and
+                            % 20 s; 14 kept (rounds 1 and 5)
 c.extra_basis = 5;          % P = ceil(T / knot_s) + 5 (paper); empty columns are then dropped
 c.tonic_scale = 1;          % 1 keeps q in uS (ours).  The paper uses 100 on its own scaling
 c.tonic_init = 'floor';     % starting q: 'floor' under the signal, or 'flat' at min(y) (ours).

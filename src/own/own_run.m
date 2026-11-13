@@ -28,6 +28,15 @@ for k = 1:2:numel(varargin)
     end
 end
 
+% y_gain: the solver sees y x gain.  The settings in uS are scaled with it, so they keep their
+% meaning in uS, and each selected start is divided back (unscale): with the same noise relative
+% to the pulses, only the penalties' weight against the fit changes.  r.history and the lambdas
+% stay in the solver's units.
+gain = c.y_gain;
+c.amp_threshold_uS = c.amp_threshold_uS * gain;
+c.q_init_sd = c.q_init_sd * gain;
+c.tol_u = c.tol_u * gain;
+
 here = fileparts(mfilename('fullpath'));
 out = fullfile(here, 'output', tag);
 if ~exist(out, 'dir'), mkdir(out); end
@@ -44,21 +53,23 @@ while rr < numel(y)
     bounds(end + 1, :) = [ll rr]; %#ok<AGROW>
 end
 W = size(bounds, 1);
-fprintf('%s, %s: %d samples, %d windows, %d starts each\n', name, tag, numel(y), W, c.n_starts);
+fprintf('%s, %s: %d samples, %d windows, %d starts each, y x %g\n', name, tag, numel(y), W, ...
+        c.n_starts, gain);
 
 sel = cell(W, 1);
-info = table('Size', [W 13], 'VariableTypes', ...
+info = table('Size', [W 16], 'VariableTypes', ...
     {'double','double','double','double','double','double','double','double','double', ...
-     'string','double','double','double'}, 'VariableNames', ...
+     'string','double','double','double','double','double','double'}, 'VariableNames', ...
     {'window','t_start','t_end','tau_rise','tau_decay','lambda1','lambda2','converged', ...
-     'n_valid_starts','selection','r2','n_impulses','seconds'});
+     'n_valid_starts','selection','r2','n_impulses','seconds','lambda1_cap','lambda2_cap','y_gain'});
 
 for w = 1:W
     yw = y(bounds(w, 1):bounds(w, 2));
+    ys = gain * yw;
     res = cell(c.n_starts, 1);
     tic
     parfor i = 1:c.n_starts
-        res{i} = own_deconvolve(yw, c, (w - 1) * 1000 + i);
+        res{i} = own_deconvolve(ys, c, (w - 1) * 1000 + i);
     end
     secs = toc;
 
@@ -72,12 +83,13 @@ for w = 1:W
     end
     fit(~pool) = Inf;
     [~, k] = min(fit);
-    r = res{k};
+    r = unscale(res{k}, gain);
     sel{w} = r;
 
     info(w, :) = {w, t(bounds(w, 1)), t(bounds(w, 2)), r.tauj(1), r.tauj(2), r.lambda1, ...
                   r.lambda2, r.convergenceFlag, sum(valid), how, ...
-                  1 - sum((yw - r.y_rec) .^ 2) / sum((yw - mean(yw)) .^ 2), nnz(r.uj), secs};
+                  1 - sum((yw - r.y_rec) .^ 2) / sum((yw - mean(yw)) .^ 2), nnz(r.uj), secs, ...
+                  c.lambda1_max, c.lambda2_max_gcv, gain};
     fprintf('window %d/%d: tau %.3f / %.3f s, %d impulses, R2 %.3f, %s, %.0f s\n', w, W, ...
             r.tauj(1), r.tauj(2), nnz(r.uj), info.r2(w), how, secs);
 end
@@ -112,4 +124,12 @@ r2 = 1 - sum((J.y - J.y_rec) .^ 2) / sum((J.y - mean(J.y)) .^ 2);
 fprintf('%s %s done: %d impulses (%.1f/min), R2 %.3f, median tau %.2f / %.2f s, %d/%d by the rule, %.0f s\n', ...
         name, tag, nnz(k), nnz(k) / (numel(y) / c.fsy / 60), r2, median(info.tau_rise), ...
         median(info.tau_decay), sum(info.selection == "authors"), W, sum(info.seconds));
+end
+
+function r = unscale(r, gain)
+% One start back in uS: everything linear in y divided by the gain, the fit by its square.
+for f = {'uj', 'y0', 'qj', 'y', 'y_phasic', 'y_tonic', 'y_rec'}
+    r.(f{1}) = r.(f{1}) / gain;
+end
+r.fit = r.fit / gain ^ 2;
 end

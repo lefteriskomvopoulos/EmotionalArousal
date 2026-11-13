@@ -5,7 +5,7 @@ The cluster only needs these files (~50 kB each), never the 19 GB of raw csv.  T
 one of the Amin & Faghih (IEEE TBME 68:1726, 2021) scripts, hence the name: fs, y, t, marker.
 
 export() writes each usable participant's plain 2 Hz segment, data/tbme_input/P<pid>.mat.  The
-deconvolution does not run on it (own_preprocess.prepare builds its input from the 1000 Hz
+deconvolution does not run on it (preprocess.prepare builds its input from the 1000 Hz
 file); it is the time axis and block codes that the synthetic sessions copy (tbme_synth.timeline),
 and cohort_profile writes it in the same pass.
 

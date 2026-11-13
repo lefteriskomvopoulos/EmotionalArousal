@@ -1,4 +1,7 @@
 function own_diagnose()
+% Historical (round 1): on the first input (0.5 Hz filter, 2 Hz) and own_config's starting
+% values, not the current setting.  Kept for the record; no result of the pipeline depends on it.
+%
 % Where do the extra pulses come from?  About 5 minutes on a laptop, one start per run.
 %
 % Two made-up 200 s windows with 13 known pulses, a slow tonic and noise, built at 20 Hz and sent

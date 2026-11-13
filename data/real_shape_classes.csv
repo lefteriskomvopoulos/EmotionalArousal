@@ -1,0 +1,4 @@
+source,windows,fast_lt4s,typical_4to7s,slow_gt7s,note
+real 50 (final run own4_p1000_k14_f3_s8),481,0.67,0.32,0.00,half-recovery of each window's fitted shape (authors' rule); fits run short on slow shapes (test: decay -37%)
+tuning set (18),18,0.333,0.333,0.333,stratified by design
+test set (50),50,0.18,0.42,0.40,drawn uniformly over the physiological range

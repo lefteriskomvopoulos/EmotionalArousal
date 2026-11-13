@@ -96,3 +96,181 @@ def raw_atlas(items, name, title, per_row=6):
     return _save(fig, name)
 
 
+
+
+def _blocks(ax, t, mk, label=False):
+    """Shade one input's baseline (darker) and film blocks (marker codes as saved: -1 baseline,
+    1xx-3xx films); label them along the top when label is set."""
+    m = np.nan_to_num(np.asarray(mk, float), nan=0.0)
+    edges = np.flatnonzero(np.diff(m) != 0) + 1
+    for a, b in zip(np.r_[0, edges], np.r_[edges, len(m)]):
+        code = m[a]
+        if code == -1 or 100 <= code < 400:
+            ax.axvspan(t[a], t[b - 1], color="0.86" if code == -1 else "0.94", lw=0, zorder=0)
+            if label:
+                ax.text((t[a] + t[b - 1]) / 2, 1.01, "baseline" if code == -1 else f"{int(code)}",
+                        transform=ax.get_xaxis_transform(), ha="center", va="bottom", fontsize=7,
+                        color="0.35")
+
+
+def _limits(*ys):
+    lo = min(np.nanmin(y) for y in ys if len(y))
+    hi = max(np.nanmax(y) for y in ys if len(y))
+    pad = .06 * (hi - lo if hi > lo else 1)
+    return lo - pad, hi + pad
+
+
+def _pair_page(it, zoom_s):
+    """One synthetic session against its real source: whole session, then the same zoom of both."""
+    fig = plt.figure(figsize=(13, 8.5))
+    gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1.15], hspace=.5, wspace=.1,
+                          left=.06, right=.99, top=.86, bottom=.07)
+    wr = fig.add_subplot(gs[0, :])
+    ws = fig.add_subplot(gs[1, :], sharex=wr, sharey=wr)
+    zr = fig.add_subplot(gs[2, 0])
+    zs = fig.add_subplot(gs[2, 1], sharex=zr, sharey=zr)
+    vis = it["ev_a"] >= cfg.MIN_EVENT_uS
+    lo, hi = _limits(it["y_real"], it["y_syn"])
+    m = np.nan_to_num(np.asarray(it["mk_real"], float))
+    films = np.flatnonzero((m >= 100) & (m < 400))
+    t0 = it["t_real"][films[0]] if len(films) else it["t_real"][0]
+    t1 = t0 + zoom_s
+    panels = ((wr, zr, it["t_real"], it["y_real"], it["mk_real"], cfg.COLOR_SIGNAL, it["real_name"]),
+              (ws, zs, it["t_syn"], it["y_syn"], it["mk_syn"], cfg.COLOR_TONIC, it["syn_name"]))
+    zoom_y = []
+    for whole, zoom, t, y, mk, color, name in panels:
+        _blocks(whole, t / 60, mk, label=whole is wr)
+        whole.plot(t / 60, y, lw=.6, color=color)
+        for v in (t0, t1):
+            whole.axvline(v / 60, color="0.45", lw=.8, ls=":")
+        whole.set_ylabel("µS")
+        whole.set_title(name, loc="left", fontsize=9, pad=12 if whole is wr else 4)
+        k = (t >= t0) & (t <= t1)
+        zoom.plot(t[k] - t0, y[k], lw=1.2, color=color)
+        zoom.set_title(f"{name}, {zoom_s:.0f} s from the first film's start (dotted lines above)",
+                       loc="left", fontsize=8)
+        zoom.set_xlabel("s")
+        zoom_y.append(y[k])
+    whole.set_xlabel("min")
+    wr.set_ylim(lo, hi)
+    ws.plot(it["ev_t"][vis] / 60, np.full(vis.sum(), lo + .02 * (hi - lo)), "|", ms=6,
+            color=cfg.COLOR_EVENTS, label="true pulses >= 0.02 uS")
+    ws.legend(loc="upper right", fontsize=7, frameon=False)
+    zlo, zhi = _limits(*zoom_y)
+    zr.set_ylim(zlo, zhi)
+    zr.set_ylabel("µS")
+    k = (it["ev_t"] >= t0) & (it["ev_t"] <= t1)
+    for sel, color, label in ((k & vis, cfg.COLOR_EVENTS, "true pulses >= 0.02 uS"),
+                              (k & ~vis, "0.65", "true pulses < 0.02 uS")):
+        zs.plot(it["ev_t"][sel] - t0, np.full(sel.sum(), zlo + .03 * (zhi - zlo)), "|", ms=9,
+                color=color, label=label)
+    zs.legend(loc="upper right", fontsize=7, frameon=False)
+    for ax in (wr, ws, zr, zs):
+        ax.tick_params(labelsize=7)
+        ax.grid(axis="y", color="0.9", lw=.5)
+    fig.suptitle(it["title"], fontsize=9, x=.01, ha="left")
+    return fig
+
+
+def _overview(items):
+    """All sessions at a glance: real input left, synthetic right, same y-axis within a row."""
+    n = len(items)
+    fig, axes = plt.subplots(n, 2, figsize=(13, .95 * n + 1.2), squeeze=False)
+    for row, it in zip(axes, items):
+        lo, hi = _limits(it["y_real"], it["y_syn"])
+        for ax, t, y, mk, color in ((row[0], it["t_real"], it["y_real"], it["mk_real"], cfg.COLOR_SIGNAL),
+                                    (row[1], it["t_syn"], it["y_syn"], it["mk_syn"], cfg.COLOR_TONIC)):
+            _blocks(ax, t / 60, mk)
+            ax.plot(t / 60, y, lw=.4, color=color)
+            ax.set_ylim(lo, hi)
+            ax.tick_params(labelsize=6)
+        row[0].set_ylabel(it["label"], rotation=0, ha="right", va="center", fontsize=7)
+    axes[0, 0].set_title("real input (the participant)", fontsize=9)
+    axes[0, 1].set_title("synthetic input built from it (flat noise)", fontsize=9)
+    for ax in axes[-1]:
+        ax.set_xlabel("min", fontsize=7)
+    fig.suptitle("Solver input (1 Hz low-pass, 4 Hz), uS; same y-axis within a row; "
+                 "dark grey = baseline, light grey = films", fontsize=9)
+    fig.subplots_adjust(left=.16, right=.99, top=1 - .7 / (.95 * n + 1.2), bottom=.5 / (.95 * n + 1.2),
+                        hspace=.45, wspace=.08)
+    return fig
+
+
+def synthetic_vs_real(items, folder, pdf_name, zoom_s=120):
+    """Synthetic sessions next to the real participants they were built from.
+    -> results/figures/<folder>/overview.png and <name>.png, and every page in <pdf_name>."""
+    from matplotlib.backends.backend_pdf import PdfPages
+    out_dir = cfg.FIG_DIR / folder
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with PdfPages(cfg.FIG_DIR / pdf_name) as pdf:
+        for name, fig in [("overview", _overview(items))] + [(it["name"], None) for it in items]:
+            fig = fig or _pair_page(next(i for i in items if i["name"] == name), zoom_s)
+            pdf.savefig(fig)
+            fig.savefig(out_dir / f"{name}.png", dpi=110)
+            plt.close(fig)
+    print(f"saved {cfg.FIG_DIR / pdf_name} and {len(items) + 1} PNGs in {out_dir}")
+
+
+COLOR_SIGNAL, COLOR_TONIC, COLOR_EVENTS = cfg.COLOR_SIGNAL, cfg.COLOR_TONIC, cfg.COLOR_EVENTS
+COLOR_MISSED = "#c8433a"     # a true pulse the solver did not find
+COLOR_FALSE = "#7a4fc4"      # an estimated pulse with no true one within 1 s
+
+
+def _pulse_rows(ax, rows, lo, span):
+    """Tick rows under the signal: [(label, times, color)], first row lowest."""
+    for k, (label, times, color) in enumerate(rows):
+        ax.plot(times, np.full(len(times), lo - (0.04 + 0.05 * k) * span), "|", ms=7, mew=1.2,
+                color=color, label=f"{label} ({len(times)})")
+
+
+def _deconv_page(it, zoom_s):
+    """One session: input, reconstruction and tonic, whole and zoomed, with its pulses."""
+    fig = plt.figure(figsize=(13, 8.5))
+    gs = fig.add_gridspec(2, 1, height_ratios=[1, 1], hspace=.35, left=.06, right=.99, top=.88, bottom=.07)
+    whole, zoom = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+    t, m = it["t"], np.nan_to_num(np.asarray(it["mk"], float))
+    films = np.flatnonzero((m >= 100) & (m < 400))
+    t0 = t[films[0]] if len(films) else t[0]
+    for ax, sl, scale, xlabel in ((whole, slice(None), 60, "min"),
+                                  (zoom, (t >= t0) & (t <= t0 + zoom_s), 1, "s from the first film's start")):
+        tt = t[sl] if not isinstance(sl, slice) else t
+        off = 0 if scale == 60 else t0
+        y, rec, ton = (np.asarray(it[k])[sl] for k in ("y", "y_rec", "tonic"))
+        lo, hi = np.nanmin(y), np.nanmax(y)
+        span = hi - lo if hi > lo else 1
+        if scale == 60:
+            _blocks(ax, tt / 60, np.asarray(it["mk"])[sl] if not isinstance(sl, slice) else it["mk"], label=True)
+        ax.plot((tt - off) / scale, y, lw=.6 if scale == 60 else 1.0, color=COLOR_SIGNAL, label="input (before)")
+        ax.plot((tt - off) / scale, rec, lw=.6 if scale == 60 else 1.2, color=COLOR_TONIC,
+                label="reconstruction (after)")
+        ax.plot((tt - off) / scale, ton, lw=.8, color="0.35", ls="--", label="tonic")
+        rows = []
+        for label, times, color in it["pulses"]:
+            times = np.asarray(times)
+            keep = (times >= tt[0]) & (times <= tt[-1])
+            rows.append((label, (times[keep] - off) / scale, color))
+        _pulse_rows(ax, rows, lo, span)
+        ax.set_ylim(lo - (0.06 + 0.05 * len(rows)) * span, hi + .05 * span)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("µS")
+        ax.tick_params(labelsize=7)
+        ax.grid(axis="y", color="0.9", lw=.5)
+    whole.legend(loc="upper right", fontsize=7, frameon=False, ncol=3)
+    zoom.set_title(f"{zoom_s:.0f} s from the first film's start", loc="left", fontsize=8)
+    fig.suptitle(it["title"], fontsize=9, x=.01, ha="left")
+    return fig
+
+
+def deconv_pages(items, folder, pdf_name, zoom_s=120):
+    """Signals before and after deconvolution, with their pulses.
+    -> results/figures/<folder>/<name>.png and every page in <pdf_name>."""
+    from matplotlib.backends.backend_pdf import PdfPages
+    out_dir = cfg.FIG_DIR / folder
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with PdfPages(cfg.FIG_DIR / pdf_name) as pdf:
+        for it in items:
+            fig = _deconv_page(it, zoom_s)
+            pdf.savefig(fig)
+            fig.savefig(out_dir / f"{it['name']}.png", dpi=110)
+            plt.close(fig)
+    print(f"saved {cfg.FIG_DIR / pdf_name} and {len(items)} PNGs in {out_dir}")

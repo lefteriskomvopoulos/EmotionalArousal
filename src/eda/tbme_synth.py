@@ -6,7 +6,7 @@ participant picked at random (cohort_profile.py; no deconvolution involved).  Ta
 profile at once keeps traits that go together (large SCRs with a high tonic level, say)
 together.  Each session is built at 100 Hz like our load.  run() also saves its plain 2 Hz
 samples (S<k>.mat), which rebuilt() checks every rebuilt session against; the deconvolution's
-input is made from the 100 Hz session by own_preprocess (S<k>_own.mat, S<k>_own4.mat):
+input is made from the 100 Hz session by synth_v1.export (S<k>_own.mat, S<k>_own4.mat):
 
     x(t) = tonic(t) + sum_i a_i h(t - t_i) + noise(t),  rounded to the
            participant's quantisation step, with the participant's gaps put back
@@ -30,6 +30,11 @@ overlap more), each the median ratio real / synthetic over the group's sessions:
 A first version set all factors from one uncorrected pass and added artefacts; the final
 sessions then counted 18% fewer, 24% larger peaks than their sources, because the factors had
 been set on different signals.
+The factors here are the first cohort's (these 36), set without the size cap and before the
+flat noise noise.matched adds.  From round 6, sessions are built from the 50 selected
+participants by build_blocks (each participant's own counted responses, rate and sizes per block,
+at random times; no correction factors), checked in generator.check50; build and assign_tau
+stay as they were for the first 36 and the first test set.
 
 Artefacts are left out.  The jump rule that counts them (cohort_profile.jumps) also fires on
 SCR onsets, and far more often on ours (1.2/min from SCRs alone) than on the real recordings
@@ -73,8 +78,8 @@ CHECKED = ["scr_pm", "scr_amp_med_uS", "scr_amp_logsd", "noise_uS", "art_pm", "l
            "drift_uS"]
 
 
-def kernel(tau_rise, tau_decay, fs=cfg.FS):
-    t = np.arange(int(KERNEL_S * fs)) / fs
+def kernel(tau_rise, tau_decay, fs=cfg.FS, seconds=KERNEL_S):
+    t = np.arange(int(seconds * fs)) / fs
     h = np.exp(-t / tau_decay) - np.exp(-t / tau_rise)
     return h / h.max()
 
@@ -82,6 +87,12 @@ def kernel(tau_rise, tau_decay, fs=cfg.FS):
 def draw(prof, rng):
     """N_SESSIONS participants without replacement, each with a tau group and (tau_r, tau_d)."""
     picked = prof.sample(min(N_SESSIONS, len(prof)), random_state=rng.integers(2**31)).sort_values("scr_pm")
+    return assign_tau(picked, rng)
+
+
+def assign_tau(picked, rng):
+    """Deal participants (sorted by SCR rate) into prior / moderate / far in turn, with their tau.
+    Split out of draw() unchanged, so the same rng gives the same draw (rebuilt() checks it)."""
     out = []
     for k, row in enumerate(picked.itertuples()):
         g = ("prior", "moderate", "far")[k % 3]
@@ -114,7 +125,8 @@ def rate_shape(mk, row):
 
 
 def build(row, t, mk, floor2, gaps, tau_rise, tau_decay, c_rate, c_amp, c_noise, seed, amp_cap=np.inf):
-    """One synthetic 100 Hz segment -> dict (NaN at the participant's gaps), sizes <= amp_cap uS."""
+    """One synthetic 100 Hz segment -> dict (NaN at the participant's gaps), sizes <= amp_cap uS.
+    The first 36 sessions and the first test set; from round 6, build_blocks."""
     rng = np.random.default_rng(seed)
     fs, n = cfg.FS, len(t)
     dur = n / fs
@@ -139,6 +151,78 @@ def build(row, t, mk, floor2, gaps, tau_rise, tau_decay, c_rate, c_amp, c_noise,
     tonic = np.interp(t, t[::tx.STEP], floor2)
     q = row.quant_uS if row.quant_uS > 0 else 0.01
     x = np.round((tonic + phasic + rng.standard_normal(n) * row.noise_uS * c_noise) / q) * q
+    x[gaps] = np.nan
+    return {"x": x, "tonic": tonic, "phasic": phasic, "ev_t": t[0] + times, "ev_a": amps}
+
+
+BLOCKS = ("baseline", "film", "other")
+
+
+def block_labels(mk):
+    """'baseline', 'film' or 'other' (the stretches between them) for each block code."""
+    mk = np.asarray(mk).astype(str)
+    out = np.full(len(mk), "other", dtype=object)
+    out[film_mask(mk)] = "film"
+    out[baseline_mask(mk)] = "baseline"
+    return out
+
+
+def code_runs(mk):
+    """Contiguous runs of one block code (each film on its own, even when films follow each other)
+    -> [(first sample, end sample, kind)]."""
+    mk, lab = np.asarray(mk).astype(str), block_labels(mk)
+    edges = np.flatnonzero(mk[1:] != mk[:-1]) + 1
+    return [(a, b, lab[a]) for a, b in zip(np.r_[0, edges], np.r_[edges, len(mk)])]
+
+
+def tp_of(tau_rise, tau_decay):
+    """Time from onset to peak of the response kernel, s."""
+    return tau_rise * tau_decay * np.log(tau_decay / tau_rise) / (tau_decay - tau_rise)
+
+
+SPLIT_uS = 0.05              # counted SCRs from here up are clearly above the noise (stage 2's level)
+SIZE_JITTER = 0.05           # log-normal spread added to each size resampled from the participant's
+
+
+def build_blocks(t, mk, floor2, gaps, tau_rise, tau_decay, prof, quant_uS, seed, amp_cap=np.inf):
+    """One synthetic 100 Hz segment from a participant's counted responses (round 6 on) -> dict as
+    build(), without noise (generator.flat_session adds it, matched on the solver input).
+
+    prof (generator.counted_profile of the participant): per run of code_runs(mk) (each
+    film, the baseline, each stretch between), rate_run, the counted rate there, and pool_run, the
+    log sizes counted there.  In each run, responses at its rate, at random times at least 1 s
+    apart; their sizes are that run's own counted ones, each once, in shuffled order (reshuffled
+    if the run draws more), with SIZE_JITTER, kept within [0.02 uS, amp_cap].  So a session holds
+    its participant's large responses, in the film where they occurred.  Tonic (tonic_floor),
+    quantisation and gaps as build()."""
+    rng = np.random.default_rng(seed)
+    fs, n = cfg.FS, len(t)
+    gap = cp.PEAK_GAP_S
+    times, amps, last = [], [], -np.inf
+    for (a, b, kind), rate, pool in zip(code_runs(mk), prof["rate_run"], prof["pool_run"]):
+        if rate <= 0 or not len(pool):
+            continue
+        mean = 60 / rate
+        run_t = []
+        t_ = max(a / fs + rng.uniform(0, mean), last + gap)
+        while t_ < b / fs:
+            run_t.append(t_)
+            last = t_
+            t_ += gap + rng.exponential(max(mean - gap, 0.05))
+        if run_t:
+            order = np.concatenate([rng.permutation(len(pool)) for _ in range(-(-len(run_t) // len(pool)))])
+            la = pool[order[:len(run_t)]] + SIZE_JITTER * rng.standard_normal(len(run_t))
+            times += run_t
+            amps += list(np.clip(np.exp(la), cfg.MIN_EVENT_uS, amp_cap))
+    times, amps = np.array(times), np.array(amps)
+
+    u = np.zeros(n)
+    np.add.at(u, (times * fs).astype(int), amps)
+    from scipy.signal import fftconvolve
+    # long enough that slow recoveries end at about 0 rather than being cut at KERNEL_S
+    phasic = fftconvolve(u, kernel(tau_rise, tau_decay, seconds=max(KERNEL_S, 8 * tau_decay)))[:n]
+    tonic = np.interp(t, t[::tx.STEP], floor2)
+    x = np.round((tonic + phasic) / quant_uS) * quant_uS
     x[gaps] = np.nan
     return {"x": x, "tonic": tonic, "phasic": phasic, "ev_t": t[0] + times, "ev_a": amps}
 
