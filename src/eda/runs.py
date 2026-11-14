@@ -224,7 +224,8 @@ def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
       time_s         on the recording's clock, s
       u              the impulse, as the solver returns it (events.csv amplitude)
       height_uS      the response it makes: u x the peak of its window's response (event_heights);
-                     the solver keeps only pulses >= 0.02 uS, so stage 2 can re-check at 0.05 uS
+                     the solver keeps only pulses >= 0.02 uS; stage 2 counts those >= 0.05 uS
+                     (main analysis; all of them as the secondary check)
       marker         block code at that time: -1 baseline, 1xx neutral, 2xx negative, 3xx positive
                      film, empty between blocks
       block          baseline / film / other;  valence  neutral / negative / positive for films

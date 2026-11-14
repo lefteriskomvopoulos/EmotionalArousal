@@ -594,8 +594,8 @@ same windows are counted too. Film groups and blocks are not looked at.
   burst, or the solver splitting real responses whose shape the model cannot produce (36% of real
   isolated SCRs recover as fast as they rise, Part 11).
 - **Verdict:** the real pulse counts are plausible for a deconvolution, about 20% high, the excess
-  small doublets on response rises. Reported as a limitation; the ≥ 0.05 µS robustness check of
-  stage 2 removes about half of it.
+  small doublets on response rises. Reported as a limitation; stage 2's main threshold of 0.05 µS
+  removes about half of it.
 
 ## Current status
 
@@ -634,7 +634,9 @@ Limitations to report:
    same input, same scoring): cvxEDA and the authors' published solver (branch `black-box`), each
    at its published defaults or tuned the same way, stated. On real data only fit, sparsity and
    plausibility can be compared, since there is no truth.
-3. Stage 2 (impulses → arousal state) and hypotheses H1–H6, with a check at ≥ 0.05 µS. Input:
+3. Stage 2 (impulses → arousal state) and hypotheses H1–H6. **Threshold, fixed 2026-11-14 before
+   H1–H6 were looked at, on accuracy alone:** the main analysis counts pulses ≥ 0.05 µS (test F1
+   0.96, recall 0.98, precision 0.96); all pulses ≥ 0.02 µS (F1 0.82) are the secondary check. Input:
    `data/real50_pulses.csv`. The first stage-2 code is on `black-box` (`state.py`) and comes over
    then.
 4. Report and slides.

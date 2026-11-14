@@ -57,8 +57,9 @@ Reads only the final run's output, which is in the repository (no MATLAB, cluste
 | `data/real50_pulses.csv` | pulse | `id`, `group` (film group), `time_s` (recording clock), `u` (impulse), `height_uS` (the response it makes), `marker` (block code: −1 baseline, 1xx neutral, 2xx negative, 3xx positive film, empty between), `block` (baseline / film / other), `valence`, `window` |
 | `data/real50_windows.csv` | 200 s window | `id`, `group`, `tau_rise`, `tau_decay` (s), `lambda1`, `lambda2`, `r2`, `selection`, … |
 
-The solver keeps only pulses of at least 0.02 µS. The planned robustness check repeats the
-hypotheses with pulses of at least 0.05 µS (`height_uS`). The full per-sample fit of each
+**Threshold (fixed 2026-11-14, before H1–H6 were looked at):** the main analysis uses pulses with
+`height_uS` ≥ 0.05 µS (test F1 0.96, recall 0.98, precision 0.96); all returned pulses, ≥ 0.02 µS
+(F1 0.82), are the secondary check. The full per-sample fit of each
 participant (input, reconstruction, tonic, phasic, block code) is in
 `hpc/own/final/output/own4_p1000_k14_f3_s8/P<id>_own4_signals.csv`. The affect slider (H6) is in
 the raw recordings (`eda.dataset.load`).

@@ -57,7 +57,11 @@ These were each learned the hard way (docs/EXPERIMENTS.md):
 6. **Selection uses the baseline only.** Film-period responding is the outcome of H1–H3.
 7. **Stage-2 checks of the pulses must be blind to the hypotheses**: plausibility, not whether
    H1–H6 come out as hoped.
-8. **One change per tuning round.** Record its settings in the comments of
+8. **Stage 2 counts pulses of at least 0.05 µS** (`height_uS` in `data/real50_pulses.csv`); all
+   pulses of at least 0.02 µS are the secondary check. Fixed 2026-11-14 on accuracy alone, before
+   H1–H6 were looked at: on the test sessions F1 0.96 against 0.82. Do not change it after seeing
+   results.
+9. **One change per tuning round.** Record its settings in the comments of
    `src/own/make_own_bundle.sh`, and its question, result and decision in docs/EXPERIMENTS.md.
 
 ## Conventions
@@ -96,7 +100,8 @@ These were each learned the hard way (docs/EXPERIMENTS.md):
 
 `real-pulses` writes `data/real50_pulses.csv` and `data/real50_windows.csv` from the committed
 final-run output (README, "Stage 2: the input"). The film group is in `data/selection.csv`; the
-block of each pulse is in its `marker`. The affect slider (H6) comes from the raw recordings
+block of each pulse is in its `marker`. The main analysis uses pulses ≥ 0.05 µS (rule 8). The
+affect slider (H6) comes from the raw recordings
 (`eda.dataset.load`, column `affect`). The first stage-2 code (`state.py`) is on branch
 `black-box` and has not been brought over yet. Known stage-1 limits that bear on stage 2:
 - decays run long on fast and typical shapes and short on slow ones;
