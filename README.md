@@ -29,16 +29,20 @@ settings were tuned on our data.
 
 - **Frozen setting `own4_p1000_k14_f3_s8`** (`src/own/make_own_final_bundle.sh`). On 50 unseen
   synthetic test sessions built from the 50 analysed participants: F1 0.82, recall 0.85,
-  precision 0.85, timing within 0.16 s, size rank correlation 0.98.
+  precision 0.85, timing within 0.16 s, size rank correlation 0.98. For pulses ≥ 0.05 µS: F1 0.96,
+  recall 0.98, precision 0.96 (nearly all errors are 0.02–0.05 µS pulses, at the noise floor).
 - **50 real participants deconvolved** (20 neutral, 10 positive, 10 negative, 10 mixed film
   groups; `data/selection.csv`). Their pulses: `data/real50_pulses.csv` (`real-pulses`, below).
 - **Known limits:** slow responses (half-recovery > 7 s) lose precision (0.74) and their decay
   comes out 37% short; on fast and typical shapes, which most real participants have, decays run
   long. The full list is in docs/EXPERIMENTS.md, Current status.
 - **Round 7** (no prior against the frozen setting): no better and less stable, so the frozen
-  setting stays. **Re-synthesis** (the papers' test), all 50: F1 0.86, the same in every film group.
-- **Open:** a check that the real pulses make sense before stage 2 (their rate is about twice the
-  counted peaks; docs/EXPERIMENTS.md, Next steps), a comparison with other methods, stage 2, H1–H6.
+  setting stays. **Round 8** (stiffer tonic, knots every 20 or 28 s): fewer misses, more false
+  pulses, no better on slow responses, so the frozen setting stays. **Re-synthesis** (the papers'
+  test), all 50: F1 0.86, the same in every film group.
+- **Real pulse counts are plausible** for a deconvolution, about 20% high (small doublets on response
+  rises; docs/EXPERIMENTS.md Part 12). **Open:** the rest of the plausibility check (flat stretches,
+  sizes, shapes), a comparison with other methods, stage 2, H1–H6.
 
 ## Stage 2: the input
 

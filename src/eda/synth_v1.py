@@ -216,7 +216,7 @@ def score_final(root=FINAL_OUT / FINAL_SETTING):
                          "tau_group": r.tau_group, **res, **sc.tonic_metrics(name, root)})
     out = pd.DataFrame(rows)
     out.to_csv(FINAL_TEST_CSV, index=False)
-    cols = ["f1_visible", "recall_visible", "precision", "timing_err_s", "amp_spearman",
+    cols = ["f1_visible", "recall_visible", "precision", "f1_05", "recall_05", "precision_05", "timing_err_s", "amp_spearman",
             "tau_rise_err_pct", "tau_decay_err_pct", "phasic_taken", "windows_authors_rule"]
     f = lambda v: f"{v:.3f}"
     print(f"{FINAL_SETTING} on the 50 test participants (median), flat and slow noise")

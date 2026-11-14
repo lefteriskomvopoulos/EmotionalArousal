@@ -29,6 +29,10 @@ unless another file is named.
    both dropped. Round 7 tested no prior against the paper's prior, weak: no prior was no better
    and less stable, so the frozen setting stays.
 9. **Re-synthesis** (Part 10), the papers' own test: F1 0.86, the same in every film group.
+10. **Round 8, the tonic** (Part 11): wider knots trade fewer misses for more false pulses and
+   leave slow sessions' tonic error unchanged. The error is a level offset during dense slow
+   responding, where the true floor is never seen, so no spline setting fixes it; the frozen
+   setting stays and it is reported as a limit.
 
 Still to come: a check that the real pulses make sense before stage 2, a comparison with other
 methods, then stage 2 and H1–H6.
@@ -370,6 +374,11 @@ participant, made by the frozen generator with its own seed (8080), never used i
 
 Timing error 0.16 s, amplitude rank correlation 0.98. Median signed errors.
 
+**At ≥ 0.05 µS** (the `_05` columns of `tbme_score`: true pulses ≥ 0.05 µS found by any returned
+pulse within 1 s, returned pulses ≥ 0.05 µS matching any true one): F1 **0.96**, recall 0.98,
+precision 0.96; fast 0.98, typical 0.97, slow 0.94; film groups 0.95–0.97. Almost all errors are
+pulses of 0.02–0.05 µS, at the noise floor.
+
 **Where the false pulses come from** (15% of returned pulses in the median session; read off the
 figures):
 1. **A rigid tonic:** slow rises the tonic cannot follow are filled with pulses.
@@ -399,6 +408,8 @@ a comparison with the literature, not a measure of accuracy (`data/own_resynth50
 |---|---|---|---|---|---|---|---|---|
 | 50 sessions | 0.860 | 0.892 | 0.839 | 0.15 s | 0.92 | −14% | +26% | 0.995 |
 | by film group | 0.84–0.88 | 0.86–0.91 | 0.83–0.86 | 0.15–0.16 s | 0.91–0.93 | −10 to −19% | +23 to +29% | 0.994–0.996 |
+
+At ≥ 0.05 µS: F1 0.96, recall 0.95, precision 0.97 (film groups 0.93–0.96).
 
 - **No film group is deconvolved better than another**, so accuracy cannot drive a group
   difference in H1–H4.
@@ -481,38 +492,144 @@ further tuning.
   is the tonic taking part of the long tails (Part 9, cause 2 and the knots).
 - **A stays.** Nothing changes for the V test sessions or the real 50, so nothing is re-run.
 
+### Round 8: the tonic's flexibility (2 settings, 36 jobs)
+
+**The question:** with the prior cleared (round 7), is the tonic what takes the slow tails? In A,
+GCV's tonic penalty λ1 is at its limit in only 7–12% of the U windows and chosen near zero
+(10⁻⁸–10⁻⁶ on P53), so the tonic's shape is set by the knot spacing alone. On slow shapes it takes
+18% of each response (`phasic_taken` 0.18, about 0 on fast and typical): a spline with knots every
+14 s can bend into a 10 s recovery. Round 5 tested the spacing on the first 18 (S) only.
+
+| Setting | Change from A |
+|---|---|
+| `own4_p1000_k20_f3_s8` | knots every 20 s |
+| `own4_p1000_k28_f3_s8` | knots every 28 s, twice A's |
+
+**Rule, set before the run:** a variant replaces A only if slow-shape precision and `phasic_taken`
+both improve, and F1 visible on fast and typical shapes falls by no more than 0.01 each. Otherwise
+A stays. A stiffer tonic may follow fast tonic rises worse (Part 9, cause 1); the F1 condition
+covers that. A variant that passes runs once on V and the real 50 (100 jobs, no further tuning),
+and the stage-2 table is rebuilt from it.
+
+**Considered and dropped:** a floor on λ1. The penalty is a ridge on the spline coefficients,
+which are the tonic's level in µS. A floor pulls the tonic down under the constraint tonic ≤
+signal and hands more of the signal to pulses; it does not stiffen the shape. If neither spacing
+passed, the next candidate was a penalty on the tonic's curvature (a P-spline, Eilers & Marx
+1996), a change to the paper's method.
+
+**Result** (`own-score`; `round-compare`: `data/round8_compare.csv`,
+`results/figures/round8_tonic.pdf`, one page per session with the true tonic dotted):
+
+| Median, 18 U sessions | A (14 s) | 20 s | 28 s |
+|---|---|---|---|
+| F1 visible | **0.835** | 0.803 | 0.794 |
+| Recall / precision | 0.850 / **0.816** | 0.887 / 0.786 | **0.900** / 0.760 |
+| Slow: F1 / precision | **0.828 / 0.767** | 0.784 / 0.722 | 0.738 / 0.631 |
+| Slow: tonic's share of each response | 0.184 | 0.198 | 0.185 |
+| Fast: F1 | **0.895** | 0.877 | 0.840 |
+| Typical: F1 | 0.771 | 0.795 | **0.800** |
+
+| Summed over the 18 | A (14 s) | 20 s | 28 s |
+|---|---|---|---|
+| Visible true pulses missed | 395 | 336 | 327 |
+| False pulses (of returned) | 452 of 2292 | 567 of 2466 | 739 of 2647 |
+| False, no true pulse within 2 s | 333 | 447 | 594 |
+| False on slow sessions (≥ 0.05 µS) | 213 (57) | 293 (106) | 418 (126) |
+
+- **Both fail the rule:** slow precision falls, the tonic's share on slow sessions does not move,
+  fast F1 drops more than 0.01. A stays; nothing is re-run.
+- **A stiffer tonic trades misses for false pulses.** It misses 59–68 fewer true pulses (mostly
+  small ones the flexible tonic absorbed; typical F1 +0.02–0.03), but returns 115–287 more false
+  ones, nearly all standing alone: real tonic changes the stiffer spline cannot follow are filled
+  with pulses (Part 9, cause 1).
+- **The slow-session error is an offset, not a bend.** In the figures (U12, 13–18 min), the
+  estimated tonic sits 0.2–0.4 µS above the true one at every spacing. Overlapping long recoveries
+  never let the signal return to the true floor, so the data hold no information about it there:
+  a higher tonic with shorter decays fits about as well as the truth and needs smaller pulses,
+  which the sparsity term favours (our reading of the figures and counts).
+  This is why slow decays come out short (−37%) with or without the prior (round 7), and why no
+  spline setting changes it. A curvature penalty would not either (the error is smooth), so it
+  is not run. Reported as a limit of separating tonic from phasic during dense slow responding,
+  a regime rare in our real data (Parts 9 and 11: real fits and waveforms are mostly fast or
+  typical).
+
+## Part 12: are the real pulse counts plausible? (blind to the hypotheses)
+
+**The question:** the frozen setting returns 11.7 pulses per minute on the real 50 (median; 9.4 of
+them ≥ 0.05 µS), 1.87× the counted peaks of the same recordings (7.0 per minute ≥ 0.02 µS,
+`data/profile_study6.csv`). At rest (baseline): 13.0 per minute, 10.1 ≥ 0.05 µS, against 6.6
+counted. Published resting rates of non-specific responses: 1–3 per minute at 0.05 µS (Dawson et
+al. 2017, as cited by Kurinec et al. 2022), about 5 and up to 10 per minute at 0.01–0.05 µS
+(Zimmer 2000, as cited by Gertler et al. 2020), 6.7 per minute above 0.1 µS in resting adolescents
+(Gertler et al. 2020). Counts of responses merge overlapping ones; deconvolution separates them,
+so some excess is expected. How much is false?
+
+**The check** (`pulse-check`, `data/pulse_check_isolated.csv`): the pulses returned under each
+isolated SCR (Part 11's measurement: no other peak ≥ 0.02 µS from 5 s before onset to
+half-recovery), on its rise (1 s before onset to the peak) and on its recovery (peak to
+half-recovery). The same on the 50 test sessions, rebuilt exactly, where the true pulses in the
+same windows are counted too. Film groups and blocks are not looked at.
+
+| Mean per isolated SCR | Test: true | Test: returned | Real: returned |
+|---|---|---|---|
+| Rise, all | 1.23 | 1.24 | **1.44** |
+| Rise, ≥ 0.05 µS | 1.13 | 1.18 | 1.27 |
+| Recovery, all | 0.17 | 0.33 | 0.31 |
+| Recovery, ≥ 0.05 µS | – | 0.11 | 0.18 |
+| Rises with 1 / 2 / 3+ pulses | 79 / 19 / 2% | 78 / 20 / 2% | 62 / 26 / 10% |
+
+452 isolated SCRs on the test sessions, 444 on the real 50 (amplitude median 0.35 and 0.20 µS).
+
+- **Where the truth is known the solver counts isolated responses right** (1.24 against 1.23 per
+  rise); its extra is small pulses on recoveries (0.33 against 0.17).
+- **On real data it adds about 0.2 pulses per rise (+16%), mostly small** (+8% at ≥ 0.05 µS):
+  doublets on response rises (36% of real rises get two or more pulses, 22% on test), not pulses
+  in quiet stretches.
+- **That accounts for the excess over counted peaks.** On the test sessions counting finds 0.74 of
+  the true pulses (overlapping responses merge; `synth-check` rate 0.74) and the solver returns
+  1.03 per true pulse (round 6). So 7.0 counted peaks per minute imply about 9.7 pulses per minute
+  if the solver behaved on real data as on synthetic; it returns 11.7, about 20% more, the same
+  size as the doublets on isolated rises.
+- **The doublets cannot be classified from the data:** real responses built from more than one
+  burst, or the solver splitting real responses whose shape the model cannot produce (36% of real
+  isolated SCRs recover as fast as they rise, Part 11).
+- **Verdict:** the real pulse counts are plausible for a deconvolution, about 20% high, the excess
+  small doublets on response rises. Reported as a limitation; the ≥ 0.05 µS robustness check of
+  stage 2 removes about half of it.
+
 ## Current status
 
 **Frozen setting: `own4_p1000_k14_f3_s8`** (Part 9). 4 Hz input with a 1 Hz low-pass; prior weight
 2·10⁻⁴ (the paper's 0.1 weakened 1000×, doubled at 4 Hz); knots every 14 s; phase-1 λ limit 2·10⁻³;
 GCV limits 2·10⁻⁴ (λ2) and 2·10⁻⁴ (λ1); one impulse per signal sample; 8 random starts; in µS.
 Everything else as in `own_config.m`. On the 50 unseen test sessions: F1 0.82, recall 0.85,
-precision 0.85.
+precision 0.85 for every pulse ≥ 0.02 µS; F1 0.96, recall 0.98, precision 0.96 for pulses ≥ 0.05 µS.
 
 Limitations to report:
 
 1. Slow responses (half-recovery > 7 s): decay 37% short and precision 0.74, from false pulses
-   along their tails (Part 9). Not the prior's doing (round 7).
+   along their tails (Part 9). During dense slow responding the true tonic is never visible, so
+   the tonic is placed too high and the decays too short; neither the prior (round 7) nor the
+   knot spacing (round 8) changes it.
 2. On fast and typical shapes the decays run long instead (test +12% on fast, re-synthesis +26%,
    waveforms ×1.19), so the real decays (median 3.4 s) are likely overestimated (Parts 10, 11).
-3. False pulses where the tonic rises faster than its knots allow.
+3. False pulses where the tonic rises faster than its knots allow (a stiffer tonic makes more of
+   them, round 8).
 4. True rises under about 0.45 s overestimated, near what a 4 Hz signal resolves (round 3).
 5. The generator's limits (Part 8), and the real signals' fast symmetric transients it lacks
    (Part 11).
 6. Generator and solver share the same response model, which favours model-based methods in any
    comparison on synthetic data.
 7. The first round-6 run could not be scored (its truth was overwritten).
+8. On real data about 20% more pulses than the synthetic tests predict, as small doublets on
+   response rises (Part 12); about half are below 0.05 µS.
 
 ## Next steps
 
-1. **Check that the real pulses make sense before stage 2**, blind to the hypotheses: plausible
-   resting rates, pulses under the visible SCRs, none in flat stretches, sizes against the counted
-   SCRs, plausible shapes per participant. The settings are frozen, so this cannot feed back into
-   tuning, and H1–H6 are not looked at. First thing to look at: the real pulse rate (`real-pulses`,
-   median 11.7 per minute, 4.9–19.3, 78% ≥ 0.05 µS) is about twice the counted baseline peaks
-   (≥ 0.02 µS, 5–7 per minute, `data/selection_measures.csv`). Precision on the test sessions
-   (0.85) does not explain a factor of two, so the comparison has to be like for like (same
-   threshold, same blocks, deconvolved pulses under one counted peak).
+1. **Finish checking that the real pulses make sense before stage 2**, blind to the hypotheses.
+   Done: the count (Part 12). Left: none in flat stretches, sizes against the counted SCRs,
+   plausible shapes per participant. The settings are frozen, so this cannot feed back into
+   tuning, and H1–H6 are not looked at.
 2. **Compare with other methods** under the same conditions (the V test sessions and the real 50,
    same input, same scoring): cvxEDA and the authors' published solver (branch `black-box`), each
    at its published defaults or tuned the same way, stated. On real data only fit, sparsity and
@@ -533,6 +650,11 @@ Limitations to report:
    `data/own_tune_scores.csv`, extract it into `hpc/own/tune/`, then
    `PYTHONPATH=src python -m eda.run own-score`. It scores every setting found there and rewrites
    `data/own_tune_scores.csv`.
+4. Judge the round session by session, whatever the verdict: set its control and variants in
+   `src/eda/tuning.py` (`COMPARE_*`), then `PYTHONPATH=src python -m eda.run round-compare`: pulses
+   found, missed and false by size and closeness, the tonic's share of the responses, the rule set
+   before the run, and one figure page per session with every setting's tonic and pulses
+   (`data/round<k>_compare.csv`, `results/figures/round<k>_tonic.pdf`).
 
 Before any code change: `own_test` in MATLAB (`addpath src/own; own_test`).
 

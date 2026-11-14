@@ -65,6 +65,12 @@ own-score)
                        -> results/figures/tune50_preview_vs_real.pdf, results/figures/tune50_preview/*.png
     own-scale          needs tune50-export.  Each input's typical response size and gain
                        -> data/own_scale.csv
+    round-compare      needs a round's output in hpc/own/tune/output (control and variants:
+                       tuning.COMPARE_*).  Each variant against the control on the 18 U sessions,
+                       session by session: pulses found / missed / false by size and closeness, the
+                       tonic's share of the responses, the round's rule; one page per session with
+                       every setting's tonic and pulses, ~3 min
+                       -> data/round<k>_compare.csv, results/figures/round<k>_tonic.pdf (+ PNG folder)
 
 The first final run (frozen own4_p1000_k14_f3; synth_v1.py; src/own/make_own_final_bundle.sh)
     final-export       needs select + noise-spectrum.  The 50 real inputs (P*_own4, the real input
@@ -104,6 +110,10 @@ Model-free SCR shapes (scr_shapes.py)
                        participant against the solver's fits; checked on the 50 test sessions with a
                        pass criterion set beforehand, ~15 min
                        -> data/scr_shapes_real50.csv, prior_measured50.csv, scr_shapes_validation.csv
+    pulse-check        needs scr-shapes and real-pulses.  How many pulses the frozen setting places under
+                       each isolated SCR (on its rise, on its recovery), real 50 against the 50 test
+                       sessions, whose true pulses are counted the same way, ~8 min
+                       -> data/pulse_check_isolated.csv
 
 Stage 2's input (runs.py)
     real-pulses        needs the final run's real outputs (hpc/own/final/output/own4_p1000_k14_f3_s8,
@@ -145,6 +155,7 @@ COMMANDS = {
     "tune50-plots": lambda pid: generator.plot_tune50(),
     "tune50-preview": lambda pid: generator.export_tune50(save=False),
     "own-scale": lambda pid: tuning.scale(),
+    "round-compare": lambda pid: tuning.compare_round(),
     "final-export": lambda pid: synth_v1.export_selected(),
     "final-score": lambda pid: synth_v1.score_final(),
     "test50-export": lambda pid: generator.export_test50(),
@@ -154,6 +165,7 @@ COMMANDS = {
     "final-plots": lambda pid: runs.plot_final(),
     "resynth-plots": lambda pid: runs.plot_resynth(),
     "scr-shapes": lambda pid: scr_shapes.run(),
+    "pulse-check": lambda pid: scr_shapes.pulse_check(),
     "real-pulses": lambda pid: runs.export_pulses(),
 }
 

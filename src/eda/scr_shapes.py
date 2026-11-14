@@ -276,3 +276,116 @@ def run(suffix="own4"):
         print(f"  {a}: error {err:+.1f}%, Spearman {rho:.2f} -> {verdict}{need}")
     print("saved", REAL_CSV.name, PRIOR_CSV.name, VALID_CSV.name)
     return real, summ, v
+
+
+PRE_S = 1.0       # pulses up to this long before an SCR's measured onset still belong to it (the onset is
+                  # the lowest point before the peak, which sits early, not late)
+PULSE_CHECK_CSV = cfg.ROOT / "data" / "pulse_check_isolated.csv"
+
+
+def _test_sessions(ids, suffix="own4"):
+    """The 50 test sessions rebuilt at 100 Hz exactly as test50-export made them and as run() checks
+    them (same draw, same seeds), each measured -> (pid, shape, isolated SCRs with t_peak)."""
+    prof = pd.read_csv(cp.PROFILE_CSV)
+    picked = prof[prof.id.isin(ids)].sort_values("scr_pm")
+    curves = np.load(cp.CURVES_NPZ)
+    caps = pd.read_csv(cp.PEAKS_CSV).groupby("id").amp_uS.max().to_dict()
+    rp = gen.real_profiles(ids)
+    rng = np.random.default_rng(gen.TEST6_SEED)
+    for k, row in enumerate(picked.itertuples(), 1):
+        pid = int(row.id)
+        tr, td, g = gen.draw_shape(rng)
+        target = pp.noise_2hz(loadmat(tx.OUT / f"P{pid}_{suffix}.mat")["y"].ravel())
+        s0 = gen.TEST6_SEED
+        t, mk, s, x = gen.flat_session(row, rp[pid], tr, td, (s0 + pid, s0 + 200000 + pid, s0 + 300000 + pid),
+                                      target, curves, caps, suffix)
+        p = pp.prepare(x, t, cfg.FS, (0, len(t) - 1), SHAPE_CUTOFF_HZ, SHAPE_FS)
+        m, _ = measure(p["y"])
+        if len(m):
+            m = m.assign(t_peak=p["t2"][m.i_peak.to_numpy(int)])
+        if k % 10 == 0:
+            print(f"  test sessions: {k}/{len(ids)} rebuilt and measured")
+        yield pid, g, m
+
+
+def _in_windows(m, times, heights=None, min_h=None):
+    """Pulses in each SCR's rise, from PRE_S before its onset to its peak, and in its recovery, from
+    the peak to the half-recovery point.  Only pulses of height >= min_h when given."""
+    t = np.asarray(times, float)
+    if min_h is not None:
+        t = t[np.asarray(heights, float) >= min_h]
+    t = np.sort(t)
+    pk = m.t_peak.to_numpy(float)
+    on, hf = pk - m.onset_rise_s.to_numpy(float), pk + m.half_s.to_numpy(float)
+    rise = np.searchsorted(t, pk, side="right") - np.searchsorted(t, on - PRE_S, side="left")
+    tail = np.searchsorted(t, hf, side="right") - np.searchsorted(t, pk, side="right")
+    return rise, tail
+
+
+def pulse_check(suffix="own4"):
+    """pulse-check: how many pulses the frozen setting places under each isolated SCR (measure():
+    no other peak >= 0.02 uS from 5 s before its onset to its half-recovery), on the 50 real
+    participants and on the 50 test sessions, where the true pulses are known too.
+
+    An isolated SCR is one response, so the physiological expectation is about one pulse on its rise
+    and none on its recovery.  The test sessions show what the solver does there when the truth is
+    known (true pulses below a counted peak can still sit inside, as on real data).  More pulses per
+    isolated SCR on real data than on the test sessions point to false pulses that are particular to
+    real signals; the same number points to the excess coming from elsewhere (overlapping responses
+    split apart where counting merges them).  Counted for all returned pulses (>= 0.02 uS) and for
+    those >= BIG_uS.  Saved: data/pulse_check_isolated.csv (one row per isolated SCR)."""
+    from . import runs
+    from .tbme_score import event_heights
+    rows = []
+    real = pd.read_csv(REAL_CSV)
+    pulses = pd.read_csv(runs.PULSES_CSV)
+    for pid, m in real.groupby("source_id"):
+        p = pulses[pulses.id == pid]
+        r, t = _in_windows(m, p.time_s)
+        rb, tb = _in_windows(m, p.time_s, p.height_uS, BIG_uS)
+        rows.append(pd.DataFrame({"data": "real", "id": pid, "shape": "", "amp_uS": m.amp_uS.to_numpy(),
+                                  "half_s": m.half_s.to_numpy(), "est_rise": r, "est_tail": t,
+                                  "est_rise_big": rb, "est_tail_big": tb}))
+    root = runs.FINAL_OUT / runs.FINAL6_SETTING
+    for pid, g, m in _test_sessions(gen.selected_ids(), suffix):
+        if not len(m):
+            continue
+        name = f"V{pid}_{suffix}"
+        ev = pd.read_csv(root / f"{name}_events.csv")
+        win = pd.read_csv(root / f"{name}_windows.csv")
+        h = event_heights(ev, win)
+        tr = np.load(ts.TRUTH_DIR / f"{name}.npz")
+        r, t = _in_windows(m, ev.time_s)
+        rb, tb = _in_windows(m, ev.time_s, h, BIG_uS)
+        qr, qt = _in_windows(m, tr["ev_t"], tr["ev_a"], cfg.MIN_EVENT_uS)
+        qrb, qtb = _in_windows(m, tr["ev_t"], tr["ev_a"], BIG_uS)
+        rows.append(pd.DataFrame({"data": "test", "id": pid, "shape": g, "amp_uS": m.amp_uS.to_numpy(),
+                                  "half_s": m.half_s.to_numpy(), "est_rise": r, "est_tail": t,
+                                  "est_rise_big": rb, "est_tail_big": tb, "true_rise": qr, "true_tail": qt,
+                                  "true_rise_big": qrb, "true_tail_big": qtb}))
+    out = pd.concat(rows, ignore_index=True)
+    out.to_csv(PULSE_CHECK_CSV, index=False)
+
+    def dist(v):
+        v = np.asarray(v)
+        return (f"0: {(v == 0).mean():.0%}, 1: {(v == 1).mean():.0%}, 2: {(v == 2).mean():.0%},"
+                f" 3+: {(v >= 3).mean():.0%}; mean {v.mean():.2f}")
+
+    print(f"\npulses under each isolated SCR (rise: {PRE_S:g} s before onset to peak; recovery: peak to"
+          f" half-recovery); frozen setting {runs.FINAL6_SETTING}")
+    for data, d in out.groupby("data", sort=False):
+        per = d.groupby("id")
+        print(f"\n{data}: {len(d)} isolated SCRs from {d.id.nunique()} {'participants' if data == 'real' else 'test sessions'}"
+              f" (amplitude median {d.amp_uS.median():.3f} uS)")
+        print(f"  returned, rise:            {dist(d.est_rise)}")
+        print(f"  returned >= {BIG_uS} uS, rise:   {dist(d.est_rise_big)}")
+        print(f"  returned, recovery:        {dist(d.est_tail)}")
+        print(f"  returned >= {BIG_uS} uS, recovery: {dist(d.est_tail_big)}")
+        if data == "test":
+            print(f"  true >= {cfg.MIN_EVENT_uS} uS, rise:      {dist(d.true_rise)}")
+            print(f"  true >= {cfg.MIN_EVENT_uS} uS, recovery:  {dist(d.true_tail)}")
+            print(f"  true >= {BIG_uS} uS, rise:      {dist(d.true_rise_big)}")
+        print(f"  per {'participant' if data == 'real' else 'session'}, median of the mean returned on the rise:"
+              f" {per.est_rise.mean().median():.2f}, on the recovery: {per.est_tail.mean().median():.2f}")
+    print("saved", PULSE_CHECK_CSV.name)
+    return out

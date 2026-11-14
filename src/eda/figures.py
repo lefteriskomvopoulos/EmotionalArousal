@@ -274,3 +274,83 @@ def deconv_pages(items, folder, pdf_name, zoom_s=120):
             fig.savefig(out_dir / f"{it['name']}.png", dpi=110)
             plt.close(fig)
     print(f"saved {cfg.FIG_DIR / pdf_name} and {len(items)} PNGs in {out_dir}")
+
+
+COLOR_ZOOM = "#e9c46a"       # the stretch shown enlarged on the right
+
+
+def _diff_window(rows, zoom_s):
+    """Start and end (s) of the zoom_s stretch where the rows' tonics differ most from the first
+    row's (the control): the moving mean of the largest absolute difference, at its maximum."""
+    t = np.asarray(rows[0]["t"], float)
+    base = np.asarray(rows[0]["tonic"], float)
+    d = np.zeros(len(t))
+    for r in rows[1:]:
+        d = np.maximum(d, np.abs(np.interp(t, np.asarray(r["t"], float), np.asarray(r["tonic"], float)) - base))
+    n = max(int(zoom_s / float(np.median(np.diff(t)))), 1)
+    if len(d) <= n:
+        return t[0], t[-1]
+    a = int(np.argmax(np.convolve(d, np.ones(n) / n, mode="valid")))
+    return t[a], t[a + n - 1]
+
+
+def tonic_compare_pages(pages, folder, pdf_name, zoom_s=120):
+    """One page per session, one row per setting (the first is the control): input, reconstruction
+    and tonic over the whole session (left) and over the zoom_s stretch where the tonics differ
+    most (right), with found / missed / false pulses under each.
+    pages: [{"name", "title", "rows": [runs._deconv_item dicts, each with its own title]}].
+    -> results/figures/<folder>/<name>.png and every page in <pdf_name>."""
+    from matplotlib.backends.backend_pdf import PdfPages
+    out_dir = cfg.FIG_DIR / folder
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with PdfPages(cfg.FIG_DIR / pdf_name) as pdf:
+        for pg in pages:
+            rows = pg["rows"]
+            a, b = _diff_window(rows, zoom_s)
+            height = 2.9 * len(rows) + 0.8
+            fig = plt.figure(figsize=(14, height))
+            gs = fig.add_gridspec(len(rows), 2, width_ratios=[2.2, 1], hspace=.6, wspace=.1,
+                                  left=.05, right=.99, top=1 - .75 / height, bottom=.5 / height)
+            for k, it in enumerate(rows):
+                t = np.asarray(it["t"], float)
+                y, rec, ton = (np.asarray(it[col], float) for col in ("y", "y_rec", "tonic"))
+                mk = np.asarray(it["mk"])
+                for j, (keep, scale, off) in enumerate(((np.ones(len(t), bool), 60, 0.0),
+                                                        ((t >= a) & (t <= b), 1, a))):
+                    ax = fig.add_subplot(gs[k, j])
+                    tt, yy, rr, oo = t[keep], y[keep], rec[keep], ton[keep]
+                    lo, hi = np.nanmin(yy), np.nanmax(yy)
+                    span = hi - lo if hi > lo else 1
+                    x = (tt - off) / scale
+                    if j == 0:
+                        _blocks(ax, x, mk[keep])
+                        ax.axvspan(a / 60, b / 60, color=COLOR_ZOOM, alpha=.35, lw=0, zorder=0)
+                    ax.plot(x, yy, lw=.6 if j == 0 else 1.0, color=COLOR_SIGNAL, label="input")
+                    ax.plot(x, rr, lw=.6 if j == 0 else 1.2, color=COLOR_TONIC, label="reconstruction")
+                    ax.plot(x, oo, lw=.9, color="0.35", ls="--", label="tonic")
+                    if "true_tonic" in it:
+                        ax.plot(x, np.asarray(it["true_tonic"], float)[keep], lw=1.0, color="k", ls=":",
+                                label="true tonic")
+                    ticks = []
+                    for label, times, color in it["pulses"]:
+                        times = np.asarray(times, float)
+                        inside = (times >= tt[0]) & (times <= tt[-1])
+                        ticks.append((label, (times[inside] - off) / scale, color))
+                    _pulse_rows(ax, ticks, lo, span)
+                    ax.set_ylim(lo - (0.06 + 0.05 * len(ticks)) * span, hi + .05 * span)
+                    ax.tick_params(labelsize=7)
+                    ax.grid(axis="y", color="0.9", lw=.5)
+                    if j == 0:
+                        ax.set_title(it["title"], loc="left", fontsize=8)
+                        ax.set_ylabel("µS")
+                        ax.legend(loc="upper right", fontsize=6, frameon=False, ncol=3)
+                    else:
+                        ax.set_title(f"{a / 60:.1f}-{b / 60:.1f} min: where the tonics differ most",
+                                     loc="left", fontsize=7)
+                    if k == len(rows) - 1:
+                        ax.set_xlabel("min" if j == 0 else f"s from {a / 60:.1f} min")
+            fig.suptitle(pg["title"], fontsize=9, x=.01, ha="left")
+            pdf.savefig(fig)
+            fig.savefig(out_dir / f"{pg['name']}.png", dpi=100)
+            plt.close(fig)
+    print(f"saved {cfg.FIG_DIR / pdf_name} and {len(pages)} PNGs in {out_dir}")

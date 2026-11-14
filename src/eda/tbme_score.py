@@ -12,6 +12,11 @@ For each session the events our solver returned (cluster output, <name>_events.c
                the paper's pruning window, so no closeness exclusion is needed
   precision    share of returned events that are real
   f1_visible   F1 from recall_visible and precision: the headline score
+  _05          the same for the stronger pulses only, >= ts.SPLIT_uS (0.05 uS, stage 2's robustness
+               level): recall_05 over true impulses >= 0.05 uS (matched against every returned
+               event), precision_05 over returned events whose height (event_heights) is >= 0.05 uS
+               (matched against every true impulse), f1_05 from the two.  Matching across the
+               threshold, so a true 0.06 uS impulse returned at 0.045 uS is not an error
   timing       mean |time error| of matched pairs
   amplitude    Spearman rank correlation of matched pairs.  Ranks, because the solver's u is
                the input to its ODE and our a_i is a response height in uS: the units differ,
@@ -74,6 +79,12 @@ def score_session(name, out_dir):
     visible = true_a >= cfg.MIN_EVENT_uS
     vi, _ = match(true_t[visible], est_t)
     recall_vis = len(vi) / visible.sum() if visible.any() else np.nan
+    strong_t = true_a >= ts.SPLIT_uS
+    strong_e = event_heights(ev, win) >= ts.SPLIT_uS if n_est else np.zeros(0, bool)
+    si, _ = match(true_t[strong_t], est_t)
+    _, se = match(true_t, est_t[strong_e])
+    recall_05 = len(si) / strong_t.sum() if strong_t.any() else np.nan
+    precision_05 = len(se) / strong_e.sum() if strong_e.any() else np.nan
     return {
         "n_true": n_true, "n_est": n_est, "n_hit": n_hit,
         "recall": recall, "precision": precision,
@@ -81,6 +92,9 @@ def score_session(name, out_dir):
         "n_visible": int(visible.sum()),
         "recall_visible": recall_vis,
         "f1_visible": 2 * recall_vis * precision / max(recall_vis + precision, 1e-12),
+        "n_true_05": int(strong_t.sum()), "n_est_05": int(strong_e.sum()),
+        "recall_05": recall_05, "precision_05": precision_05,
+        "f1_05": 2 * recall_05 * precision_05 / max(recall_05 + precision_05, 1e-12),
         "timing_err_s": np.abs(true_t[ti] - est_t[ei]).mean() if n_hit else np.nan,
         "amp_spearman": spearmanr(true_a[ti], est_a[ei])[0] if n_hit > 2 else np.nan,
         "tau_rise_fit": win.tau_rise.median(), "tau_decay_fit": win.tau_decay.median(),

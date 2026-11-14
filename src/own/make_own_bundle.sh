@@ -79,6 +79,29 @@ cp "$root"/src/own/*.m "$root/src/own/run_own.sbatch" "$b/"
 # amplitude rank .947 vs .971, windows meeting the authors' rule .83 vs 1.00 (slow shapes .36 vs
 # .83); slow decay -28% vs -41% but slow precision .736 vs .767.  No better and less stable, as in
 # round 4: A stays, nothing re-run.  The prior is not what makes the false pulses on slow tails.
+#   (round 7 job per session: ${base},'use_prior',false, tag own4_p1000_k14_f3_s8_free)
+#
+# Round 8, the tonic's flexibility.  In A, GCV's tonic penalty lambda1 is at its limit in only
+# 7-12% of the U windows and is chosen near zero (1e-8 to 1e-6 on P53), so the tonic's shape is set
+# by the knot spacing alone.  On slow shapes it takes 18% of each response (phasic_taken .18,
+# about 0 on fast and typical): a spline with knots every 14 s bends into a 10 s recovery.  Round 5
+# tested spacing on the first 18 (S) only.  Two variants of A, same 18 U:
+#   A_k20   knots every 20 s                                   (own4_p1000_k20_f3_s8)
+#   A_k28   knots every 28 s, twice A's                        (own4_p1000_k28_f3_s8)
+# Control: A (round 6).  Rule, set before the run: a variant replaces A only if slow-shape precision
+# and phasic_taken both improve, and F1 visible on fast and typical shapes falls by no more than
+# .01 each.  Otherwise A stays.  A floor on lambda1 was considered and dropped: the penalty is a
+# ridge on the spline coefficients (the tonic's level, in uS), so a floor pulls the tonic down
+# under the constraint C q <= y and hands more of the signal to pulses; it does not stiffen the
+# shape.  If neither spacing passes, the next candidate is a penalty on the tonic's curvature
+# (P-spline, Eilers & Marx 1996), a change to the paper's method.
+# Result (2026-11-14, median of the 18; round-compare, data/round8_compare.csv): F1 visible .835 /
+# .803 / .794 (14 / 20 / 28 s), precision .816 / .786 / .760; slow precision .767 / .722 / .631,
+# slow phasic_taken .184 / .198 / .185.  Both fail: wider knots miss 59-68 fewer true pulses but
+# return 115-287 more false ones, nearly all standing alone.  On slow sessions the estimated tonic
+# sits 0.2-0.4 uS above the true one at every spacing (an offset, not a bend: overlapping long
+# recoveries hide the floor), so the curvature penalty is not run either.  A stays, nothing re-run.
+#   (round 8 jobs per session: ${base},'knot_s',20 and ${base},'knot_s',28)
 base="'u_per_y',1,'lambda2_max_focuss',2e-3,'lambda2_max_gcv',2e-4,'lambda1_max',2e-4"
 base="${base},'knot_s',14,'prior_lambda',[0.0002;0.0002],'n_starts',8"
 
@@ -87,9 +110,10 @@ sessions=$(awk -F, 'NR==1{for(i=1;i<=NF;i++) h[$i]=i; next} {print $h["session"]
            "$root/data/tune50_cohort.csv")
 for s in $sessions; do
   n="${s}_own4"
-  tag="own4_p1000_k14_f3_s8"
   cp "$root/data/tbme_input/${n}.mat" "$b/input/"
-  echo "'${n}','amin2021','tag','${tag}_free',${base},'use_prior',false" >> "$b/jobs.txt"
+  for k in 20 28; do
+    echo "'${n}','amin2021','tag','own4_p1000_k${k}_f3_s8',${base},'knot_s',${k}" >> "$b/jobs.txt"
+  done
 done
 n=$(wc -l < "$b/jobs.txt" | tr -d ' ')
 sed -i '' "s/^#SBATCH --array=.*/#SBATCH --array=1-$n/" "$b/run_own.sbatch"

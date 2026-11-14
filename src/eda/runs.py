@@ -53,7 +53,7 @@ def score_test50(root=FINAL_OUT / FINAL6_SETTING):
                      "shape": r.tau_group, **res, **sc.tonic_metrics(name, root)})
     out = pd.DataFrame(rows)
     out.to_csv(TEST6_SCORES_CSV, index=False)
-    cols = ["f1_visible", "recall_visible", "precision", "timing_err_s", "amp_spearman",
+    cols = ["f1_visible", "recall_visible", "precision", "f1_05", "recall_05", "precision_05", "timing_err_s", "amp_spearman",
             "tau_rise_err_pct", "tau_decay_err_pct", "phasic_taken", "windows_authors_rule", "lambda2_at_cap"]
     f = lambda v: f"{v:.3f}"
     print(f"{FINAL6_SETTING} on the {len(out)} test sessions (median)")
@@ -130,7 +130,7 @@ def score_resynth(root=RESYNTH_OUT / FINAL6_SETTING):
                      **res, **sc.tonic_metrics(name, root)})
     out = pd.DataFrame(rows)
     out.to_csv(RESYNTH_SCORES_CSV, index=False)
-    cols = ["f1_visible", "recall_visible", "precision", "timing_err_s", "amp_spearman",
+    cols = ["f1_visible", "recall_visible", "precision", "f1_05", "recall_05", "precision_05", "timing_err_s", "amp_spearman",
             "tau_rise_err_pct", "tau_decay_err_pct", "r2_median"]
     f = lambda v: f"{v:.3f}"
     print(f"re-synthesis (noise at each participant's fit residual), {FINAL6_SETTING}, {len(out)} sessions (median):")

@@ -62,7 +62,7 @@ def score(root=cfg.ROOT / "hpc" / "own" / "tune" / "output"):
                          **sc.tonic_metrics(name, folder)})
     out = pd.DataFrame(rows)
     out.to_csv(TUNE_CSV, index=False)
-    cols = ["f1_visible", "recall_visible", "f1", "recall", "precision", "timing_err_s",
+    cols = ["f1_visible", "recall_visible", "f1", "recall", "precision", "f1_05", "timing_err_s",
             "amp_spearman", "tau_rise_err_pct",
             "tau_decay_err_pct", "phasic_taken", "windows_authors_rule", "lambda2_at_cap"]
     f = lambda v: f"{v:.3f}"
@@ -216,4 +216,139 @@ def error_check(setting=DECAY_SETTING, root=cfg.ROOT / "hpc" / "own" / "tune" / 
         print(t.to_string(float_format=lambda v: f"{v:.3f}"))
     print(f"\nclose = a true impulse within {CLOSE_S:g} s; small = below {LARGE_uS:g} uS")
     print("saved", ERRORS_CSV.name, ERRORS_SUMMARY_CSV.name)
+    return out
+
+
+COMPARE_ROUND = 8                                            # set per round; round 7: ("..._s8_free",)
+COMPARE_CONTROL = "own4_p1000_k14_f3_s8"                     # A, frozen after round 6
+COMPARE_VARIANTS = ("own4_p1000_k20_f3_s8", "own4_p1000_k28_f3_s8")
+COMPARE_CSV = cfg.ROOT / "data" / f"round{COMPARE_ROUND}_compare.csv"
+
+
+def _pulse_counts(name, folder, tr):
+    """Found, missed and false pulses of one session under one setting, classified as error_check
+    does: missed = true pulses >= 0.02 uS with no estimate within 1 s, by size (LARGE_uS) and by
+    whether another true pulse lies within CLOSE_S (merged) or not (lost alone); false = estimates
+    with no true pulse within 1 s, by height and by whether a true pulse lies within CLOSE_S (a
+    response split or mistimed) or not (filling a tail, a tonic rise or noise)."""
+    from . import tbme_score as sc
+    ev = pd.read_csv(folder / f"{name}_events.csv")
+    win = pd.read_csv(folder / f"{name}_windows.csv")
+    true_t, true_a = tr["ev_t"], tr["ev_a"]
+    est_t, est_h = ev.time_s.to_numpy(), event_heights(ev, win)
+    vis = true_a >= cfg.MIN_EVENT_uS
+    vt, va = true_t[vis], true_a[vis]
+    vi, _ = sc.match(vt, est_t)
+    missed = np.ones(len(vt), bool)
+    missed[vi] = False
+    vgap = nearest_gap(vt, true_t, same=True)
+    _, ei = sc.match(true_t, est_t)
+    false = np.ones(len(est_t), bool)
+    false[ei] = False
+    fgap = nearest_gap(est_t, true_t)
+    small_m, small_f = va < LARGE_uS, est_h < LARGE_uS
+    return {"visible": int(vis.sum()), "found": int((~missed).sum()), "missed": int(missed.sum()),
+            "missed_small": int((missed & small_m).sum()), "missed_large": int((missed & ~small_m).sum()),
+            "missed_close": int((missed & (vgap < CLOSE_S)).sum()),
+            "missed_alone": int((missed & (vgap >= CLOSE_S)).sum()),
+            "estimated": len(est_t), "false": int(false.sum()),
+            "false_small": int((false & small_f).sum()), "false_large": int((false & ~small_f).sum()),
+            "false_near": int((false & (fgap < CLOSE_S)).sum()),
+            "false_far": int((false & (fgap >= CLOSE_S)).sum())}
+
+
+def compare_round(control=COMPARE_CONTROL, variants=COMPARE_VARIANTS,
+                  root=cfg.ROOT / "hpc" / "own" / "tune" / "output"):
+    """round-compare: a round's variants against its control on the 18 U sessions, session by
+    session, whatever the verdict.
+
+    Counts summed by shape (_pulse_counts: found, missed, false, by size and closeness), medians by
+    shape (F1, precision, recall, phasic_taken = the share of each true response the tonic takes,
+    decay error), the paired change per variant (variant minus control on the same session), and
+    the round's rule as set before the run (docs/EXPERIMENTS.md, round 8: slow precision up, slow
+    phasic_taken closer to 0, F1 on fast and typical down by no more than 0.01 each, medians).
+    Figures: one page per session, one row per setting, the whole session and the 120 s where the
+    tonics differ most, with the estimated and the true tonic and found / missed / false pulses
+    (needs the runs' signals.csv).
+    -> data/round<k>_compare.csv, results/figures/round<k>_tonic.pdf, round<k>_tonic/<session>.png"""
+    from . import figures
+    from . import runs
+    from . import tbme_score as sc
+    settings = (control,) + tuple(variants)
+    c = pd.read_csv(TUNE50_CSV).sort_values(["tau_group", "group", "source_id"])
+    rows, pages = [], []
+    for r in c.itertuples():
+        name = f"{r.session}_own4"
+        tr = np.load(sc.truth_file(name))
+        items = []
+        for s in settings:
+            folder = root / s
+            res = sc.score_session(name, folder)
+            if res is None:
+                print(f"  {s}/{name}: no output, skipped")
+                continue
+            tm = sc.tonic_metrics(name, folder)
+            cnt = _pulse_counts(name, folder, tr)
+            rows.append({"session": r.session, "shape": r.tau_group, "setting": s, **cnt,
+                         "f1_visible": res["f1_visible"], "recall_visible": res["recall_visible"],
+                         "precision": res["precision"], "phasic_taken": tm["phasic_taken"],
+                         "tau_decay_err_pct": res["tau_decay_err_pct"]})
+            if (folder / f"{name}_signals.csv").exists():
+                title = (f"{s}: found {cnt['found']} of {cnt['visible']}, missed {cnt['missed']}, false"
+                         f" {cnt['false']} of {cnt['estimated']} returned; F1 {res['f1_visible']:.3f}, precision"
+                         f" {res['precision']:.3f}; tonic takes {tm['phasic_taken']:.2f} of the responses")
+                it = runs._deconv_item(name, folder, title, tr)
+                true_tonic = np.interp(it["t"], tr["t2"], tr["tonic2"])          # on the input's scale,
+                true_phasic = np.interp(it["t"], tr["t2"], tr["phasic2"])        # as tonic_metrics aligns it
+                it["true_tonic"] = true_tonic + np.median(it["y"] - true_tonic - true_phasic)
+                items.append(it)
+        if len(items) == len(settings):
+            pages.append({"name": r.session, "rows": items,
+                          "title": f"{r.session} from P{r.source_id} ({r.group} films), {r.tau_group} shape:"
+                                   f" true tau {float(tr['tau_rise']):.2f} / {float(tr['tau_decay']):.2f} s"})
+    out = pd.DataFrame(rows)
+    out.to_csv(COMPARE_CSV, index=False)
+
+    counts = ["visible", "found", "missed", "missed_small", "missed_large", "missed_close", "missed_alone",
+              "estimated", "false", "false_small", "false_large", "false_near", "false_far"]
+    f = lambda v: f"{v:.3f}"
+    print(f"round {COMPARE_ROUND}, pulses summed over the sessions of each shape.  missed: true >= "
+          f"{cfg.MIN_EVENT_uS} uS not found; false: returned, no true one within 1 s; small: < {LARGE_uS} uS;"
+          f" close / near: another true pulse within {CLOSE_S:g} s; alone / far: none")
+    print(out.groupby(["shape", "setting"], sort=False)[counts].sum().to_string())
+    print("all 18:")
+    print(out.groupby("setting", sort=False)[counts].sum().to_string())
+    meds = ["f1_visible", "precision", "recall_visible", "phasic_taken", "tau_decay_err_pct"]
+    med = out.groupby(["shape", "setting"], sort=False)[meds].median()
+    print("\nmedian by shape:")
+    print(med.to_string(float_format=f))
+
+    piv = out.pivot_table(index=["session", "shape"], columns="setting",
+                          values=["f1_visible", "precision", "phasic_taken", "missed", "false"])
+    for v in variants:
+        d = pd.DataFrame({m: piv[(m, v)] - piv[(m, control)]
+                          for m in ("f1_visible", "precision", "phasic_taken", "missed", "false")})
+        g = d.groupby(level="shape")
+        t = pd.DataFrame({"F1": g.f1_visible.median(), "precision": g.precision.median(),
+                          "phasic_taken": g.phasic_taken.median(),
+                          "missed": g.missed.sum().round().astype(int), "false": g["false"].sum().round().astype(int),
+                          "sessions F1 up / down": g.f1_visible.apply(lambda x: f"{(x > 0).sum()} / {(x < 0).sum()}")})
+        print(f"\n{v} minus {control}, session by session (median change by shape; missed, false: total change)")
+        print(t.to_string(float_format=lambda x: f"{x:+.3f}"))
+
+    print("\nrule (set before the run): slow precision up, slow phasic_taken closer to 0, F1 on fast and on"
+          " typical down by no more than 0.01 each (medians by shape)")
+    for v in variants:
+        up = med.loc[("slow", v), "precision"] > med.loc[("slow", control), "precision"]
+        tonic = abs(med.loc[("slow", v), "phasic_taken"]) < abs(med.loc[("slow", control), "phasic_taken"])
+        keep = all(med.loc[(s, v), "f1_visible"] - med.loc[(s, control), "f1_visible"] >= -0.01
+                   for s in ("fast", "typical"))
+        print(f"  {v}: slow precision {'up' if up else 'not up'}, slow phasic_taken"
+              f" {'closer to 0' if tonic else 'not closer to 0'}, fast and typical F1"
+              f" {'within 0.01' if keep else 'down by more than 0.01'} -> {'PASS' if up and tonic and keep else 'FAIL'}")
+    if pages:
+        figures.tonic_compare_pages(pages, f"round{COMPARE_ROUND}_tonic", f"round{COMPARE_ROUND}_tonic.pdf")
+    else:
+        print("no figures: the runs' signals.csv are not all here")
+    print("saved", COMPARE_CSV.name)
     return out
