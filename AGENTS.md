@@ -50,7 +50,7 @@ These were each learned the hard way (docs/EXPERIMENTS.md):
 3. **No cohort calibration factors in the generator.** Each session copies its own participant;
    factors fitted across participants ran away and overfit.
 4. **No priors from the solver's own outputs.** That is circular. The paper's prior comes from a
-   different dataset; round 7 tests no prior against it.
+   different dataset; round 7 tested no prior against it (no better, less stable).
 5. **Set the pass criterion before the run, and do not keep refining a measurement or generator
    until it passes.** The waveform-shape measurement (`scr_shapes.py`) failed its check and is kept
    as a description only, for this reason.

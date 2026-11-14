@@ -26,10 +26,12 @@ unless another file is named.
    0.846; slow responses worst) and the 50 real participants.
 8. **The prior on τ** (Part 11): the paper's prior comes from a different dataset. A prior refitted
    to our own estimates (circular) and a prior measured on the waveforms (failed its check) were
-   both dropped. Round 7 tests no prior against the paper's prior, weak.
+   both dropped. Round 7 tested no prior against the paper's prior, weak: no prior was no better
+   and less stable, so the frozen setting stays.
+9. **Re-synthesis** (Part 10), the papers' own test: F1 0.86, the same in every film group.
 
-Still to come: round 7's result, the re-synthesis score (Part 10), a check that the real pulses
-make sense before stage 2, a comparison with other methods, then stage 2 and H1–H6.
+Still to come: a check that the real pulses make sense before stage 2, a comparison with other
+methods, then stage 2 and H1–H6.
 
 ## Terms
 
@@ -395,8 +397,8 @@ a comparison with the literature, not a measure of accuracy (`data/own_resynth50
 
 | | F1 visible | Recall visible | Precision | Timing | Amplitude ρ | Rise error | Decay error | R² |
 |---|---|---|---|---|---|---|---|---|
-| 49 sessions (R115 pending) | 0.859 | 0.894 | 0.838 | 0.15 s | 0.92 | −12% | +26% | 0.995 |
-| by film group | 0.84–0.86 | 0.86–0.91 | 0.83–0.85 | 0.14–0.16 s | 0.91–0.93 | −10 to −19% | +24 to +29% | 0.994–0.996 |
+| 50 sessions | 0.860 | 0.892 | 0.839 | 0.15 s | 0.92 | −14% | +26% | 0.995 |
+| by film group | 0.84–0.88 | 0.86–0.91 | 0.83–0.86 | 0.15–0.16 s | 0.91–0.93 | −10 to −19% | +23 to +29% | 0.994–0.996 |
 
 - **No film group is deconvolved better than another**, so accuracy cannot drive a group
   difference in H1–H4.
@@ -405,7 +407,8 @@ a comparison with the literature, not a measure of accuracy (`data/own_resynth50
   Part 11), three independent checks agree: on fast and typical shapes, which most real
   participants have, the solver's decays run long. The real decays (median 3.4 s) are likely
   overestimated; reported as a limitation.
-- R115's first job ran out of memory while starting MATLAB's workers; it was resubmitted at 16 GB.
+- R115's first job ran out of memory while starting MATLAB's workers; it was resubmitted at 16 GB
+  and scored with the rest (the 49-session scores were the same to within 0.002 in F1).
 
 ## Part 11: the prior on τ
 
@@ -421,7 +424,7 @@ real 50, 47% of the frozen run's windows fall outside its ±2 SD (`data/decay_vs
 | Refit the prior to our own estimates on the real 50 (rise 1.17 ± 0.38, decay 3.38 ± 1.45 s; `data/prior_from_real50.csv`) | dropped | Circular: it feeds the solver's own biased outputs back into it |
 | A hierarchical (Bayesian) prior | dropped | Too much machinery for the question |
 | A prior measured on the waveforms with no model (`scr-shapes`) | dropped | Failed the check set before the run (below) |
-| **No prior, only the bounds** | **round 7** | Matches the generator, which draws shapes uniformly within physiological limits |
+| No prior, only the bounds | tested in round 7, not adopted | Matches the generator, which draws shapes uniformly within physiological limits; no better and less stable (below) |
 
 **The waveform measurement** (`src/eda/scr_shapes.py`). On every isolated SCR ≥ 0.05 µS: the time
 from the 50% point on the way up to the peak (half-rise) and from the peak to the 50% point on the
@@ -451,16 +454,32 @@ within ±10% and Spearman ≥ 0.8 across sessions with ≥ 5 SCRs. Recovery and 
   trap as the generator's calibration factors. Kept as a description only
   (`data/prior_measured50.csv`, `scr_shapes_real50.csv`, `scr_shapes_validation.csv`).
 
-### Round 7: no prior (1 setting, 18 jobs, pending)
+### Round 7: no prior (1 setting, 18 jobs)
 
-| Setting | Against |
-|---|---|
-| `own4_p1000_k14_f3_s8_free`: A with no prior on rise or decay, only the bounds | A (round 6, same 18 U sessions) |
+`own4_p1000_k14_f3_s8_free`: A with no prior on rise or decay, only the bounds, against A (round
+6) on the same 18 U sessions. The rule, set before the run: if the two score the same, the prior
+does not matter for detection and A stays; if one wins, it goes to V and the real 50 without
+further tuning.
 
-If the two score the same, the prior does not matter for detection, and A stays. If one wins, it
-goes to the 50 V test sessions and the real 50 without further tuning. Its generalisation is the
-justification: tuned on shapes drawn uniformly within physiological limits, it is not tied to one
-range of shapes.
+| Median | A (paper's prior, weak) | No prior |
+|---|---|---|
+| F1 visible, all 18 | **0.835** | 0.825 |
+| Recall / precision | 0.850 / 0.816 | 0.853 / 0.812 |
+| Amplitude rank correlation | **0.971** | 0.947 |
+| Decay error, all 18 | −0.8% | +6.3% |
+| Windows meeting the authors' rule | **1.00** | 0.83 |
+| Slow shapes: F1 / precision | **0.828 / 0.767** | 0.794 / 0.736 |
+| Slow shapes: decay error | −41% | −28% |
+| Slow shapes: windows meeting the rule | **0.83** | 0.36 |
+| Typical shapes: decay error | **−0.8%** | +10% |
+
+- **No prior is no better for detection** (F1 within 0.01 overall), and worse on what the prior
+  was there for: on slow shapes, two thirds of the windows lose the selection rule (τ rise at a
+  bound), as in round 4, and precision falls.
+- **The prior is not what makes the false pulses on slow recoveries.** Without it the slow decays
+  come out less short (−28% against −41%), but precision drops instead of recovering. What is left
+  is the tonic taking part of the long tails (Part 9, cause 2 and the knots).
+- **A stays.** Nothing changes for the V test sessions or the real 50, so nothing is re-run.
 
 ## Current status
 
@@ -473,30 +492,35 @@ precision 0.85.
 Limitations to report:
 
 1. Slow responses (half-recovery > 7 s): decay 37% short and precision 0.74, from false pulses
-   along their tails (Part 9).
-2. False pulses where the tonic rises faster than its knots allow.
-3. True rises under about 0.45 s overestimated, near what a 4 Hz signal resolves (round 3).
-4. The generator's limits (Part 8), and the real signals' fast symmetric transients it lacks
+   along their tails (Part 9). Not the prior's doing (round 7).
+2. On fast and typical shapes the decays run long instead (test +12% on fast, re-synthesis +26%,
+   waveforms ×1.19), so the real decays (median 3.4 s) are likely overestimated (Parts 10, 11).
+3. False pulses where the tonic rises faster than its knots allow.
+4. True rises under about 0.45 s overestimated, near what a 4 Hz signal resolves (round 3).
+5. The generator's limits (Part 8), and the real signals' fast symmetric transients it lacks
    (Part 11).
-5. Generator and solver share the same response model, which favours model-based methods in any
+6. Generator and solver share the same response model, which favours model-based methods in any
    comparison on synthetic data.
-6. The first round-6 run could not be scored (its truth was overwritten).
+7. The first round-6 run could not be scored (its truth was overwritten).
 
 ## Next steps
 
-1. **Round 7** (no prior against A) and its decision.
-2. **Score the re-synthesis** (Part 10).
-3. **Check that the real pulses make sense before stage 2**, blind to the hypotheses: plausible
+1. **Check that the real pulses make sense before stage 2**, blind to the hypotheses: plausible
    resting rates, pulses under the visible SCRs, none in flat stretches, sizes against the counted
    SCRs, plausible shapes per participant. The settings are frozen, so this cannot feed back into
-   tuning, and H1–H6 are not looked at.
-4. **Compare with other methods** under the same conditions (the V test sessions and the real 50,
+   tuning, and H1–H6 are not looked at. First thing to look at: the real pulse rate (`real-pulses`,
+   median 11.7 per minute, 4.9–19.3, 78% ≥ 0.05 µS) is about twice the counted baseline peaks
+   (≥ 0.02 µS, 5–7 per minute, `data/selection_measures.csv`). Precision on the test sessions
+   (0.85) does not explain a factor of two, so the comparison has to be like for like (same
+   threshold, same blocks, deconvolved pulses under one counted peak).
+2. **Compare with other methods** under the same conditions (the V test sessions and the real 50,
    same input, same scoring): cvxEDA and the authors' published solver (branch `black-box`), each
    at its published defaults or tuned the same way, stated. On real data only fit, sparsity and
    plausibility can be compared, since there is no truth.
-5. Stage 2 (impulses → arousal state) and hypotheses H1–H6, with a check at ≥ 0.05 µS. That code
-   is on `black-box` (`state.py`) and comes over then.
-6. Report and slides.
+3. Stage 2 (impulses → arousal state) and hypotheses H1–H6, with a check at ≥ 0.05 µS. Input:
+   `data/real50_pulses.csv`. The first stage-2 code is on `black-box` (`state.py`) and comes over
+   then.
+4. Report and slides.
 
 ## How to run a round
 

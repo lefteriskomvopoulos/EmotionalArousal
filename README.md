@@ -35,8 +35,10 @@ settings were tuned on our data.
 - **Known limits:** slow responses (half-recovery > 7 s) lose precision (0.74) and their decay
   comes out 37% short; on fast and typical shapes, which most real participants have, decays run
   long. The full list is in docs/EXPERIMENTS.md, Current status.
-- **Open:** round 7 (no prior against the frozen setting), re-synthesis session R115, a check that
-  the real pulses make sense before stage 2, a comparison with other methods, stage 2, H1–H6.
+- **Round 7** (no prior against the frozen setting): no better and less stable, so the frozen
+  setting stays. **Re-synthesis** (the papers' test), all 50: F1 0.86, the same in every film group.
+- **Open:** a check that the real pulses make sense before stage 2 (their rate is about twice the
+  counted peaks; docs/EXPERIMENTS.md, Next steps), a comparison with other methods, stage 2, H1–H6.
 
 ## Stage 2: the input
 

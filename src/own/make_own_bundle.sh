@@ -75,6 +75,10 @@ cp "$root"/src/own/*.m "$root/src/own/run_own.sbatch" "$b/"
 # decay (+13.9%; rise passed, -0.1%, Spearman .97), and 36% of real isolated SCRs recover as fast
 # as they rise, which no kernel shape fits.  Refining it until it passes would be tuning the
 # measurement to the check.  Kept as a description only (data/prior_measured50.csv).
+# Result (2026-11-13, median of the 18, against A): F1 visible .825 vs .835, precision .812 vs .816,
+# amplitude rank .947 vs .971, windows meeting the authors' rule .83 vs 1.00 (slow shapes .36 vs
+# .83); slow decay -28% vs -41% but slow precision .736 vs .767.  No better and less stable, as in
+# round 4: A stays, nothing re-run.  The prior is not what makes the false pulses on slow tails.
 base="'u_per_y',1,'lambda2_max_focuss',2e-3,'lambda2_max_gcv',2e-4,'lambda1_max',2e-4"
 base="${base},'knot_s',14,'prior_lambda',[0.0002;0.0002],'n_starts',8"
 
