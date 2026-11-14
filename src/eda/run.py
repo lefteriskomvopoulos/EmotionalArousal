@@ -120,6 +120,10 @@ Stage 2's input (runs.py)
                        in the repository).  Every pulse of the 50 real participants with its time,
                        size in uS, block and film valence; and every window's fit, ~1 min
                        -> data/real50_pulses.csv, data/real50_windows.csv
+    block-rates        needs real-pulses.  Descriptive pulse rates and sizes by block (baseline, neutral /
+                       negative / positive films) and film group, >= 0.05 uS and all; no test.  A
+                       first look at what H1-H3 are about, after stage 1 and the threshold were frozen
+                       -> data/real50_block_rates.csv
 """
 import sys
 
@@ -167,6 +171,7 @@ COMMANDS = {
     "scr-shapes": lambda pid: scr_shapes.run(),
     "pulse-check": lambda pid: scr_shapes.pulse_check(),
     "real-pulses": lambda pid: runs.export_pulses(),
+    "block-rates": lambda pid: runs.block_rates(),
 }
 
 

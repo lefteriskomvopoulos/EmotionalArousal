@@ -56,7 +56,9 @@ These were each learned the hard way (docs/EXPERIMENTS.md):
    as a description only, for this reason.
 6. **Selection uses the baseline only.** Film-period responding is the outcome of H1–H3.
 7. **Stage-2 checks of the pulses must be blind to the hypotheses**: plausibility, not whether
-   H1–H6 come out as hoped.
+   H1–H6 come out as hoped. A first descriptive look at the quantities H1–H3 are about (pulse
+   rates by block and film group, `block-rates`, no tests) was taken on 2026-11-14, after the solver,
+   the selection and the 0.05 µS threshold were frozen. Nothing in stage 1 may change after it.
 8. **Stage 2 counts pulses of at least 0.05 µS** (`height_uS` in `data/real50_pulses.csv`); all
    pulses of at least 0.02 µS are the secondary check. Fixed 2026-11-14 on accuracy alone, before
    H1–H6 were looked at: on the test sessions F1 0.96 against 0.82. Do not change it after seeing

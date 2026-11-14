@@ -268,3 +268,87 @@ def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
     print(f"height median {p.height_uS.median():.3f} uS, {(p.height_uS >= 0.05).mean():.0%} >= 0.05 uS")
     print("saved", PULSES_CSV.name, FITS_CSV.name)
     return p, f
+
+
+BLOCK_RATES_CSV = cfg.ROOT / "data" / "real50_block_rates.csv"
+BLOCK_KINDS = ("baseline", "neutral", "negative", "positive")
+
+
+def _block_kind(mk):
+    """Block code -> baseline / neutral (1xx) / negative (2xx) / positive (3xx) film / other."""
+    mk = np.asarray(mk, float)
+    out = np.full(len(mk), "other", dtype=object)
+    out[mk == -1] = "baseline"
+    for lo, kind in ((100, "neutral"), (200, "negative"), (300, "positive")):
+        out[(mk >= lo) & (mk < lo + 100)] = kind
+    return out
+
+
+def block_rates(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
+    """block-rates: descriptive pulse rates and sizes of the 50 real participants by block (baseline, and
+    neutral / negative / positive films), per film group.  A first descriptive look at the
+    quantities H1-H3 are about, taken on 2026-11-14 after the solver, the selection and stage 2's
+    threshold were frozen (docs/EXPERIMENTS.md): no test, and nothing in stage 1 changes after it.
+    Main: pulses >= 0.05 uS; secondary: all returned pulses (>= 0.02 uS).  Minutes per block from
+    each participant's final-run signals (4 Hz block codes).
+    -> data/real50_block_rates.csv (one row per participant and block)"""
+    from . import selection
+    sel = pd.read_csv(selection.SELECTION_CSV)
+    sel = sel[sel.selected.astype(bool)].sort_values("id")
+    pulses = pd.read_csv(PULSES_CSV)
+    rows = []
+    for r in sel.itertuples():
+        pid = int(r.id)
+        sig = pd.read_csv(root / f"P{pid}_{suffix}_signals.csv", usecols=["time_s", "marker"])
+        kind = _block_kind(sig.marker.to_numpy(float))
+        dt = float(np.median(np.diff(sig.time_s.to_numpy())))
+        p = pulses[pulses.id == pid]
+        k = np.clip(np.searchsorted(sig.time_s.to_numpy(), p.time_s.to_numpy()), 0, len(sig) - 1)
+        pk = kind[k]
+        h = p.height_uS.to_numpy()
+        big = h >= ts.SPLIT_uS
+        for b in BLOCK_KINDS:
+            minutes = (kind == b).sum() * dt / 60
+            if minutes <= 0:
+                continue
+            here = pk == b
+            n_all, n_05 = int(here.sum()), int((here & big).sum())
+            med = lambda v: float(np.median(v)) if len(v) else np.nan
+            rows.append({"id": pid, "group": r.group, "block": b, "minutes": minutes, "n_all": n_all,
+                         "n_05": n_05, "rate_all_pm": n_all / minutes, "rate_05_pm": n_05 / minutes,
+                         # size: the median pulse height, and the summed heights per minute (rate x size)
+                         "size_05_uS": med(h[here & big]), "size_all_uS": med(h[here]),
+                         "drive_05_uS_pm": h[here & big].sum() / minutes, "drive_all_uS_pm": h[here].sum() / minutes})
+    out = pd.DataFrame(rows)
+    out.to_csv(BLOCK_RATES_CSV, index=False)
+
+    f = lambda v: f"{v:.1f}"
+    for col, label in (("rate_05_pm", f">= {ts.SPLIT_uS} uS (main)"), ("rate_all_pm", "all, >= 0.02 uS (secondary)")):
+        t = out.pivot_table(index="group", columns="block", values=col, aggfunc="median")
+        t = t[[b for b in BLOCK_KINDS if b in t.columns]]
+        print(f"\npulses per minute, {label}: median over participants, by film group and block")
+        print(t.to_string(float_format=f))
+    n = out.pivot_table(index="group", columns="block", values="id", aggfunc="count").fillna(0).astype(int)
+    print("\nparticipants with each block:")
+    print(n[[b for b in BLOCK_KINDS if b in n.columns]].to_string())
+    m = out.pivot_table(index="group", columns="block", values="minutes", aggfunc="median")
+    print("\nminutes per block, median:")
+    print(m[[b for b in BLOCK_KINDS if b in m.columns]].to_string(float_format=f))
+    for col, label in (("size_05_uS", f"median pulse height, uS, pulses >= {ts.SPLIT_uS} uS"),
+                       ("drive_05_uS_pm", f"summed pulse heights per minute (rate x size), uS/min, pulses >= {ts.SPLIT_uS} uS")):
+        t = out.pivot_table(index="group", columns="block", values=col, aggfunc="median")
+        t = t[[b for b in BLOCK_KINDS if b in t.columns]]
+        print(f"\n{label}: median over participants, by film group and block")
+        print(t.to_string(float_format=lambda v: f"{v:.3f}" if col.startswith("size") else f"{v:.2f}"))
+    print(f"\nwithin participant, films (mean of their film kinds) / baseline, pulses >= {ts.SPLIT_uS} uS:"
+          " median by group")
+    ratios = {}
+    for col, name in (("rate_05_pm", "rate"), ("size_05_uS", "size"), ("drive_05_uS_pm", "rate x size")):
+        w = out.pivot_table(index=["id", "group"], columns="block", values=col)
+        films = [b for b in ("neutral", "negative", "positive") if b in w.columns]
+        ratios[name] = (w[films].mean(axis=1) / w["baseline"]).replace([np.inf, -np.inf], np.nan)
+    print(pd.DataFrame(ratios).groupby(level="group").median().to_string(float_format=lambda v: f"{v:.2f}"))
+    print("descriptive only: no test; block lengths, film order and habituation differ between blocks."
+          "  Size was added after rate was seen (2026-11-14), recorded in docs/EXPERIMENTS.md")
+    print("saved", BLOCK_RATES_CSV.name)
+    return out

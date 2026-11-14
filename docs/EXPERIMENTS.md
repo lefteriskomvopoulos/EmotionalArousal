@@ -552,6 +552,24 @@ passed, the next candidate was a penalty on the tonic's curvature (a P-spline, E
   is not run. Reported as a limit of separating tonic from phasic during dense slow responding,
   a regime rare in our real data (Parts 9 and 11: real fits and waveforms are mostly fast or
   typical).
+- **Why GCV leaves the tonic unpenalised:** the penalty λ1‖q‖² acts on the spline coefficients,
+  which are the tonic's level (about 1–3 µS). A 200 s window has only about 20 of them against 800
+  samples, so shrinking them barely reduces the tonic's effective parameters while any real λ1 pulls
+  the whole tonic toward zero. GCV therefore picks λ1 at the low end of its search; the knots alone
+  set the tonic's flexibility.
+
+**Other ways to treat the tonic, checked against the sources (2026-11-14), and why none is run:**
+
+| Method | Tonic | Why not tested here |
+|---|---|---|
+| cvxEDA (Greco et al. 2016; official code) | spline with knots every 10 s, plus an unpenalised offset and linear trend; ridge ½γ‖l‖² on the spline, γ = 0.01 fixed; joint with a sparse non-negative driver | inside a 200 s window within a dense slow stretch the offset rises for free, so it cannot see the floor either; compared as a whole method instead (Next steps) |
+| Ledalab CDA (Benedek & Kaernbach 2010) | from the deconvolved driver between detected impulses, averaged on a 10 s grid (100 s in their DDA), cubic-spline interpolated | anchors the floor on quiet moments minutes away, which fails when the tonic truly changes during a dense stretch; and our generator's true tonic is itself a low-percentile floor, so a floor-type estimator would be scored against a floor-type truth (partly circular) |
+| The Faghih group's earlier multichannel method (as described by Alam, Amin & Faghih 2023) | removed from each channel before deconvolution | same as above |
+| Amin & Faghih 2022 (PLOS Comput Biol) | a state of a three-state state-space model, no spline | a different solver, not a tonic option |
+| NeuroKit2 default (`eda_phasic`) | Butterworth low-pass at 0.05 Hz | filtering, no deconvolution |
+
+Benedek & Kaernbach note that responses have "a slowly recovering trail which may obscure any
+tonic SC activity": none of these methods can recover the floor where it is never visible.
 
 ## Part 12: are the real pulse counts plausible? (blind to the hypotheses)
 
@@ -597,6 +615,31 @@ same windows are counted too. Film groups and blocks are not looked at.
   small doublets on response rises. Reported as a limitation; stage 2's main threshold of 0.05 µS
   removes about half of it.
 
+**Further checks (2026-11-14):**
+
+- **Spacing.** Pulses closer than 1 s are pruned to the largest (`sep_s = 1`, the paper's rule,
+  in phase 1; phase 2 cannot add pulse positions). It holds: none of the 12,221 real pulses is
+  within 1 s of another. 26% of real pulses come 1–2 s after the previous one, against 13% on the
+  test sessions: that is where the doublets are. A 2 s rule would also merge true bursts 1–2 s
+  apart, and at 0.05 µS the excess is only +8%, so it is not pursued.
+- **Sparser is not more correct.** Sparser settings were tuned against the truth and lost: round 6
+  with the input halved (precision 0.88, recall 0.78, F1 0.815 against 0.835) and round 1's strict
+  sparsity limit (precision 1.00, recall 0.41). The frozen setting returns about as many pulses as
+  are true (2,292 against 2,235 on the U sessions; 1.24 against 1.23 per isolated response).
+- **Each person's pulse rate tracks their visible responding:** rank correlation with their counted
+  response rate 0.73 (all pulses), 0.67 (≥ 0.05 µS), over the 50.
+- **Other methods on the same data** (`black-box` branch tables): the authors' published solver on
+  the four participants both runs share returns 6.3–11.9 pulses per minute (ours 8.1–17.2; counted
+  responses 2.3–9.2), from 1.2 to 2.8× the counted rate (ours 1.7–3.5×). cvxEDA at its defaults on
+  eight other participants: 11.4 per minute at rest, median size 0.038 µS.
+- **No reference range exists for deconvolved pulses.** Published norms count responses, which merge
+  overlapping bursts. At rest our 50 show 4.6 counted responses ≥ 0.05 µS per minute (1.2–9.6;
+  `data/profile_study6_peaks.csv`), 1.5–4× the usual 1–3: an active sample, selected as clear
+  responders (median baseline response ≥ 0.05 µS). Their pulse rate at ≥ 0.05 µS is 10.1 per minute
+  at rest. What can be claimed: accurate where the truth is known, consistent with each person's
+  visible responding, and in line with other deconvolution methods; not "within the physiological
+  range" in the textbook sense.
+
 ## Current status
 
 **Frozen setting: `own4_p1000_k14_f3_s8`** (Part 9). 4 Hz input with a 1 Hz low-pass; prior weight
@@ -639,6 +682,27 @@ Limitations to report:
    0.96, recall 0.98, precision 0.96); all pulses ≥ 0.02 µS (F1 0.82) are the secondary check. Input:
    `data/real50_pulses.csv`. The first stage-2 code is on `black-box` (`state.py`) and comes over
    then.
+   **First descriptive look (2026-11-14):** pulse rates by block and film group (`block-rates`,
+   `data/real50_block_rates.csv`), taken after the solver, the selection and the threshold were
+   frozen, with no tests. Nothing in stage 1 changes after it; the stage-2 tests are set before
+   they are run.
+   What it showed (pulses ≥ 0.05 µS per minute, medians; baseline → own films; within-person
+   films / baseline): neutral group 10.8 → 9.2 (0.77), negative 10.4 → 10.1 (0.93), positive 12.3 →
+   12.3 (1.01), mixed 7.4 → negative 9.8 and positive 7.2 (1.21). Every block has pulses at
+   plausible rates. Groups already differ at baseline and the baseline comes first (responding
+   fades over a session), so stage 2 compares films with each person's own baseline.
+   Pulse size by block (median height, and summed heights per minute) was added to `block-rates`
+   after these rates had been seen, at the user's request: recorded here so that any use of size in
+   stage 2 is known to have been chosen after looking.
+   What it showed (pulses ≥ 0.05 µS, within-person films / baseline, medians; rate, size, rate ×
+   size): neutral 0.77, 1.01, 0.81; negative 0.93, 1.16, 1.14; positive 1.01, 0.99, 1.01; mixed
+   1.21, 1.09, 1.34. Size rises only where negative films are shown; films are above baseline in
+   rate × size only in the groups with negative films. Groups of 10, no tests.
+   The timeline (POPANE, Behnke et al. 2022): a 5-minute baseline, an unlabelled transition (median
+   150 s, 96–338 s; its content is not described in the paper, probably on-screen instructions),
+   then 12 minutes of film clips back to back (mixed group: 6 negative, 6 positive), then an
+   ultimatum game, which our segment excludes. The transition is left out of the block rates, and
+   it adds to the time between baseline and films.
 4. Report and slides.
 
 ## How to run a round
@@ -665,6 +729,9 @@ Before any code change: `own_test` in MATLAB (`addpath src/own; own_test`).
 | What | Where |
 |---|---|
 | **Stage 2's input:** every real pulse and window fit | `data/real50_pulses.csv`, `data/real50_windows.csv` (`real-pulses`) |
+| Plausibility of the real pulses (Part 12) | `data/pulse_check_isolated.csv` (`pulse-check`) |
+| First descriptive look at blocks and film groups | `data/real50_block_rates.csv` (`block-rates`) |
+| Per-session comparison of a round's settings | `data/round<k>_compare.csv`, `results/figures/round<k>_tonic.pdf` (`round-compare`) |
 | Code, one module per stage | README, Layout; every command in `src/eda/run.py` |
 | Scores of every tuning setting, per session (rounds 1–7) | `data/own_tune_scores.csv` |
 | Cluster output and logs, every round | `hpc/own/tune/output/<tag>/`, `hpc/own/tune/slurm-own-*.out`; unscorable first round-6 run: `hpc/own/tune_pre/` |
@@ -681,3 +748,16 @@ Before any code change: `own_test` in MATLAB (`addpath src/own; own_test`).
 | Input checks | `data/input_check.csv`, `data/input_check_own4.csv`, `data/filter_response.csv`, `data/preprocess_stages.csv`, `data/raw_overview.csv` |
 | Participant screen and profiles | `data/quality_study6.csv`, `data/profile_study6.csv`, `data/profile_study6_peaks.csv` |
 | Figures | `results/figures/stages_*.png`, `raw_atlas_*.png`, `filter_response.png` |
+
+## Sources checked (2026-11-14)
+
+- Amin & Faghih 2021, IEEE TBME 68(5):1726–1736, accepted manuscript: https://par.nsf.gov/servlets/purl/10220906
+- Alam, Amin & Faghih 2023, IEEE OJEMB: https://pmc.ncbi.nlm.nih.gov/articles/PMC10776104/
+- Amin & Faghih 2022, PLOS Comput Biol: https://pmc.ncbi.nlm.nih.gov/articles/PMC9333288/
+- Greco et al. 2016, cvxEDA, IEEE TBME 63(4):797–804; code: https://github.com/lciti/cvxEDA
+- Benedek & Kaernbach 2010, J Neurosci Methods 190:80–91: https://pmc.ncbi.nlm.nih.gov/articles/PMC2892750/
+- Benedek & Kaernbach 2010, Psychophysiology 47:647–658: https://pmc.ncbi.nlm.nih.gov/articles/PMC2904901/
+- NeuroKit2 `eda_phasic`: https://github.com/neuropsychology/NeuroKit/blob/master/neurokit2/eda/eda_phasic.py
+- Kurinec et al. 2022, Front Behav Neurosci (resting NS-SCR rate 1–3 per minute, citing Dawson et al. 2017): https://www.frontiersin.org/articles/10.3389/fnbeh.2022.885302/full
+- Gertler et al. 2020, NeuroImage (about 5, up to 10 per minute, citing Zimmer 2000; 6.7 per minute above 0.1 µS at rest): https://pmc.ncbi.nlm.nih.gov/articles/PMC7263940/
+- Behnke et al. 2022, Scientific Data 9:10 (POPANE, Study 6 procedure): https://pmc.ncbi.nlm.nih.gov/articles/PMC8776805/
