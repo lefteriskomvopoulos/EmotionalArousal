@@ -631,7 +631,8 @@ same windows are counted too. Film groups and blocks are not looked at.
 - **Other methods on the same data** (`black-box` branch tables): the authors' published solver on
   the four participants both runs share returns 6.3–11.9 pulses per minute (ours 8.1–17.2; counted
   responses 2.3–9.2), from 1.2 to 2.8× the counted rate (ours 1.7–3.5×). cvxEDA at its defaults on
-  eight other participants: 11.4 per minute at rest, median size 0.038 µS.
+  eight participants of the dataset (one, P12, among our 50): median 11.4 per minute at rest,
+  median size 0.038 µS.
 - **No reference range exists for deconvolved pulses.** Published norms count responses, which merge
   overlapping bursts. At rest our 50 show 4.6 counted responses ≥ 0.05 µS per minute (1.2–9.6;
   `data/profile_study6_peaks.csv`), 1.5–4× the usual 1–3: an active sample, selected as clear

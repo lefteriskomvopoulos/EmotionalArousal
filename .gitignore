@@ -6,6 +6,15 @@
 !/CLAUDE.md
 !/requirements.txt
 
+# The IEEE report (LaTeX for Overleaf): text, references, figures
+!/report/
+/report/*.aux
+/report/*.log
+/report/*.bbl
+/report/*.blg
+/report/*.out
+/report/*.synctex.gz
+
 # Code
 !/src/
 /src/tools/
