@@ -14,6 +14,8 @@
 /report/*.blg
 /report/*.out
 /report/*.synctex.gz
+/report/slides/equations/*.aux
+/report/slides/equations/*.log
 
 # Code
 !/src/

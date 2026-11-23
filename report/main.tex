@@ -113,7 +113,7 @@ required a median baseline SCR of at least 0.05\uS: below it most responses lie 
 \cite{boucsein2012}. It excluded 22 participants (10 negative, 5 neutral, 4 positive, 3 mixed).
 Stage~3 drew 20 neutral, 10 positive, 10 negative and 10 mixed participants at random, with a
 fixed seed, from the 97 who passed. The four groups did not differ at baseline in SC level, SCR
-rate, SCR size or noise (Kruskal--Wallis, all $p \ge 0.13$).
+rate, SCR size or noise (Kruskal--Wallis, all $p > 0.12$).
 
 %=====================================================================
 \section{Methods}
@@ -149,12 +149,15 @@ minimum-norm iteration
 $\mathbf{u}\leftarrow\mathbf{P}\mathbf{B}^{\top}(\mathbf{B}\mathbf{P}\mathbf{B}^{\top}
 +\lambda_2\mathbf{I})^{-1}\mathbf{r}$ on the current residual $\mathbf{r}$, with
 $\mathbf{P}=\mathrm{diag}(|\mathbf{u}|^{2-p})$ and negative entries set to zero, which drives
-small impulses to exactly zero; impulses closer than 1\,s are pruned to the largest, and at most
+small impulses to exactly zero. In this phase $\lambda_1=0$ and
+$\lambda_2=(1-\|\mathbf{r}-\mathbf{B}\mathbf{u}\|/\|\mathbf{r}\|)\,\lambda_{\max}$ grows as the
+fit improves, up to a cap $\lambda_{\max}$ that the paper does not give; impulses closer than 1\,s are pruned to the largest, and at most
 the number of SCR peaks plus 20 are kept. Then $\boldsymbol{\tau}$ and $\mathbf{y}_0$ are updated
 by an interior-point method, and $\mathbf{q}$ by least squares under the tonic constraint.
 Phase~2 repeats the cycle until nothing changes, with GCV-FOCUSS+: the same update, but with
-$\lambda_2$ chosen at every iteration by generalized cross-validation \cite{golub1979} and
-impulses whose response would peak below 0.02\uS{} removed; $\lambda_1$ is also chosen by GCV.
+$\lambda_2$ chosen at every iteration by generalized cross-validation \cite{golub1979} below a
+fixed cap and impulses whose response would peak below 0.02\uS{} removed; $\lambda_1$ is also
+chosen by GCV, below its own cap.
 Windows are 200\,s long and start every 100\,s. Each is solved from 8 random starts; the converged
 start with the lowest residual whose $\tau_r$ lies off its bounds is kept, and the middle halves
 of the windows are joined. Each impulse's height in $\mu$S is its amplitude times the peak of its
@@ -181,9 +184,9 @@ $\tau_r$, $\tau_d$ upper bounds & 1.5, 6\,s & 2, 14\,s & Physiological SCR range
 $\tau_d \ge 1.1\,\tau_r$ & -- & added & Keeps the kernel defined \\
 Input model & impulse & zero-order hold & Matches the published solver \\
 Knot spacing & 6\,s & 14\,s & Rounds 1, 5, 8 \\
-Prior weight $\lambda_3$ & 0.1 & $2\cdot10^{-4}$ & Rounds 1, 4 \\
+Prior weight $\lambda_3$ & 0.1 & $2\cdot10^{-4}$ & Rounds 1, 4; doubled at 4\,Hz \\
 Sparsity exponent $p$ & open & 0.5 & Code of \cite{faghih2014} \\
-Phase-1 limit on $\lambda_2$ & -- & $2\cdot10^{-3}$ & Round 2 \\
+Phase-1 cap $\lambda_{\max}$ on $\lambda_2$ & -- & $2\cdot10^{-3}$ & Round 2; doubled at 4\,Hz \\
 GCV caps on $\lambda_2$, $\lambda_1$ & $10^{-4}$ & $2\cdot10^{-4}$ & Doubled at 4\,Hz \\
 Impulse cutoff & 3 (in $u$) & 0.02\uS{} height & Same meaning at any $\tau$ \\
 Scaling of $\mathbf{y}$ & -- & none ($\mu$S) & Round 6 \\
@@ -269,11 +272,11 @@ participant's own baseline.
 
 \subsection{Sequence of Experiments}
 Each round answered a question raised by the one before it (Table~\ref{tab:rounds}). Round~1
-varied the two settings the published solver had kept fixed, the prior's weight and the knot
+varied the two settings the published solver had kept fixed, the prior's weight $\lambda_3$ and the knot
 spacing: knots every 14\,s kept the tonic from absorbing slow responses, but every setting found
 only about half of the pulses. The cause was in the code: FOCUSS+ never restores a zeroed impulse,
-so phase~1 bounds what phase~2 can find, and the phase-1 sparsity limit, which the paper does not
-state, was too strict. Lowering it tenfold (round~2) recovered the missing pulses; lowering it
+so phase~1 bounds what phase~2 can find, and the phase-1 cap $\lambda_{\max}$ on the sparsity
+weight $\lambda_2$, which the paper does not state, was too strict. Lowering it tenfold (round~2) recovered the missing pulses; lowering it
 further admitted false ones. The fitted rises then showed a floor near 0.6\,s, consistent with the
 0.5\,Hz filter smearing each response, which the new input of Section~\ref{sec:prep} removed
 (round~3). The decays, however, were still pulled toward the prior's mean, so round~4 weakened the
@@ -281,13 +284,13 @@ prior to 1000 times below the paper's weight; removing it entirely made the fits
 Round~5 confirmed that the knot spacing did not explain the remaining decay errors.
 
 The setting frozen after round~5 kept its accuracy on test sessions from the early generator, but
-on real data GCV's sparsity weight sat at its limit in most windows (91\%, against 38\% in
+on real data the $\lambda_2$ chosen by GCV sat at its cap in most windows (91\%, against 38\% in
 tuning): the synthetic signals were not on the real signals' scale, so settings tuned on them could
 not be defended. This motivated the participant-matched generator (Section~\ref{sec:synth}) and
 round~6 on its sessions, which asked whether scale should be controlled. Normalizing each session
 lowered accuracy, since the noise is roughly constant in $\mu$S and scaling small responders up
-amplifies it; halving or doubling the input only traded recall against precision; and relaxing
-GCV's limit changed nothing. The solver therefore runs in $\mu$S with the paper's 8 random starts,
+amplifies it; halving or doubling the input only traded recall against precision; and raising
+GCV's cap on $\lambda_2$ tenfold changed nothing. The solver therefore runs in $\mu$S with the paper's 8 random starts,
 and was frozen and evaluated once (Section~\ref{sec:test}). Rounds~7 and~8 then asked whether the
 prior or the tonic causes the remaining errors on slow responses (Section~\ref{sec:errors}).
 
@@ -300,14 +303,14 @@ prior or the tonic causes the remaining errors on slow responses (Section~\ref{s
 \toprule
 Round & Change & Result & Decision \\
 \midrule
-1 & Prior weight (3 levels) $\times$ knots (6, 14\,s) & 14\,s best (F1 0.60 vs 0.47); recall only 0.41 & Knots 14\,s; find the missing pulses \\
-2 & Phase-1 limit $10^{-2}\to10^{-3}$, $10^{-4}$ & F1 0.58 $\to$ 0.81; at $10^{-4}$ precision 0.74 & Limit $10^{-3}$ \\
+1 & Prior weight $\lambda_3$ (3 levels) $\times$ knots (6, 14\,s) & 14\,s best (F1 0.60 vs 0.47); recall only 0.41 & Knots 14\,s; find the missing pulses \\
+2 & Phase-1 cap $\lambda_{\max}$ on $\lambda_2$: $10^{-2}\to10^{-3}$, $10^{-4}$ & F1 0.58 $\to$ 0.81; at $10^{-4}$ precision 0.74 & $\lambda_{\max}=10^{-3}$ ($2\cdot10^{-3}$ at 4\,Hz) \\
 3 & Input 0.5\,Hz / 2\,Hz $\to$ 1\,Hz / 4\,Hz & F1 0.81 $\to$ 0.85; rise floor 0.6 $\to$ 0.5\,s & 1\,Hz / 4\,Hz input \\
-4 & Prior 10$\times$ weaker; no prior & F1 0.84; slowest-shape decay error $-23\% \to -4\%$; no prior unstable & Prior weight $10^{-4}$ ($2\cdot10^{-4}$ at 4\,Hz) \\
+4 & $\lambda_3$ 10$\times$ lower; no prior ($\lambda_3=0$) & F1 0.84; slowest-shape decay error $-23\% \to -4\%$; no prior unstable & $\lambda_3=10^{-4}$ ($2\cdot10^{-4}$ at 4\,Hz) \\
 5 & Knots 10, 20\,s & No difference (F1 0.89--0.90) & 14\,s; frozen for the first real run \\
 \midrule
-6 & Normalization; input $\times0.5$, $\times2$; GCV cap $\times10$; 8 starts & 0.835 (normalized 0.792; $\times0.5$ 0.815; $\times2$ 0.784; cap 0.827) & $\mu$S, 8 starts; frozen \\
-7 & No prior & 0.825; fewer windows meet the selection rule & Weak prior kept \\
+6 & Normalization; input $\times0.5$, $\times2$; GCV cap on $\lambda_2$ $\times10$; 8 starts & 0.835 (normalized 0.792; $\times0.5$ 0.815; $\times2$ 0.784; cap 0.827) & $\mu$S, 8 starts; frozen \\
+7 & No prior ($\lambda_3=0$) & 0.825; fewer windows meet the selection rule & Weak prior kept \\
 8 & Knots 20, 28\,s & 0.803, 0.794; more false pulses & 14\,s kept \\
 \bottomrule
 \multicolumn{4}{@{}p{16.9cm}@{}}{\scriptsize Rounds 1--5 on the earlier generator's sessions, 6--8 on the
