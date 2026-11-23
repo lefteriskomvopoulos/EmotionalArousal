@@ -1,4 +1,4 @@
-# Decoding sympathetic arousal from skin conductance — branch `own`
+# Decoding sympathetic arousal from skin conductance — branch `deconvolution`
 
 Course project for BE-GY 9603 / ECE-GY 9153 A, Neural and Physiological Signal Processing.
 Komvopoulos Eleftherios (ek4538) and Piyush More (pm4081).
@@ -18,8 +18,8 @@ Stage 1 is done and frozen on this branch. Stage 2 starts from one table (below)
 
 | Branch | What it holds |
 |---|---|
-| `black-box` | Everything up to and including the published Amin & Faghih (2021) solver, run unmodified (encrypted MATLAB), and the first stage-2 code (`state.py`). Frozen. |
-| `own` (this one) | **Our own implementation** of the same algorithm, with every setting under our control, tuned on synthetic sessions with a known truth, then run on the real participants. Runs without anything from `black-box`. |
+| `paper_solver` | Everything up to and including the published Amin & Faghih (2021) solver, run unmodified (encrypted MATLAB), and the first stage-2 code (`state.py`). Frozen. |
+| `deconvolution` (this one) | **Our own implementation** of the same algorithm, with every setting under our control, tuned on synthetic sessions with a known truth, then run on the real participants. Runs without anything from `paper_solver`. |
 
 We wrote our own implementation because the black box's settings could not be changed: its
 response shape always stayed at its built-in prior. The algorithm is the published one; its

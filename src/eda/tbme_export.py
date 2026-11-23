@@ -18,7 +18,7 @@ Ours, stated for the report:
     because the solver has no notion of a gap.
   - a recording that goes below 0 uS (a POPANE amplifier offset) is shifted up by a constant
     so its minimum is 0: on synthetic sessions negative signals made tau jump between its
-    bounds window to window, and the shift removed that (shift test, black-box branch).  Logged
+    bounds window to window, and the shift removed that (shift test, paper_solver branch).  Logged
     in data/tbme_input_shifts.csv.
 """
 import numpy as np

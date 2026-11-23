@@ -9,7 +9,7 @@ function own_run(name, algorithm, varargin)
 % Input   input/<name>.mat (fs, y, t, marker), written by src/eda/tbme_export.save
 % Output  output/<tag>/<name>.mat, _events.csv, _windows.csv, _signals.csv, scored by
 %         src/eda/tbme_score.py.  The columns are those of the black box's run script
-%         (black-box branch), so the two can be compared directly.
+%         (paper_solver branch), so the two can be compared directly.
 %
 % Selection and joining as in that script: lowest residual among converged starts with tau_rise
 % off its limits, falling back (flagged) when no start qualifies, and half the overlap dropped

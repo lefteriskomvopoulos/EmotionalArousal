@@ -1,5 +1,5 @@
 """
-POPANE Study 6 — decoding sympathetic arousal from skin conductance.  Branch `own`.
+POPANE Study 6 — decoding sympathetic arousal from skin conductance.  Branch `deconvolution`.
 
 Skin conductance -> impulses with our own implementation of Amin & Faghih (IEEE TBME 2021)
 (src/own/, MATLAB), tuned on synthetic sessions with a known truth.  This package prepares its

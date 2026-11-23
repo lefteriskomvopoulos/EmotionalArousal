@@ -1,4 +1,4 @@
-# Experiment log — branch `own`
+# Experiment log — branch `deconvolution`
 
 What we built, how we tested it, what each step showed, and what we decided, in the order it
 happened. Each step answers a question the previous one raised. Read it top to bottom. Every
@@ -7,7 +7,7 @@ unless another file is named.
 
 ## The short version
 
-1. The published solver (branch `black-box`) could not be tuned: its τ always stayed at its
+1. The published solver (branch `paper_solver`) could not be tuned: its τ always stayed at its
    built-in prior. So we **implemented the same algorithm ourselves** (Amin & Faghih, IEEE TBME
    2021), and checked it against the black box: same model, same output.
 2. We rebuilt the **preprocessing** as one chain in one order, following the papers, and made the
@@ -55,7 +55,7 @@ methods, then stage 2 and H1–H6.
 
 ## Part 1: why our own implementation
 
-On the `black-box` branch the authors' encrypted solver passed our synthetic test, but its τ never
+On the `paper_solver` branch the authors' encrypted solver passed our synthetic test, but its τ never
 left the prior (0.65 / 2.77 s) whatever the true τ was. When the truth was far from the prior, about
 46% of each response leaked into the tonic. Its prior strength, timing and limits are inside the
 encrypted code, so none of this could be changed. Every workaround (measuring τ per person, a shared
@@ -628,7 +628,7 @@ same windows are counted too. Film groups and blocks are not looked at.
   are true (2,292 against 2,235 on the U sessions; 1.24 against 1.23 per isolated response).
 - **Each person's pulse rate tracks their visible responding:** rank correlation with their counted
   response rate 0.73 (all pulses), 0.67 (≥ 0.05 µS), over the 50.
-- **Other methods on the same data** (`black-box` branch tables): the authors' published solver on
+- **Other methods on the same data** (`paper_solver` branch tables): the authors' published solver on
   the four participants both runs share returns 6.3–11.9 pulses per minute (ours 8.1–17.2; counted
   responses 2.3–9.2), from 1.2 to 2.8× the counted rate (ours 1.7–3.5×). cvxEDA at its defaults on
   eight participants of the dataset (one, P12, among our 50): median 11.4 per minute at rest,
@@ -675,13 +675,13 @@ Limitations to report:
    plausible shapes per participant. The settings are frozen, so this cannot feed back into
    tuning, and H1–H6 are not looked at.
 2. **Compare with other methods** under the same conditions (the V test sessions and the real 50,
-   same input, same scoring): cvxEDA and the authors' published solver (branch `black-box`), each
+   same input, same scoring): cvxEDA and the authors' published solver (branch `paper_solver`), each
    at its published defaults or tuned the same way, stated. On real data only fit, sparsity and
    plausibility can be compared, since there is no truth.
 3. Stage 2 (impulses → arousal state) and hypotheses H1–H6. **Threshold, fixed 2026-11-14 before
    H1–H6 were looked at, on accuracy alone:** the main analysis counts pulses ≥ 0.05 µS (test F1
    0.96, recall 0.98, precision 0.96); all pulses ≥ 0.02 µS (F1 0.82) are the secondary check. Input:
-   `data/real50_pulses.csv`. The first stage-2 code is on `black-box` (`state.py`) and comes over
+   `data/real50_pulses.csv`. The first stage-2 code is on `paper_solver` (`state.py`) and comes over
    then.
    **First descriptive look (2026-11-14):** pulse rates by block and film group (`block-rates`,
    `data/real50_block_rates.csv`), taken after the solver, the selection and the threshold were

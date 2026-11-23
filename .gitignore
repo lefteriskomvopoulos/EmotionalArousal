@@ -1,4 +1,4 @@
-# Branch `own`.  Allow-list: only what is named here is shared.  Everything else stays local.
+# Branch `deconvolution`.  Allow-list: only what is named here is shared.  Everything else stays local.
 /*
 !/.gitignore
 !/README.md

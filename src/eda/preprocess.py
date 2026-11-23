@@ -15,7 +15,7 @@ sampling frequency", with the single down-sampling last.
   6 down-sample    to 2 Hz: the only rate change.  Step 4 leaves nothing above 1 Hz to fold back
   7 shift          a constant, only if the 2 Hz signal goes below 0
 
-Why this order, against the first version (paper_preprocess, black-box branch):
+Why this order, against the first version (paper_preprocess, paper_solver branch):
   - the first version dropped to 100 Hz with no filter before everything else, so content above
     50 Hz folded back and jumps were looked for on a thinned signal.  Now there is no such step.
   - it cut the segment before filtering, so the filter's edges fell on the data and were padded
@@ -219,7 +219,7 @@ def real_session(pid):
     p = prepare(x, t, RAW_FS, (i0, i1))
     first = {"label": "1 raw 1000 Hz", "t": t, "x": x, "change": None, "seg": (t[i0], t[i1]),
              "note": f"{len(x) / RAW_FS / 60:.1f} min, grey = kept ({(i1 - i0) / RAW_FS / 60:.1f} min)"}
-    first_version = tx.OUT / f"P{pid}_pp.mat"    # written on the black-box branch (paper-export)
+    first_version = tx.OUT / f"P{pid}_pp.mat"    # written on the paper_solver branch (paper-export)
     old = None
     if first_version.exists():                   # compared only where that file is present
         m = loadmat(first_version)
