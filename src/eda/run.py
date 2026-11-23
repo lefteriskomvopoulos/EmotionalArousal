@@ -20,6 +20,8 @@ The solver's input (preprocess.py)
                        -> results/figures/raw_atlas_*.png, data/raw_overview.csv
     preprocess-stages  every preprocessing step, 5 real + 5 tuning sessions, ~2 min
                        -> results/figures/stages_*.png, data/preprocess_stages.csv
+    preprocess-stages-own4  the same figure for P53 through the final chain (1 Hz low-pass, 4 Hz), ~1 min
+                       -> results/figures/stages_P53_own4.png
     own-check          all 119 through prepare: roughness, jumps, gaps + the filter's response, ~8 min
                        -> data/input_check.csv, data/filter_response.csv, results/figures/filter_response.png
 
@@ -144,6 +146,7 @@ COMMANDS = {
     "synth": lambda pid: tbme_synth.run(),
     "raw-atlas": lambda pid: preprocess.atlas(),
     "preprocess-stages": lambda pid: preprocess.stages(),
+    "preprocess-stages-own4": lambda pid: preprocess.stages_variant(),
     "own-check": lambda pid: preprocess.check_inputs(),
     "own-export": lambda pid: synth_v1.export(),
     "own4-export": lambda pid: synth_v1.export(suffix="own4"),

@@ -54,7 +54,7 @@ def preprocess_stages(item, name):
     bottom = fig.add_subplot(grid[-1, :])
     bottom.plot(z["t"], z["before"], lw=.7, color=cfg.COLOR_SIGNAL, label="before the low-pass (100 Hz)")
     bottom.plot(z["t"], z["low"], lw=1.4, color=cfg.COLOR_TONIC, label="after the low-pass")
-    bottom.plot(z["t2"], z["y2"], "o", ms=4, color=cfg.COLOR_EVENTS, label="2 Hz samples the solver gets")
+    bottom.plot(z["t2"], z["y2"], "o", ms=4, color=cfg.COLOR_EVENTS, label=f"{item.get('fsy', 2):g} Hz samples the solver gets")
     bottom.set_title("zoom: 60 s around the steepest rise", loc="left", fontsize=10)
     bottom.set_xlabel("time (s)")
     bottom.set_ylabel("µS", fontsize=8)

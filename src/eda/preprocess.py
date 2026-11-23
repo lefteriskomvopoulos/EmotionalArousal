@@ -181,7 +181,7 @@ def check_inputs():
     return out
 
 
-def picture(name, x, t, fs, p, first_row, old):
+def picture(name, x, t, fs, p, first_row, old, cutoff=FIR_CUTOFF_HZ, fsy=FSY):
     """The figure's rows and the table's rows for one session."""
     k, i0, i1 = int(5 * fs), p["idx"][0], p["idx"][-1]
     kept = p["low"][i0:i1]
@@ -194,16 +194,16 @@ def picture(name, x, t, fs, p, first_row, old):
              "note": f"{int(p['gaps'].sum())} samples filled ({100 * p['gaps'].mean():.2f}%)"},
             {"label": "3 jumps removed", "t": t, "x": p["clean"], "change": jump,
              "note": f"{p['n_jumps']} jumps, {int((jump != 0).sum())} samples replaced"},
-            {"label": "4 low-pass 0.5 Hz", "t": t, "x": p["low"], "change": low,
+            {"label": f"4 low-pass {cutoff:g} Hz", "t": t, "x": p["low"], "change": low,
              "note": f"removed: rms {rms(low):.4f} µS, largest {np.abs(low).max():.3f} µS"},
-            {"label": "5-7 cut, 2 Hz, shift", "t": p["t2"], "x": p["y"], "t_change": p["t2"],
+            {"label": f"5-7 cut, {fsy:g} Hz, shift", "t": p["t2"], "x": p["y"], "t_change": p["t2"],
              "change": None if old is None else p["y"] - old,
              "note": f"{len(p['y'])} samples, shift +{p['shift']:.3f} µS"
                      + ("" if old is None else f"; this minus the first version: rms {rms(p['y'] - old):.4f} µS")}]
     z = {"t": t[a:b], "before": p["clean"][a:b], "low": p["low"][a:b], "t2": p["t2"][keep],
          "y2": p["y"][keep] - p["shift"]}
     table = {"session": name, "rate_hz": fs, "minutes_recorded": len(x) / fs / 60,
-             "minutes_kept": len(p["y"]) / FSY / 60, "margin_before_s": p["t2"][0] - t[0],
+             "minutes_kept": len(p["y"]) / fsy / 60, "margin_before_s": p["t2"][0] - t[0],
              "margin_after_s": t[-1] - p["t2"][-1], "gap_samples": int(p["gaps"].sum()), "jumps": p["n_jumps"],
              "lowpass_rms_uS": rms(low), "lowpass_max_uS": float(np.abs(low).max()), "shift_uS": p["shift"],
              "input_min_uS": p["y"].min(), "input_max_uS": p["y"].max(), "noise_2hz_uS": noise_2hz(p["y"]),
@@ -310,3 +310,20 @@ def atlas():
     print("below 0 uS somewhere:", int((out.min_uS < 0).sum()), "of", len(out))
     print("saved", OVERVIEW_CSV.name)
     return out
+
+
+def stages_variant(pid=53, suffix="own4"):
+    """preprocess-stages-own4: the stage figure of one real participant through a variant's chain
+    (own4: 1 Hz low-pass, 4 Hz, the solver's input from round 3 on).  Written next to the original
+    figures under its own name, so those stay as they are.
+    -> results/figures/stages_P<pid>_<suffix>.png"""
+    cutoff, fsy = VARIANTS[suffix]
+    d = load(pid, every=1)
+    x, t = d["eda"], d["t"]
+    i0, i1 = segment_of(d["marker"])
+    p = prepare(x, t, RAW_FS, (i0, i1), cutoff, fsy)
+    first = {"label": "1 raw 1000 Hz", "t": t, "x": x, "change": None, "seg": (t[i0], t[i1]),
+             "note": f"{len(x) / RAW_FS / 60:.1f} min, grey = kept ({(i1 - i0) / RAW_FS / 60:.1f} min)"}
+    item, _ = picture(f"P{pid}", x, t, RAW_FS, p, first, None, cutoff, fsy)
+    item["fsy"] = fsy
+    figures.preprocess_stages(item, f"stages_P{pid}_{suffix}.png")
