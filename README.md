@@ -41,8 +41,17 @@ settings were tuned on our data.
   pulses, no better on slow responses, so the frozen setting stays. **Re-synthesis** (the papers'
   test), all 50: F1 0.86, the same in every film group.
 - **Real pulse counts are plausible** for a deconvolution, about 20% high (small doublets on response
-  rises; docs/EXPERIMENTS.md Part 12). **Open:** the rest of the plausibility check (flat stretches,
-  sizes, shapes), a comparison with other methods, stage 2, H1–H6.
+  rises; docs/EXPERIMENTS.md Part 12).
+- **Stage 2 and H1–H6 done** (docs/EXPERIMENTS.md Parts 13–14). The Data Challenge 2 filters were
+  validated on synthetic sessions, then run on the 50. The tests were set in writing first, then
+  run once.
+  - **H2 supported.**
+  - **H1, H3 and H4 not supported.** Within the mixed group, negative and positive films are
+    equivalent.
+  - **H5:** no evidence of separation.
+  - **H6:** not tested; it needs the raw files.
+- **Open:** the rest of the plausibility check (flat stretches, sizes, shapes), a comparison with
+  other methods, and H6.
 
 ## Stage 2: the input
 
@@ -69,6 +78,16 @@ the raw recordings (`eda.dataset.load`).
 ```
 docs/EXPERIMENTS.md          the story, every number's source, current status, next steps
 docs/dataset_check/          first look at POPANE, and the metadata the quality screen reads
+src/stage2/                  STAGE 2: PULSES -> AROUSAL STATE (MATLAB; docs/EXPERIMENTS.md Part 13)
+  s2_filter_mpp.m, s2_filter_bin.m   the Data Challenge 2 filters, arithmetic unchanged
+  s2_test_dc.m               reproduces the Data Challenge's saved results (needs its folder)
+  s2_observations.m          one participant's 1 s bins: pulse, log height, block code
+  s2_synth.m                 validation on 400 synthetic sessions -> data/stage2_synth_scores.csv
+  s2_run.m                   the 50 -> data/stage2_params.csv, data/stage2_states_00{5,2}.csv
+  s2_plot.m                  one participant's figure -> results/figures/stage2_state_P<id>.png
+  s2_plot_all.m              all 50, one page each -> results/figures/stage2_states_real50.pdf
+  s2_tests.m                 H1-H6 as set in Part 14 -> data/stage2_tests.csv,
+                             data/stage2_block_summary.csv, results/figures/stage2_hypotheses.png
 src/own/                     OUR DECONVOLUTION (MATLAB)
   own_config.m               every setting, with where it comes from (paper, DC code, ours)
   own_run.m                  one session: 200 s windows every 100 s, random starts, selection

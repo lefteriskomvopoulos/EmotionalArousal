@@ -34,8 +34,20 @@ unless another file is named.
    responding, where the true floor is never seen, so no spline setting fixes it; the frozen
    setting stays and it is reported as a limit.
 
-Still to come: a check that the real pulses make sense before stage 2, a comparison with other
-methods, then stage 2 and H1–H6.
+11. **Stage 2** (Part 13): the Data Challenge 2 filters, validated on 400 synthetic sessions (one
+   criterion rescored after the result, flagged), run on the 50.
+12. **H1–H6** (Part 14), set in writing first and then run once.
+    - **H2 supported:** emotional films are above neutral, mostly because neutral films fall below
+      baseline.
+    - **H1 not supported.**
+    - **H3 not supported:** the negative group is not above neutral. Within the mixed group,
+      negative and positive films are equivalent.
+    - **H4 not supported.**
+    - **H5:** no evidence of separation.
+    - **H6:** not tested (raw data absent).
+
+Still to come: the rest of the check that the real pulses make sense, a comparison with other
+methods, H6 if the raw files are obtained, and the report.
 
 ## Terms
 
@@ -640,6 +652,276 @@ same windows are counted too. Film groups and blocks are not looked at.
   visible responding, and in line with other deconvolution methods; not "within the physiological
   range" in the textbook sense.
 
+## Part 13: stage 2, the state estimator (`src/stage2/`)
+
+**The filters.** Stage 2 uses the state-space filters of the course's Data Challenge 2 (Piyush's
+submission): `filter_one_mpp.m` (marked point process: pulse occurrence and size, Wickramasuriya &
+Faghih, IEEE Access 2020) and `filter_one_bin.m` (pulse occurrence only). They are copied into
+`s2_filter_mpp.m` and `s2_filter_bin.m` with the arithmetic unchanged: only the interface changed
+(n and r passed separately, silent, a stop reason returned, the p_k confidence limits left out).
+`s2_test_dc` runs both on the Data Challenge's own subjects with its starting values and
+reproduces its saved results exactly (Subjects 1, 2, 8, 10; difference 0 in state, variance and
+parameters, including Subject 2's MPP stop on r1 ≤ 0). These filters replace `state.py` on
+`black-box`, whose fixed size noise and capped slope the proposal named as unvalidated.
+
+**The input** (`s2_observations`): pulses ≥ 0.05 µS (rule 8) in 1 s bins over the whole segment
+(baseline, transition, films), size r = log(height in µS) as in the proposal. Chosen on structure
+alone, before any state was computed: the solver keeps pulses ≥ 1 s apart, so a 1 s bin holds at
+most one pulse, where 5 s bins (the proposal) dropped a pulse in 37% of occupied bins. Two
+exceptions to the 1 s spacing were found, contradicting Part 12's "none within 1 s": P60 at
+1042.1 s and P80 at 376.0 s, pairs 0.25 s apart (one 4 Hz sample) in the same window. Adjacent
+samples are one burst (proposal), so each pair is merged into one pulse with the summed height.
+The 50: 1,116–1,357 bins each, 9,509 pulses, median 0.157 pulses per second, log height mean −1.86,
+SD 0.74 (pooled over all blocks and participants).
+
+**Starting values** (MPP): the rules of Data Challenge Problem 3F, from the data rather than the
+cortisol-scale constants: r0 = mean(r), r1 = std(r), vr = var(r)/2 over the pulse bins,
+ve = 5·10⁻³. Binary: ve = 0.05 as in the Data Challenge.
+
+**Which filter (fixed before any real state was computed).** The MPP filter is the main one. When
+it stops without converging (r1 ≤ 0, i.e. pulse sizes do not rise with the state, or the
+iteration limit), that participant's state comes from the binary filter, as in Data Challenge
+Subjects 2 and 8. The binary filter is also run on everyone as the timing-only check.
+
+**Synthetic validation** (`s2_synth`; set before it was run). Each session copies one of the 50
+real layouts (bin count and block codes only, no pulses). True state: 0 in the baseline and
+transition; each film clip at Δ + c, c ~ N(0, 0.2²); plus a random walk with variance 2·10⁻⁴ per
+second. Pulses from P(n=1) = 1/(1+exp(−(b0 + x))), b0 = logit(0.157); sizes r = −1.86 + r1·x +
+N(0, 0.5). Δ ∈ {−0.5, 0, 0.5, 1.0} (logit units; 1.0 roughly doubles the pulse rate),
+r1 ∈ {0, 0.5}: r1 = 0 is the Data Challenge's failure case, sizes that carry no state. 50 layouts ×
+8 conditions = 400 sessions, fixed seeds. The contrast scored is the one H1–H4 use:
+Δ̂ = mean state over film bins − mean over baseline bins, against the same on the true state.
+
+Pass criteria, for the filter chosen by the rule above:
+
+| | Criterion | Pass |
+|---|---|---|
+| C1 | Contrast recovery over all 400 sessions | r(Δ̂, Δ_true) ≥ 0.8 and slope 0.7–1.3 |
+| C2 | Bias in the contrast, in each Δ level | |mean(Δ̂ − Δ_true)| ≤ 0.1 |
+| C3 | Coverage of the true state by the 95% band | median over sessions 0.85–0.99 |
+| C4 | Chosen filter converged | ≥ 95% of sessions |
+| C5 | MPP usable when sizes do carry the state (r1 = 0.5) | MPP converges in ≥ 80% |
+
+If C1–C4 pass, the 50 real participants are run with the rule above. If any fails, the real
+participants are not run: the failure is recorded here and one change is made and tested.
+
+**Result** (`data/stage2_synth_scores.csv`, 2026-11-16):
+
+| | Result | |
+|---|---|---|
+| C1 | r(Δ̂, Δ_true) 0.963, slope 0.949 | pass |
+| C2 | bias by Δ (−0.5, 0, 0.5, 1.0): +0.032, +0.030, +0.001, −0.029 | pass |
+| C3 | coverage median 0.842 | **fail** |
+| C4 | converged 1.000 (MPP 286, binary fallback 114) | pass |
+| C5 | MPP converged at r1 = 0.5: 0.915 | pass |
+
+- **The contrast H1–H4 test is recovered** by either filter: r 0.96–0.97, bias within ±0.03.
+- **The MPP filter stops when sizes carry no state** (r1 = 0: converged in 52%), as in the Data
+  Challenge, and the binary fallback takes over. At r1 = 0.5 it converged in 92%; 3 of the 34
+  stops first blew up (r1 near 10⁸, state NaN), the Data Challenge's Subject 4 failure. The fallback
+  covered all of them.
+- **Why C3 failed** (diagnosis on 10 layouts per Δ at r1 = 0.5, same seeds; nothing tuned). Coverage
+  is 0.96–0.98 at Δ = 0 and collapses at Δ = +1.0 (0.19 chosen, 0.45 binary). The filters pin b0 to
+  the session's overall pulse log-odds; when the films raise the rate, b0 comes out higher and the
+  whole state lower by the same amount. Mean(x̂ − x) against b̂0 − b0: +0.13 / −0.16 (Δ −0.5),
+  −0.02 / −0.00 (0), −0.43 / +0.45 (0.5), −0.68 / +0.70 (1.0). With that constant removed, coverage
+  is 0.98–1.00 at every Δ. Only b0 + x enters the model, so the absolute level is not identifiable
+  by any setting of these filters; differences within a session are. C3 as written scored the
+  absolute level.
+- **Decision (2026-11-16, Piyush): C3 is rescored, and this is a change made after seeing the
+  result.** C3 as first set failed, and that stays on record. The rescored criterion, C3′, scores
+  what H1–H4 use, the state relative to the person's own baseline: x̂ − mean(x̂ over baseline
+  bins) against x − mean(x over baseline bins), with the same 95% band half-width and the same
+  pass range, median 0.85–0.99. It was written here before it was computed. The band does not
+  include the uncertainty of the baseline mean, so C3′ is, if anything, strict. The rest of the
+  run must come out identical (same seeds).
+- **C3′ result: pass**, median 0.984 (by Δ: 0.989, 0.986, 0.989, 0.970; MPP and binary alike).
+  The rerun reproduced the first run's 19 columns in all 400 rows exactly. The bands are slightly
+  conservative (near the top of the range), not overconfident.
+
+**The real 50** (`s2_run`, 2026-11-16): `data/stage2_params.csv` (stops and parameters),
+`data/stage2_states_005.csv` (main) and `data/stage2_states_002.csv` (secondary), one row per
+participant and 1 s bin: both filters' states, the chosen state with its 95% band, and p_k. The
+checks below are blind to the hypotheses: no block or group contrast was computed.
+
+- **0.05 µS (main):** MPP converged for 44 of 50; size rises with the state in all of them (r1
+  0.09–1.33, median 0.46, near the synthetic 0.5). 6 stopped on r1 ≤ 0 (P15, P106, P111, P115,
+  P168, P178; P111 after a blow-up) and use the binary state. Binary converged for all 50. No NaN
+  in any chosen state. Median 95% band width 1.15. Converged MPP against binary state, per person:
+  r median 0.92 (0.59–0.995).
+- **0.02 µS (secondary):** MPP converged for 45; the other 5 blew up (3 stopped on r1 ≤ 0, 2 hit
+  the iteration limit) and use the binary state.
+- **Flag:** P68 has a large drift variance in both filters (ve 0.16 and 0.17 per s), so its state
+  moves fast. Both filters agree, so it is the data, not a filter failure.
+- `s2_plot(99)` → `results/figures/stage2_state_P99.png`: the method on one participant.
+  `s2_plot_all` → `results/figures/stage2_states_real50.pdf`: all 50, one page each, ordered by film
+  group then id. Each page title says whether the MPP state or the binary fallback is shown. The
+  baseline is shaded; dotted lines mark the end of the baseline and each clip boundary (the stretch
+  between the first two is the transition).
+
+## Part 14: the H1–H6 tests (set 2026-11-16, before they were run)
+
+Written after Part 13 and before any block or group contrast of the state was computed. Already
+seen at this point: the descriptive look at pulse rates and sizes by block and film group (Next
+steps, item 3, 2026-11-14). Where the proposal is specific, the plan follows its wording. Where a
+choice had to be made after that look, it says so. The tests run once, in one script, and the
+result is recorded whatever it is. Nothing in stage 1 or stage 2 (filters, choice rule, thresholds,
+bins) changes after they are run.
+
+**The design** (read from the state tables and the POPANE stimulus list,
+`docs/dataset_check/metadata_R1.xlsx`; no outcome looked at). Every participant has a 300 s
+baseline (marker −1), then a transition (left out), then six 120 s film clips in random order.
+Neutral group: 101–106. Negative group: 201–206. Positive group: 301–306. Mixed group: 3 negative
+and 3 positive clips from the same pools (checked for all 10). The earlier note "mixed group: 6
+negative, 6 positive" (Next steps) was wrong and is corrected there. Clip emotions: fear 201,
+anger 202–204, disgust 205, sadness 206, amusement 301–304, tenderness 305–306.
+
+**Per-block summaries**, one row per participant and block, pulses ≥ 0.05 µS:
+
+| | Measure, per block | Change score against the person's own baseline |
+|---|---|---|
+| S | mean chosen state over the block's bins | difference (logit units) |
+| R | pulse rate: log((count + 0.5) / minutes); the 0.5 keeps an empty clip finite | difference (a log rate ratio) |
+| Z | mean log height of the block's pulses (missing if the block has none) | difference |
+
+- **A person's film period** is all bins of their six clips. The clips are equal in length, so this
+  is the mean of the clip means. In the mixed group, the negative and positive periods are the bins
+  of their three clips of each.
+- **S is the primary measure, and the hypotheses are judged on it.** R and Z are reported next to
+  every test, as the proposal says. Where S disagrees with R and Z, that is reported as a finding
+  about the estimator.
+- **Only within-person changes are used.** The state's absolute level is not identifiable (Part
+  13), and the groups already differ at baseline.
+
+**Statistics.**
+- **Estimates:** each is a mean change with its 95% CI (t).
+- **Tests:** Welch t-tests between groups, and one-sample or paired t-tests within a person. All are
+  two-sided at α = 0.05. A directional hypothesis is supported only when p < 0.05 and the sign is
+  the predicted one.
+- **Equivalence:** by two one-sided tests (TOST). Two things count as equivalent when the 90% CI of
+  their difference lies inside ±δ.
+- **Rank-test check:** a rank test runs next to each t-test (Mann–Whitney between groups, Wilcoxon
+  signed-rank within a person). Any disagreement is reported.
+- **No correction across H1–H6.** Each is its own question in the proposal, and exact p values are
+  reported.
+
+**The equivalence margin is δ = 0.5 logit units.**
+- **Where it comes from:** the smallest nonzero film effect in the stage-2 validation (Part 13).
+  At the median rate of 0.157 pulses per second, that is about 1.5× the pulse rate. It is also 15×
+  the filters' largest bias (0.032).
+- **It was set after the descriptive look.** That look showed the mixed group's median rate higher
+  during negative than positive films (9.8 against 7.2 per minute; log ratio 0.31). δ comes from
+  the validation design, not from that number. The 90% CI is reported in full, so any other margin
+  can be applied.
+- **The result may be inconclusive.** With 10 people in the mixed group, the CI is likely to cross
+  both 0 and ±δ. Such a result will be reported as inconclusive, not as support for either
+  hypothesis.
+
+| | Hypothesis (proposal) | Who, and the statistic | Test | Supported when |
+|---|---|---|---|---|
+| H1 | Films raise arousal above the resting baseline | All 50, own films; Δ = film − baseline | one-sample t | p < 0.05, Δ > 0 |
+| H2 | Emotional films raise it more than neutral ones | Δ: negative, positive and mixed groups (30) against neutral (20) | Welch | p < 0.05, emotional > neutral |
+| H3 (primary) | Arousal reflects intensity alone: negative and positive both exceed neutral, and do not differ from each other | (a) Δ, negative group (10) against neutral (20); (b) Δ, positive group (10) against neutral (20); (c) mixed group, D = Δneg − Δpos per person | (a), (b) Welch; (c) paired TOST | (a) and (b) p < 0.05 in the predicted direction, and (c) equivalent |
+| H4 | Negative exceeds positive, within the same person | Mixed group, D | paired t | p < 0.05, D > 0 |
+| H5 | Emotions within a valence do not separate | Clip changes, averaged per emotion. Negative group: fear, anger (mean of 3 clips), disgust, sadness. Positive group: amusement (mean of 4 clips) against tenderness (mean of 2 clips) | Friedman (4 negative emotions); paired t (positive) | p ≥ 0.05 in both, reported as no evidence of separation, not as equivalence |
+| H6 | The decoded state tracks the participant's own affect slider | Everyone with slider data. Per person, Spearman r across the 6 clips between the clip's mean state and its mean slider intensity, \|a − 5.5\| | Fisher z, then one-sample t | p < 0.05, mean r > 0 |
+
+- **H1 is the proposal's: all films, all 50.** It is also reported for each group, as a
+  description. The descriptive look showed the neutral group's rate falling during films (0.77 of
+  baseline), so H1 may fail through the neutral group. The definition predates that look and is
+  kept.
+- **H3 and H4 together.** If D is above 0 (p < 0.05) and its 90% CI lies inside ±δ, the verdict is
+  "negative above positive, by less than the margin", and both results are given. The
+  between-person version of (c), negative group against positive group with Welch TOST and the
+  same δ, is reported as secondary: the proposal names the mixed group's within-person test as the
+  one that tells H3 and H4 apart.
+- **H5's limits.** Fear, disgust and sadness are each a single film, so emotion and film cannot be
+  told apart, and a difference may come from the film. The mixed group is left out: each person
+  saw 3 random clips per valence, so the emotions are unbalanced. Clip order is random, so position
+  effects average out.
+- **H6's details.**
+  - The slider is valence, from 1 (extremely negative) to 10 (extremely positive) (Behnke et al.
+    2022), so intensity is the distance from the midpoint, as in H3. The raw valence is reported
+    alongside, two-sided.
+  - Only the film clips are used: the paper does not say whether the slider was used during the
+    baseline.
+  - Anyone whose slider does not change across their six clips (r undefined) is left out, and the
+    number is reported.
+  - The slider is only in the raw POPANE files (`eda.dataset.load`, column `affect`). If they cannot
+    be obtained by the deadline, H6 is not tested, and the report says so.
+
+**Checks, run with the same tests and reported as secondary.** None of them can change a verdict.
+1. The 0.02 µS threshold (`data/stage2_states_002.csv`).
+2. The binary filter's state for all 50 (pulse timing only).
+3. Without P68, flagged in Part 13 before any contrast.
+4. The rank tests (above).
+
+**Output.**
+- **The script:** `src/stage2/s2_tests.m`.
+- **What it writes:**
+  - `data/stage2_block_summary.csv`;
+  - `data/stage2_tests.csv`, one row per hypothesis, measure, threshold and check (n, estimate, CI,
+    p, verdict);
+  - `results/figures/stage2_hypotheses.png`, change scores by group for S, R and Z.
+- **Before the real run,** it runs end to end once on a copy with the group labels and clip codes
+  randomly permuted (fixed seed), so the code is tested without any real contrast being seen.
+
+**The code check, as run** (`s2_tests(pwd, 'synthetic', true)`, 2026-11-16). It deviates from the
+plan above, and the change is stricter. Permuting labels would still have shown the real H1, which
+uses no labels. So the check used made-up states on the real layouts, with no real pulse or state
+in them:
+- **The made-up data:** +0.5 in every negative and positive clip, and 0 in neutral clips. Pulses
+  and sizes come from the MPP model, and the state is the truth plus noise.
+- **What came back:**
+  - H1 estimate 0.27, against 0.30 expected (30 of the 50 see emotional films);
+  - H3 (a) and (b) supported;
+  - mixed-group D −0.003, equivalent; H4 not supported.
+  - H5 came out "separation" at p 0.043, from the random-walk drift across clips. That is a false
+    positive of the kind the 5% level allows.
+- **H6's file reader** was tested only on a hand-made file in the format `eda.dataset.load`
+  describes. It has not seen a real POPANE file.
+
+**Result** (`data/stage2_tests.csv`, `data/stage2_block_summary.csv`,
+`results/figures/stage2_hypotheses.png`; run once, 2026-11-16). All figures are for the main check,
+the state (S), as change from each person's own baseline, in logit units. They are given as
+estimate [95% CI], p (rank-test p).
+
+| | Result | Verdict |
+|---|---|---|
+| H1 | All 50: −0.08 [−0.24, 0.07], p 0.30 (0.23). By group (descriptive): neutral −0.31 (p 0.03), negative −0.10, positive +0.19, mixed +0.11 | not supported |
+| H2 | Emotional − neutral: +0.37 [0.05, 0.69], p 0.023 (0.019) | supported |
+| H3 (a) | Negative − neutral: +0.20 [−0.21, 0.61], p 0.31 (0.39) | not supported |
+| H3 (b) | Positive − neutral: +0.50 [0.08, 0.93], p 0.023 (0.011) | supported |
+| H3 (c) | Mixed group, D = +0.05, 90% CI [−0.30, 0.41], inside ±0.5; TOST p 0.023 | equivalent |
+| H3 | (a) fails | **not supported** |
+| H4 | Mixed group, D = +0.05, p 0.78 (0.92) | not supported |
+| H3/H4 | Within person, negative and positive films do not differ, and the difference is shown to be inside the margin | the H3 side |
+| H3, secondary | Negative group − positive group: −0.30 [−0.75, 0.16]; 90% CI reaches −0.67 | not shown equivalent |
+| H5 | Negative group, Friedman p 0.062. Positive group, amusement − tenderness +0.08 [−0.19, 0.34], p 0.54 | no evidence of separation |
+| H6 | Raw POPANE files not present | not tested |
+
+- **All four checks give the same verdicts:** the 0.02 µS threshold, the binary filter, the run
+  without P68, and the rank tests next to every test.
+- **The pulse rate (R) agrees with the state on every test.** H2 +0.37, p 0.014; H3 (b) +0.45,
+  p 0.039; mixed-group D −0.01. So the state carries what the raw pulse timing shows, and is not
+  an artefact of the estimator.
+- **Pulse size (Z) separates nothing.** No group or valence contrast is significant. Size is
+  slightly up in films overall (+0.07 [0.00, 0.14], p 0.04), the same in every group.
+- **What drives H2 is the neutral group falling.** The neutral films bring arousal below baseline
+  (−0.31), while the emotional films hold it near baseline (−0.10 to +0.19, none significant). So
+  "emotional films raise it more than neutral ones" holds as a difference between groups, but no
+  film group rises significantly above its own baseline. Responding fades over a session (Next
+  steps, item 3), so baseline-to-film is not a clean "no film" contrast.
+- **H3 against H4, within person.** In the mixed group the same people show no valence difference,
+  which is the H3 side of the question the proposal set the mixed group to settle. H3 as a whole
+  fails because the negative group does not rise above the neutral group (n = 10, wide CI). The
+  negative-group and positive-group comparison is not shown equivalent either. So the
+  between-group evidence is weak in both directions.
+- **H5 is borderline for the negative films** (p 0.062; R p 0.056), on 10 people, with fear,
+  disgust and sadness each a single film.
+- **One outlier.** One neutral-group participant falls by about 2 logit units. The rank tests,
+  which it cannot dominate, give the same verdicts.
+
 ## Current status
 
 **Frozen setting: `own4_p1000_k14_f3_s8`** (Part 9). 4 Hz input with a 1 Hz low-pass; prior weight
@@ -700,9 +982,16 @@ Limitations to report:
    rate × size only in the groups with negative films. Groups of 10, no tests.
    The timeline (POPANE, Behnke et al. 2022): a 5-minute baseline, an unlabelled transition (median
    150 s, 96–338 s; its content is not described in the paper, probably on-screen instructions),
-   then 12 minutes of film clips back to back (mixed group: 6 negative, 6 positive), then an
+   then 12 minutes of film clips back to back (six clips; mixed group: 3 negative and 3 positive,
+   corrected 2026-11-16 from "6 negative, 6 positive", Part 14), then an
    ultimatum game, which our segment excludes. The transition is left out of the block rates, and
    it adds to the time between baseline and films.
+   **Stage 2 state estimation done (Part 13, 2026-11-16):** the Data Challenge 2 filters, validated
+   on 400 synthetic sessions (C3 failed as first set; C3′, rescored after the result, passed), run on
+   the 50. **H1–H6 tests set in writing, then run once (Part 14, 2026-11-16):** H2 supported; H1,
+   H3 and H4 not supported; within the mixed group negative and positive are equivalent; H5 no
+   evidence of separation; H6 not tested (needs the raw POPANE files, `eda.dataset.load`). Next: H6
+   if the raw files are obtained, then the report and slides.
 4. Report and slides.
 
 ## How to run a round
@@ -760,4 +1049,4 @@ Before any code change: `own_test` in MATLAB (`addpath src/own; own_test`).
 - NeuroKit2 `eda_phasic`: https://github.com/neuropsychology/NeuroKit/blob/master/neurokit2/eda/eda_phasic.py
 - Kurinec et al. 2022, Front Behav Neurosci (resting NS-SCR rate 1–3 per minute, citing Dawson et al. 2017): https://www.frontiersin.org/articles/10.3389/fnbeh.2022.885302/full
 - Gertler et al. 2020, NeuroImage (about 5, up to 10 per minute, citing Zimmer 2000; 6.7 per minute above 0.1 µS at rest): https://pmc.ncbi.nlm.nih.gov/articles/PMC7263940/
-- Behnke et al. 2022, Scientific Data 9:10 (POPANE, Study 6 procedure): https://pmc.ncbi.nlm.nih.gov/articles/PMC8776805/
+- Behnke et al. 2022, Scientific Data 9:10 (POPANE, Study 6 procedure; affect slider is valence, 1 extremely negative to 10 extremely positive, read 2026-11-16): https://pmc.ncbi.nlm.nih.gov/articles/PMC8776805/

@@ -38,6 +38,8 @@ __pycache__/
 !/results/figures/raw_atlas_*.png
 !/results/figures/filter_response.png
 !/results/figures/*_deconv.pdf
+!/results/figures/stage2_*.png
+!/results/figures/stage2_*.pdf
 !/results/figures/round*_tonic.pdf
 !/results/figures/tune50_vs_real.pdf
 !/results/figures/tune50_preview_vs_real.pdf
