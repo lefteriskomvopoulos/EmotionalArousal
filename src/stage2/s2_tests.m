@@ -24,13 +24,19 @@ function R = s2_tests(root, varargin)
 ip = inputParser;
 addParameter(ip, 'synthetic', false);
 addParameter(ip, 'delta', 0.5);
+addParameter(ip, 'variant', '');
 parse(ip, varargin{:});
 if nargin < 1 || isempty(root), root = pwd; end
 syn = ip.Results.synthetic;
 delta = ip.Results.delta;
+% A variant (e.g. 'tonic', Part 15) reads data/stage2_states_005_<variant>.csv, runs the main check
+% only, and writes every output with the suffix _<variant>: Part 14's files are never touched.
+vsuf = '';
+if ~isempty(ip.Results.variant), vsuf = ['_' ip.Results.variant]; end
 
 checks = struct('name', {'main', 'th002', 'binary', 'noP68'}, 'th', {0.05, 0.02, 0.05, 0.05}, ...
     'col', {'state', 'state', 'bin_state', 'state'}, 'drop', {[], [], [], 68});
+if ~isempty(vsuf), checks = checks(1); end
 
 cache = struct();
 rows = {};
@@ -38,7 +44,7 @@ Bout = {};
 for c = checks
     key = sprintf('t%03d', round(100 * c.th));
     if ~isfield(cache, key)
-        S = readtable(fullfile(root, 'data', sprintf('stage2_states_%03d.csv', round(100 * c.th))), ...
+        S = readtable(fullfile(root, 'data', sprintf('stage2_states_%03d%s.csv', round(100 * c.th), vsuf)), ...
             'TextType', 'string');
         if syn, S = synth_states(S); end
         cache.(key) = S;
@@ -53,7 +59,7 @@ for c = checks
     rows = [rows; run_tests(P, c.name, c.th, delta)]; %#ok<AGROW>
     if strcmp(c.name, 'main'), Bmain = B; Pmain = P; end
 end
-rows = [rows; h6(root, Bmain, syn)];
+rows = [rows; h6(root, Bmain, syn || ~isempty(vsuf))];
 
 R = cell2table(rows, 'VariableNames', {'check', 'min_height_uS', 'hypothesis', 'part', 'measure', ...
     'test', 'n1', 'n2', 'estimate', 'ci_lo', 'ci_hi', 'ci90_lo', 'ci90_hi', 'p', 'p_rank', 'p_tost', ...
@@ -62,9 +68,9 @@ R = cell2table(rows, 'VariableNames', {'check', 'min_height_uS', 'hypothesis', '
 print_summary(R, syn);
 if ~syn
     B = vertcat(Bout{:});
-    writetable(B, fullfile(root, 'data', 'stage2_block_summary.csv'));
-    writetable(R, fullfile(root, 'data', 'stage2_tests.csv'));
-    plot_changes(Pmain, fullfile(root, 'results', 'figures', 'stage2_hypotheses.png'));
+    writetable(B, fullfile(root, 'data', ['stage2_block_summary' vsuf '.csv']));
+    writetable(R, fullfile(root, 'data', ['stage2_tests' vsuf '.csv']));
+    plot_changes(Pmain, fullfile(root, 'results', 'figures', ['stage2_hypotheses' vsuf '.png']));
 end
 end
 
@@ -290,10 +296,7 @@ rI = nan(numel(ids), 1);  rV = rI;
 for i = 1:numel(ids)
     f = fullfile(rawdir, sprintf('S6_P%d_All.csv', ids(i)));
     if ~isfile(f), continue; end
-    opts = detectImportOptions(f, 'CommentStyle', '#', 'Delimiter', ',');
-    opts.SelectedVariableNames = {'affect', 'marker'};
-    opts = setvartype(opts, {'affect', 'marker'}, 'double');
-    T = readtable(f, opts);
+    T = s2_read_raw(f, {'affect', 'marker'});   % Part 19: the reader, not the test, was fixed
     Bi = B(B.id == ids(i) & B.marker >= 100, :);
     a = nan(height(Bi), 2);
     for j = 1:height(Bi)

@@ -40,6 +40,21 @@ for c = 1:size(cases, 1)
     fprintf('%-32s Subject %2d %s  stop %-9s  max|dstate| %.1e  max|dvar| %.1e  max|dparam| %.1e\n', ...
         cases{c, 1}, cases{c, 2}, cases{c, 3}, res.stop, dx, dv, dp);
 end
+% Problem 3C (Subject 3, binary + simulated continuous feature): s2_filter_tonic with sizes off, the
+% feature in every bin and the Data Challenge's starting values = filter_one_bin_one_cont.m
+saved = load(fullfile(dc_dir, 'results', 'Problem3C_results.mat'));
+saved = saved.results;
+sim = load(fullfile(dc_dir, 'results', 'Problem3B_simulated.mat'));
+d = load(fullfile(data_dir, 'Subject3.mat'));
+res = s2_filter_tonic(double(d.mpp(:)' > 0), [], sim.cont, struct('sizes', false, 'init', 'dc'));
+dx = max(abs(res.state(:) - saved.state(:)));
+dv = max(abs(res.var(:) - saved.var(:)));
+dp = max(abs([res.param_ve res.param_s0 res.param_s1 res.param_vs] - ...
+              [saved.param_ve saved.param_r0 saved.param_r1 saved.param_vr]));
+worst = max([worst dx dv dp]);
+fprintf('%-32s Subject %2d %s  stop %-9s  max|dstate| %.1e  max|dvar| %.1e  max|dparam| %.1e\n', ...
+    'Problem3C_results.mat', 3, 'bin+cont (s2_filter_tonic)', res.stop, dx, dv, dp);
+
 if worst < 1e-9
     fprintf('PASS: identical to the Data Challenge results (worst difference %.1e)\n', worst);
 else

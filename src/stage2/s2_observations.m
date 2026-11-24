@@ -22,6 +22,7 @@ function obs = s2_observations(id, min_height, root)
 % obs.marker   block code at the bin centre: -1 baseline, 1xx/2xx/3xx neutral/negative/positive
 %              film clip, NaN in the transition
 % obs.group    film group
+% obs.tonic    stage 1's tonic level (uS), mean over the bin (variant tonic14, Part 15)
 
 if nargin < 2, min_height = 0.05; end
 if nargin < 3, root = pwd; end
@@ -55,4 +56,8 @@ obs.height = height;
 obs.r = log(height);
 obs.marker = interp1(sig.time_s, sig.marker, t, 'nearest', 'extrap');
 obs.merged = merged;
+% tonic level (uS), mean of the 4 Hz samples in each bin: variant tonic14 only (Part 15)
+kb = floor(sig.time_s - t0 + 1e-6) + 1;
+ok = kb >= 1 & kb <= K;
+obs.tonic = accumarray(kb(ok), sig.tonic(ok), [K 1], @mean, NaN)';
 end

@@ -44,7 +44,28 @@ unless another file is named.
       negative and positive films are equivalent.
     - **H4 not supported.**
     - **H5:** no evidence of separation.
-    - **H6:** not tested (raw data absent).
+    - **H6:** not supported (r +0.14, p 0.074; run 2026-11-23 once the raw files were in, Part 19).
+13. **The tonic level as a third observation** (Parts 15–16, exploratory variants; both failed
+    validation and were run on the 50 at Piyush's request).
+    - **Unweighted, `tonic14`:** the tonic level took over the state, with overconfident bands and
+      drift leaking in. H1 and H2 flipped in the predicted direction.
+    - **With a balanced floor, `tonic14b`:** the overconfidence is fixed and the drift leak is
+      smaller, but it is not gone. The estimates are back near the main analysis's, with H2 at
+      p 0.09.
+    - **Neither changes a verdict.**
+    - **Differenced, `tonic14d` (Part 17):** the tonic level's changes, with the floor. Drift is
+      handled (its drift scenario passes), but the clean scenario fails narrowly on a stretched
+      scale (bias 0.13 against a limit of 0.1). Not run on the 50.
+    - **Calibrated, `tonic14c` (Part 18):** the link is calibrated from the pulse-only state
+      (regression calibration). It **passes on fresh synthetic seeds**, the first tonic variant to
+      pass. On the 50 every verdict matches the main analysis, the estimates agree to within 0.03,
+      and the intervals are slightly narrower (H2 p 0.010). It is a validated robustness check,
+      not a replacement for Part 14.
+14. **The affect slider** (Part 19): H6 run as set in Part 14, plus the evaluation of Oliver et al.
+    (2025), adapted.
+    - The state does not identify the moments of highest self-reported intensity (chance).
+    - It does follow the direction of changes slightly above chance (54–59%, p 0.002–0.05), the
+      same level the paper reports.
 
 Still to come: the rest of the check that the real pulses make sense, a comparison with other
 methods, H6 if the raw files are obtained, and the report.
@@ -898,7 +919,7 @@ estimate [95% CI], p (rank-test p).
 | H3/H4 | Within person, negative and positive films do not differ, and the difference is shown to be inside the margin | the H3 side |
 | H3, secondary | Negative group − positive group: −0.30 [−0.75, 0.16]; 90% CI reaches −0.67 | not shown equivalent |
 | H5 | Negative group, Friedman p 0.062. Positive group, amusement − tenderness +0.08 [−0.19, 0.34], p 0.54 | no evidence of separation |
-| H6 | Raw POPANE files not present | not tested |
+| H6 | Raw POPANE files not present on 2026-11-16. Run 2026-11-23 as set here, once the files were in (Part 19): r +0.14 [−0.01, +0.28], p 0.074, 42 of 50 | not supported |
 
 - **All four checks give the same verdicts:** the 0.02 µS threshold, the binary filter, the run
   without P68, and the rank tests next to every test.
@@ -921,6 +942,722 @@ estimate [95% CI], p (rank-test p).
   disgust and sadness each a single film.
 - **One outlier.** One neutral-group participant falls by about 2 logit units. The rank tests,
   which it cannot dominate, give the same verdicts.
+
+## Part 15: the tonic level as a third observation (variant `tonic14`, exploratory)
+
+Set 2026-11-23, after Part 14's results, at Piyush's request. **This is a new, named variant. It
+cannot change any H1–H6 verdict in Part 14.** The question: does adding the slow skin-conductance
+level change the hypothesis results?
+
+**The problem it has to handle.** In Data Challenge 2, a continuous feature observed in every bin
+took over the state (Problem 4C, cortisol; Problem 5C, sleep). Each sample was weighted by
+1/(noise variance), and there were far more samples than pulses. The tonic level would be the
+extreme case:
+- it is in every bin (about 1,200 per person, against about 190 pulses);
+- it is nearly noise-free (a spline);
+- its seconds are not independent (knots every 14 s, the frozen stage-1 setting).
+
+**The weighting rule, option 3** (chosen 2026-11-23, before any tonic state was computed): the
+filter sees the tonic level once per 14 s, the stage-1 knot spacing, which is about one independent
+value per knot interval. It uses bins 7, 21, 35, …, and the other bins have no tonic observation.
+There is no variance floor or balance rule (the Data Challenge's lines 174 and 165), so this rule
+is the only control on the tonic level's weight.
+
+**The variant.**
+- **Feature:** `tonic` from `P<id>_own4_signals.csv` (µS), averaged over each 1 s bin. Not
+  detrended.
+- **Model:** the main filter unchanged (b₀ pinned, b₁ = 1, EM for v_e, r₀, r₁, v_r, stop on
+  r₁ ≤ 0), plus s_k = s₀ + s₁·x_k + N(0, v_s) in the observed bins. The continuous terms are those
+  of `filter_one_mpp_one_cont.m`, with b₁ = 1. No sign constraint on s₁: the pulses fix the sign of
+  x.
+- **Starting values:** s₀ = mean, s₁ = SD and v_s = variance/2 of the observed tonic values (the
+  Problem 3F rule, as for the sizes).
+- **Which filter:** MPP + tonic when it converges. Otherwise binary + tonic (the same filter
+  without sizes). If neither converges, the participant keeps the main analysis's chosen state, and
+  this is counted.
+- **Regression check:** the same code, with sizes off, tonic in every bin and the Data Challenge's
+  starting values, must reproduce `filter_one_bin_one_cont` on Problem 3C exactly.
+
+**Synthetic check** (`s2_synth_tonic`), set before it runs. It uses Part 13's generator at
+r₁ = 0.5, Δ ∈ {−0.5, 0, 0.5, 1.0}, and the 50 real layouts, giving 200 sessions per scenario,
+plus a true tonic level in µS:
+- **A, informative:** s = 5 + 1·x + N(0, 0.05²) in every second.
+- **B, drift:** s = the layout participant's own real tonic level + 1·x. The real tonic level's own
+  course, including its fall over the session, is drift unrelated to the true state. This is the
+  habituation confound.
+
+| | Criterion (chosen filter) | Pass |
+|---|---|---|
+| T1 | Contrast recovery, per scenario | r(Δ̂, Δ_true) ≥ 0.8 and slope 0.7–1.3 |
+| T2 | Bias per Δ level, per scenario | \|mean(Δ̂ − Δ_true)\| ≤ 0.1 |
+| T3 | Baseline-referenced coverage (C3′) | median 0.85–0.99 |
+| T4 | Converged (MPP + tonic or binary + tonic) | ≥ 95% |
+
+Also reported: the same sessions through the main filter (no tonic), as the reference.
+- **If A passes and B fails T1 or T2,** the tonic level leaks drift into the state. The real run is
+  still made, as requested, but its results are reported as confounded, not as evidence.
+- **If A fails,** the variant does not work and the real run is not made.
+
+**Real run:** `s2_run_tonic` writes `data/stage2_params_tonic.csv` and
+`data/stage2_states_005_tonic.csv`. Then `s2_tests(pwd, 'variant', 'tonic')` writes
+`data/stage2_tests_tonic.csv` and `results/figures/stage2_hypotheses_tonic.png`. It runs the main
+check only (0.05 µS) and leaves Part 14's files untouched.
+
+**Regression check: pass.** `s2_filter_tonic` with sizes off reproduces `filter_one_bin_one_cont`
+on Problem 3C exactly (difference 0). The five earlier `s2_test_dc` cases are unchanged.
+
+**Synthetic check result** (`data/stage2_synth_tonic_scores.csv`, 2026-11-23). The main filter,
+run on the same sessions, is the reference.
+
+| | A, informative | B, drift | Main filter (both) |
+|---|---|---|---|
+| T1 r, slope | 0.972, 1.25 (pass) | 0.809, 0.98 (pass) | 0.967, 1.00 |
+| T2 bias by Δ (−0.5, 0, 0.5, 1.0) | −0.18, −0.01, +0.18, +0.16 (**fail**) | +0.23, +0.28, +0.30, +0.15 (**fail**) | −0.01 to +0.04 |
+| T3 C3′ coverage median | 0.68 (**fail**) | 0.26 (**fail**) | 0.98 |
+| T4 converged | 0.97 (pass) | 0.95 (pass) | |
+
+- **A: the tonic level still dominates at one observation per 14 s.** The fitted tonic noise is
+  tiny. The state follows the tonic level closely (correlation with the true state 0.985), but its
+  scale is wrong: s₁ comes out at 0.81 against a true 1, so x is stretched by about 1.25, and the
+  film effect is overstated by up to 0.18. The 95% bands are far too narrow (coverage 0.68): the
+  filter trusts the tonic level as near-exact.
+- **B: the real tonic level's own course leaks into the state.** It adds +0.15 to +0.30 to the
+  film effect. This is the habituation confound named in the plan. The state agrees with the true
+  state less well than the main filter's does (correlation 0.76 against about 0.97).
+- **One real participant was looked at before the check, as a smoke test:** on P99, the fitted
+  tonic noise was 0.0007 µS², and the state correlated 0.45 with the main state. No contrast was
+  computed.
+- **Decision, by the rule above: A fails, so the variant does not work, and the real run is not
+  made.** Option 3 alone does not control the tonic level's weight. Any fix would be a new variant
+  with a new name, tested once, and the setting must not be refined until it passes (rule 5):
+  - a variance floor (the Data Challenge's line 174);
+  - a separate drift state (option 5).
+- **Override (2026-11-23, Piyush): the real run is made anyway.** This was decided after the
+  synthetic check failed, and against the rule above. Its H1–H6 results come from a variant that
+  failed validation: they are reported for completeness, are not evidence, and change no verdict.
+
+**Real run** (`data/stage2_params_tonic.csv`, `data/stage2_states_005_tonic.csv`, 2026-11-23).
+- **Which filter was used:**
+  - MPP + tonic: 35 participants;
+  - binary + tonic: 13 (MPP + tonic stopped on r₁ ≤ 0, against 6 in the main analysis);
+  - main state kept: 2, P21 and P168 (neither tonic filter converged).
+- **Fitted tonic noise:** SD about 0.02 µS for most participants, so the filter treats the tonic
+  level as near-exact, as in synthetic scenario A.
+- **The tonic state is mostly not the main state:** R² against it is often below 0.2.
+- **Negative tonic slope (s₁ < 0) in 4 participants** (P10, P20, P152, P179): their tonic level
+  falls as the pulse-defined arousal rises.
+
+**H1–H6 on the variant** (`s2_tests(pwd, 'variant', 'tonic')`: `data/stage2_tests_tonic.csv`,
+`data/stage2_block_summary_tonic.csv`, `results/figures/stage2_hypotheses_tonic.png`). State (S),
+change from own baseline:
+
+| | Main analysis (Part 14) | Tonic variant |
+|---|---|---|
+| H1, all 50 | −0.08, p 0.30, not supported | +0.30 [0.06, 0.54], p 0.014, "supported" |
+| H2, emotional − neutral | +0.37, p 0.023, supported | +0.24, p 0.35, not supported |
+| H3 (a) negative − neutral | +0.20, p 0.31 | +0.14, p 0.69 |
+| H3 (b) positive − neutral | +0.50, p 0.023 | +0.13, p 0.69 |
+| H3 (c) mixed group D, 90% CI | +0.05 [−0.30, 0.41], equivalent | +0.13 [−0.05, 0.31], equivalent |
+| H4 | not supported | not supported |
+| H5 | no evidence of separation | no evidence of separation |
+
+- **H1 "flips" by about +0.38,** the size of the drift bias found in synthetic scenario B (+0.15
+  to +0.30, plus a stretched scale). It is not a finding: the tonic level is higher during films
+  than at baseline for most people, and the variant turns that into "arousal".
+- **The variant's state no longer agrees with the pulses.** The neutral group is +0.15 in the
+  tonic state, while its pulse rate falls (R −0.25, unchanged). By Part 14's rule, a state that
+  disagrees with the raw pulse statistics says something about the estimator: here, that it
+  reports the tonic level, not the bursts.
+- **The results that do not depend on the tonic level hold:** within the mixed group, negative
+  and positive films are equivalent; H4 is not supported; and there is no separation within a
+  valence.
+- **Conclusion for the report:** adding the tonic level as a continuous observation, weighted
+  only by observing it once per 14 s, makes the state follow the slow level and its session
+  drift. It failed validation, and on real data it overturns H1 and H2 in the direction the
+  synthetic check predicted. Leaving the tonic level out (Part 13) is the right choice for this
+  model. A version that could work needs a separate drift state (option 5) or an explicit weight,
+  validated before use.
+
+## Part 16: tonic14 with a balanced floor (variant `tonic14b`, exploratory)
+
+Set 2026-11-23, after Part 15's results, at Piyush's request, and written down before any
+`tonic14b` state was computed. **A new, named variant; it cannot change any H1–H6 verdict in
+Part 14.** It changes one thing from `tonic14`: a cap on the tonic level's weight.
+
+**Why.** Part 15 found two problems:
+- **Overconfidence (scenario A).** The fitted tonic noise collapsed (SD about 0.02 µS). One tonic
+  observation then carried several hundred times the information about the state that the pulses
+  carry over the same 14 s. The state became a copy of the tonic level, with bands far too narrow.
+- **Drift (scenario B).** The tonic level's own slow course entered the state.
+
+The floor targets the first problem directly. For the second it can only reduce the leak, not
+remove it.
+
+**The rule (balanced floor).** A tonic observation may carry at most as much information about the
+state as the pulses are expected to carry between two tonic observations:
+
+  s₁² / v_s ≤ I_pulse = g · p̄(1 − p̄)
+
+- g = 14, the spacing of the tonic observations;
+- p̄ is the participant's pulse fraction per bin, the same one that pins b₀;
+- p̄(1 − p̄) is the information about x_k in one bin's pulse/no-pulse observation (the filter's own
+  term). The size observations are not counted, so the cap is the same for MPP + tonic and
+  binary + tonic.
+
+It is applied as v_s ← max(v_s, s₁² / I_pulse), to the starting value and after every M step. It
+caps the ratio, not v_s alone, so EM cannot restore the weight by inflating s₁. The stop on a
+fitted v_s ≤ 0 is checked before the floor, as in `tonic14`. The rule comes from the filter's own
+terms, not from any real result.
+
+**Everything else is `tonic14` unchanged:**
+- the tonic feature, observed at bins 7, 21, 35, …;
+- the model and the starting values (apart from the floor);
+- the filter choice (MPP + tonic, else binary + tonic, else the main state);
+- the regression check: with the floor off, the code must still reproduce Problem 3C exactly, and
+  Part 15's tonic14 state for P99.
+
+**Synthetic check:** Part 15's sessions (same seeds), scenarios A and B, and the same criteria
+T1–T4 (Part 15's table). Also reported: how often the floor is active at the end.
+
+**Decision rule, overridden in advance (2026-11-23, Piyush):**
+- the real run and H1–H6 are made **whatever the synthetic check shows**;
+- if A or B fails any of T1–T4, the variant's H1–H6 results are reported as coming from a variant
+  that failed validation: for completeness, not as evidence;
+- whatever the result, the floor is not re-tuned (rule 5).
+
+**Expected, written before the run:**
+- A: the bands widen and the scale bias shrinks, so T2 and T3 may pass;
+- B: the drift bias shrinks but does not vanish;
+- H1 remains confounded with time on task in any case, because the baseline always comes first.
+
+**Commands:**
+- synthetic check: `s2_synth_tonic(pwd, 'tonic14b')` → `data/stage2_synth_tonic14b_scores.csv`;
+- real run: `s2_run_tonic(pwd, 'tonic14b')` → `data/stage2_params_tonic14b.csv`,
+  `data/stage2_states_005_tonic14b.csv`;
+- tests: `s2_tests(pwd, 'variant', 'tonic14b')` → `data/stage2_tests_tonic14b.csv`,
+  `data/stage2_block_summary_tonic14b.csv`, `results/figures/stage2_hypotheses_tonic14b.png`.
+
+Part 14's and Part 15's files are not touched.
+
+**Regression check: pass.** With the floor off:
+- the five `s2_test_dc` cases and Problem 3C are identical (difference 0);
+- P99's tonic14 state matches `data/stage2_states_005_tonic.csv` to 5·10⁻¹⁶.
+
+A smoke test on P99, with the floor on: in tonic14, one tonic observation had carried 1,083 times
+I_pulse. Now the cap holds it at exactly 1, and the tonic noise SD is 0.70 µS instead of about
+0.03.
+
+**Synthetic check result** (`data/stage2_synth_tonic14b_scores.csv`, 2026-11-23). The same
+sessions as Part 15; tonic14 is shown for comparison.
+
+| | A, tonic14b | B, tonic14b | A, tonic14 | B, tonic14 | Main filter |
+|---|---|---|---|---|---|
+| T1 r, slope | 0.958, 1.03 (pass) | 0.943, 0.91 (pass) | 0.972, 1.25 | 0.809, 0.98 | 0.967, 1.00 |
+| T2 bias by Δ (−0.5, 0, 0.5, 1.0) | +0.00, −0.01, +0.07, +0.03 (pass) | +0.15, +0.07, +0.03, −0.01 (**fail**) | −0.18 to +0.18 | +0.15 to +0.30 | −0.01 to +0.04 |
+| T3 C3′ coverage median | 0.906 (pass) | 0.777 (**fail**) | 0.68 | 0.26 | 0.98 |
+| T4 converged | 1.000 (pass) | 0.995 (pass) | 0.97 | 0.95 | |
+
+- **The floor was active at the end in every converged session, A and B.** Left alone, EM always
+  gives the tonic level more weight than the pulses.
+- **A passes all four criteria: the overconfidence is fixed.** The stretched scale is gone (slope
+  1.03 against 1.25), the bias is within 0.07, and the bands are honest (coverage 0.91).
+- **B still fails, but the leak is much smaller:**
+  - the drift bias is at most +0.15 (at Δ = −0.5) and within 0.1 at the other levels, against
+    +0.15 to +0.30 in tonic14;
+  - coverage is 0.78, against 0.26;
+  - the state's correlation with the truth is a median of 0.85, against 0.76.
+
+  The real tonic level's own course still enters the state, as predicted: the floor can reduce
+  the drift, but not remove it.
+- **Warnings:** in some sessions the 2 × 2 regression in the M step (sizes, line 120; tonic, line
+  130) was near-singular during EM, which happens when the state is close to flat. Every
+  converged state was finite, and T4 passed.
+- **Decision:** B fails T2 and T3, so the variant fails validation. By the rule set in advance,
+  the real run and H1–H6 are made anyway (Piyush), and are reported as coming from a variant
+  that failed validation. The floor is not re-tuned.
+
+**Real run** (`data/stage2_params_tonic14b.csv`, `data/stage2_states_005_tonic14b.csv`,
+2026-11-23).
+- **Which filter was used:** MPP + tonic for 43 participants and binary + tonic for 7 (P15, P49,
+  P106, P111, P115, P118, P178). None kept the main state. The main analysis had 44 MPP and 6
+  binary.
+- **The floor is active in 48 of 50.** The other two had already settled at 0.03 and 0.18 times
+  the cap.
+- **The state now mostly agrees with the main state:** R² against it has a median of 0.65, with 5
+  participants below 0.2. In tonic14 the median was 0.25, with 23 below 0.2.
+- **s₁ < 0** in the same 4 participants as tonic14 (P10, P20, P152, P179).
+- **s₁ is large in a few participants** (P15 +9.5, P20 −9.2, P111 +5.9, P115 +5.0, P76 +4.9), each
+  with a matching large tonic noise. The cap fixes the ratio, so a stretched s₁ just means a
+  compressed state scale for that person.
+- **P111's MPP + tonic run** gave near-singular warnings before it stopped on r₁ ≤ 0. Its
+  binary + tonic state, the one used, converged.
+
+**H1–H6 on the variant** (`s2_tests(pwd, 'variant', 'tonic14b')`:
+`data/stage2_tests_tonic14b.csv`, `data/stage2_block_summary_tonic14b.csv`,
+`results/figures/stage2_hypotheses_tonic14b.png`). State (S), change from own baseline:
+
+| | Main analysis (Part 14) | tonic14 (Part 15) | tonic14b |
+|---|---|---|---|
+| H1, all 50 | −0.08, p 0.30, not supported | +0.30, p 0.014, "supported" | +0.10 [−0.09, 0.28], p 0.29, not supported |
+| H2, emotional − neutral | +0.37 [0.05, 0.69], p 0.023, supported | +0.24, p 0.35 | +0.34 [−0.06, 0.73], p 0.091, not supported |
+| H3 (a) negative − neutral | +0.20, p 0.31 | +0.14, p 0.69 | +0.12, p 0.62 |
+| H3 (b) positive − neutral | +0.50, p 0.023 | +0.13, p 0.69 | +0.45 [−0.03, 0.94], p 0.064 |
+| H3 (c) mixed group D, 90% CI | +0.05 [−0.30, 0.41], equivalent | +0.13 [−0.05, 0.31], equivalent | +0.08 [−0.13, 0.29], equivalent |
+| H4 | not supported | not supported | not supported |
+| H5 | no evidence of separation | no evidence of separation | no evidence of separation (negative group p 0.15) |
+| Group means: neutral, negative, positive, mixed | −0.31, −0.10, +0.19, +0.11 | +0.16, +0.30, +0.29, +0.61 | −0.10, +0.02, +0.35, +0.32 |
+
+- **The estimates are close to the main analysis again.** H2 is +0.34 against +0.37, and
+  H3 (b) +0.45 against +0.50. tonic14 had pulled both towards zero.
+  - The intervals are wider, so H2 drops just above 0.05 (p 0.091).
+  - The verdict changes, but the size of the effect does not. Its 90% interval still excludes
+    zero ([+0.01, +0.66]).
+- **H1 moves by about +0.18** relative to the main analysis (tonic14: +0.38). That is in the
+  range of the drift bias left in scenario B (up to +0.15), and it stays not supported.
+- **The state agrees with the pulses again.** The neutral group is −0.10, the same sign as its
+  pulse rate (R −0.25); in tonic14 it was +0.16. The negative group is close to zero in both S and
+  R.
+- **The within-person results hold, as in every analysis:**
+  - within the mixed group, negative and positive films are equivalent;
+  - H4 is not supported;
+  - there is no separation within a valence.
+- **P178 is the largest outlier** (−2.4), as in the main analysis (−2.1).
+- **Conclusion for the report:**
+  - **The balanced floor fixes the overconfidence.** It passes scenario A, which tonic14 failed.
+  - **It shrinks the drift leak by half or more, but does not remove it.** On real data the H1
+    shift falls from +0.38 to +0.18; in scenario B the mean bias falls from +0.24 to +0.06. B fails, so
+    the variant is not validated. Its H1–H6 results are not evidence and change no verdict.
+  - **The results agree with the main analysis in direction and size, not in significance.**
+  - **The tonic level adds no hypothesis evidence beyond the pulses.** Its remaining influence is
+    partly drift. A version that could be validated needs the drift handled in the model (a
+    separate drift state, option 5) or a drift-free input (the tonic level's changes, not its
+    level).
+
+## Part 17: the differenced tonic level (variant `tonic14d`, exploratory)
+
+Set 2026-11-23, after Part 16's results, at Piyush's request, and written down before any
+`tonic14d` state was computed. **A new, named variant; it cannot change any H1–H6 verdict in
+Part 14.** It changes one thing from `tonic14b`: the filter sees the tonic level's changes, not
+its level.
+
+**Why.** Part 16's floor fixed the overconfidence. What was left is the tonic level's own slow
+course (drift), which a weight can only shrink. Differencing removes a constant offset entirely,
+turns a linear drift into a constant (absorbed by s₀), and leaves a curved drift only as a small,
+slowly varying offset.
+
+**The input.**
+- The tonic level is read at bins 7, 21, 35, … (as in tonic14).
+- The filter sees each change, Δs_j = s(7 + 14j) − s(7 + 14(j − 1)), placed at the midpoint bin
+  14j (bins 14, 28, 42, …). Every other bin has no continuous observation.
+- That gives one observation per 14 s, as before.
+
+**What the model then says.** The filter is unchanged: Δs_k = s₀ + s₁·x_k + N(0, v_s). With the
+change as input, this means the tonic level *rises at a rate set by arousal*, so the level
+integrates arousal. Physiologically this is the leaky-integrator view of sweat accumulation, in
+contrast to tonic14's assumption that the level is proportional to arousal. Everything else is
+`tonic14b` unchanged:
+- the balanced floor, s₁²/v_s ≤ 14·p̄(1 − p̄);
+- the starting values, computed from the observed differences;
+- the filter choice (MPP + tonic, else binary + tonic, else the main state).
+
+**Synthetic check.** Part 15's sessions (same seeds; r₁ = 0.5, Δ ∈ {−0.5, 0, 0.5, 1.0}, the 50
+layouts), with three true tonic levels:
+- **A, level ∝ arousal** (Parts 15–16's A): s = 5 + x + N(0, 0.05²). The differenced model is
+  misspecified here. Reported, not a criterion.
+- **Ai, integrator:** s_k = 5 + γ·Σ_{j≤k} x_j + N(0, 0.05²), with γ = 0.01 µS per second per logit.
+  For example, a clip held at +0.5 raises the level by 0.6 µS over 120 s. γ was chosen a priori as
+  a plausible size, not fitted to the real data.
+- **Bi, drift:** s = the layout participant's own real tonic level + γ·Σ_{j≤k} x_j. Its own course
+  is drift unrelated to the true state, as in Part 15's B.
+
+Criteria T1–T4 (Part 15's table), on Ai and Bi.
+
+**Decision rule.**
+- **Pass** if Ai and Bi both pass T1–T4. Then `s2_run_tonic(pwd, 'tonic14d')` and
+  `s2_tests(pwd, 'variant', 'tonic14d')` run on the 50.
+- **Fail** otherwise. The real run is not made unless Piyush decides otherwise, and γ and the input
+  are not re-tuned (rule 5).
+
+**Outputs:**
+- `data/stage2_synth_tonic14d_scores.csv`;
+- and if it passes: `data/stage2_params_tonic14d.csv`, `data/stage2_states_005_tonic14d.csv`,
+  `data/stage2_tests_tonic14d.csv`, `data/stage2_block_summary_tonic14d.csv` and
+  `results/figures/stage2_hypotheses_tonic14d.png`.
+
+**Regression check: pass.** The tonic14 and tonic14b inputs now come from `s2_tonic_input`
+(new). Rebuilt that way, P99's tonic14 and tonic14b states match the saved ones to 5·10⁻¹⁶.
+- **Smoke test, one synthetic Ai session** (no real participant was looked at): the fit
+  converged, with s₁ 0.11 against a true 14γ = 0.14, and the tonic-change noise SD 0.072 against
+  an expected 0.071 (√2 · 0.05).
+
+**Synthetic check result** (`data/stage2_synth_tonic14d_scores.csv`, 2026-11-23):
+
+| | A, level ∝ arousal (not a criterion) | Ai, integrator | Bi, real drift + integrator | Main filter |
+|---|---|---|---|---|
+| T1 r, slope | 0.968, 1.00 | 0.980, 1.14 (pass) | 0.973, 1.06 (pass) | 0.967, 1.00 |
+| T2 bias by Δ (−0.5, 0, 0.5, 1.0) | −0.00, +0.02, +0.04, −0.01 | −0.13, −0.00, +0.11, +0.09 (**fail**) | −0.07, −0.01, +0.05, +0.02 (pass) | −0.01 to +0.04 |
+| T3 C3′ coverage median | 0.98 | 0.98 (pass) | 0.97 (pass) | 0.98 |
+| T4 converged | 1.00 | 1.00 (pass) | 1.00 (pass) | |
+| Floor active | 0% | 22% | 34% | |
+| s₁ median | −0.00 | 0.08 (true 0.14) | 0.10 (true 0.14) | |
+
+- **The drift problem is solved.** Bi, the real tonic course plus the integrator, passes all four
+  criteria. Bias is within 0.07 and the bands are honest. In Parts 15–16, the matching scenario B
+  failed with drift biases up to +0.30.
+- **The clean integrator case, Ai, fails T2 narrowly.** The scale is stretched (slope 1.14), so
+  the film effect is overstated by 0.11–0.13 at Δ = ±0.5, against a limit of 0.1. s₁ comes out at
+  about 0.08 against a true 0.14, which stretches x. The bands stay honest (coverage 0.98).
+- **It fails safe when the tonic level carries no rate information.** In A (level ∝ arousal), s₁
+  comes out at about 0. The tonic changes are ignored, and the state is the main state
+  (R² 0.999).
+- **Warnings:** near-singular M-step regressions in some sessions, as in Part 16. Every converged
+  state was finite.
+- **Decision, by the rule above: Ai fails T2, so the variant fails validation, and the real run is
+  not made.** The failure is narrow: it is a scale stretch, not drift. γ and the input are not
+  re-tuned (rule 5). This is the first tonic variant whose drift scenario passes.
+
+## Part 18: the tonic link calibrated from the pulses (variant `tonic14c`, exploratory)
+
+Set 2026-11-23, after Part 17's results, at Piyush's request, and written down before any
+`tonic14c` state was computed. **A new, named variant; it cannot change any H1–H6 verdict in
+Part 14.** It changes one thing from `tonic14d`: how the tonic link is estimated.
+
+**Diagnosis, from Part 17's synthetic scores only (no real data looked at).** The stretch sits in
+the sessions where the floor was not active:
+- Ai, floor not active (157 sessions): s₁ 0.069 against a true 0.14, bias +0.12 at Δ = +0.5 and
+  +1.0;
+- Ai, floor active (43 sessions): s₁ 0.110, bias +0.06 and +0.04.
+
+When EM estimates the state and the link together, it can lower s₁ and enlarge x while fitting the
+tonic changes equally well. The pulses fix x's scale only weakly (b₁ = 1), so EM settles too low on
+s₁ and the state is stretched.
+
+**The calibration (regression calibration), per participant:**
+1. Take the main analysis's chosen state (pulses only) at every bin: x̂_k and its variance v_k.
+   Their scale comes only from the pulses.
+2. At the bins where a tonic change is observed (14, 28, …), fit Δs_j = s₀ + s₁·x̂_j by least
+   squares.
+3. Set v_s = (mean squared residual) − s₁²·mean(v_j). The second term removes the part of the
+   spread that is only the pulse state's own uncertainty. If this leaves v_s ≤ 0, it is set to
+   10⁻¹² and the floor takes over.
+4. Apply the balanced floor (Part 16): v_s ≥ s₁² / (14·p̄(1 − p̄)).
+5. Run the tonic filter with s₀, s₁ and v_s **held fixed**. EM still estimates v_e, r₀, r₁ and v_r.
+
+Because the slope is fitted against the pulses' best guess of x, not against a noisy measurement of
+it, it is not shrunk. The tonic changes can then sharpen the state but cannot rescale it.
+
+**Everything else is `tonic14d` unchanged:**
+- the input: tonic changes at bins 14, 28, …;
+- the floor;
+- the filter choice: MPP + tonic, else binary + tonic, else the main state. On real data the
+  calibration uses the main analysis's chosen state from `data/stage2_states_005.csv`, with its
+  variance rebuilt from its 95% band.
+
+**Synthetic check on fresh seeds.** Part 17's sessions were used to diagnose the failure and design
+this fix, so they no longer test it fairly.
+- **The decision uses fresh sessions:** the same generator, scenarios (A, Ai, Bi), γ = 0.01, 50
+  layouts and Δ levels, with seeds `900000 + 1000·cond + i` instead of `1000·cond + i`. No earlier
+  stage-2 run used them.
+- **For comparison only:** the old seeds are also run. They do not enter the decision.
+
+**Criteria:** T1–T4 (Part 15's table) on Ai and Bi, fresh seeds.
+
+**Decision rule:**
+- **Pass** if Ai and Bi both pass T1–T4 on the fresh seeds. Then `s2_run_tonic(pwd, 'tonic14c')`
+  and `s2_tests(pwd, 'variant', 'tonic14c')` run on the 50, with no override needed.
+- **Fail** otherwise. The real run is not made unless Piyush decides otherwise, and no further
+  refinement of the tonic link follows (rule 5).
+
+**Outputs:**
+- `data/stage2_synth_tonic14c_scores.csv` (fresh seeds);
+- `data/stage2_synth_tonic14c_oldseeds_scores.csv` (comparison);
+- if it passes: `data/stage2_params_tonic14c.csv`, `data/stage2_states_005_tonic14c.csv`,
+  `data/stage2_tests_tonic14c.csv`, `data/stage2_block_summary_tonic14c.csv` and
+  `results/figures/stage2_hypotheses_tonic14c.png`.
+
+**Regression check: pass.**
+- The six `s2_test_dc` cases are identical (difference 0).
+- P99's tonic14 and tonic14b states match the saved ones to 5·10⁻¹⁶.
+- A tonic14d synthetic session (Ai, Δ = −0.5, first layout) reproduces its saved Δ̂ exactly.
+- Smoke test on that old-seed session: the calibrated link gave s₁ 0.105 and a noise SD of 0.072
+  µS, and the fit converged in 10 iterations.
+
+**Synthetic check result** (2026-11-23). The decision uses the fresh seeds
+(`data/stage2_synth_tonic14c_scores.csv`). The old seeds
+(`data/stage2_synth_tonic14c_oldseeds_scores.csv`) are for comparison only.
+
+| | Ai, fresh | Bi, fresh | A, fresh (not a criterion) | Ai, old seeds | Bi, old seeds | Main filter, fresh |
+|---|---|---|---|---|---|---|
+| T1 r, slope | 0.978, 1.06 (pass) | 0.973, 1.05 (pass) | 0.970, 1.00 | 0.976, 1.05 | 0.973, 1.04 | 0.969, 1.01 |
+| T2 bias by Δ (−0.5, 0, 0.5, 1.0) | −0.03, −0.03, +0.01, +0.07 (pass) | −0.02, −0.03, −0.01, +0.07 (pass) | +0.04, −0.02, −0.02, +0.07 | −0.06, +0.00, +0.07, +0.02 | −0.05, −0.01, +0.04, +0.01 | +0.03, −0.02, −0.02, +0.07 |
+| T3 C3′ coverage median | 0.989 (pass) | 0.978 (pass) | 0.984 | 0.989 | 0.979 | 0.980 |
+| T4 converged | 1.00 (pass) | 1.00 (pass) | 1.00 | 1.00 | 1.00 | |
+| Floor active | 57% | 16% | 0% | 52% | 21% | |
+| s₁ median (true 0.14) | 0.10 | 0.10 | −0.00 | 0.10 | 0.10 | |
+
+- **Pass on the fresh seeds:** Ai and Bi meet all four criteria. By the rule above, the real run is
+  made with no override.
+- **The stretch is gone.** Ai's slope is 1.06 (tonic14d: 1.14), and its worst bias is 0.07
+  (tonic14d: 0.13).
+  - **The fresh seeds' +0.07 at Δ = 1.0 is in the main filter too** (+0.07), so it belongs to
+    those draws, not to the tonic level.
+- **The drift stays handled** (Bi). When the tonic changes carry no information (A), the variant
+  falls back to the main state (R² 0.998).
+- **The old seeds agree.** The fix passes on the sessions it was designed on and on fresh ones
+  alike.
+- **The calibrated s₁ is still below the truth** (0.10 against 0.14). Because the scale is fixed
+  by the pulses, this only lowers the tonic level's weight, the safe direction, and causes no
+  stretch.
+- **Warnings:** near-singular M-step regressions in some synthetic sessions, as in Parts 16–17.
+  Every converged state was finite.
+
+**Real run** (`data/stage2_params_tonic14c.csv`, `data/stage2_states_005_tonic14c.csv`,
+2026-11-23). No warnings.
+- **Which filter was used:** MPP + tonic for 48 participants, binary + tonic for 2 (P15 and P178,
+  MPP stopped on r₁ ≤ 0), and the main state for none.
+  - The main analysis had 6 binary. P106, P111, P115 and P168 now converge with MPP + tonic.
+- **The link:** calibrated s₁ has a median of 0.09 (range −0.0001 to 0.35), and the tonic-change
+  noise SD a median of 0.10 µS.
+  - No participant has a clearly negative link. tonic14 and tonic14b had 4.
+  - The floor was active for 18 of 50.
+- **The state stays close to the main state:** R² median 0.94, with none below 0.2.
+
+**H1–H6 on the variant** (`s2_tests(pwd, 'variant', 'tonic14c')`:
+`data/stage2_tests_tonic14c.csv`, `data/stage2_block_summary_tonic14c.csv`,
+`results/figures/stage2_hypotheses_tonic14c.png`). State (S), change from own baseline:
+
+| | Main analysis (Part 14) | tonic14c |
+|---|---|---|
+| H1, all 50 | −0.08 [−0.24, 0.07], p 0.30, not supported | −0.06 [−0.20, 0.08], p 0.38, not supported |
+| H2, emotional − neutral | +0.37 [0.05, 0.69], p 0.023, supported | +0.37 [0.09, 0.64], p 0.010, supported |
+| H3 (a) negative − neutral | +0.20, p 0.31 | +0.18 [−0.20, 0.56], p 0.34 |
+| H3 (b) positive − neutral | +0.50 [0.08, 0.93], p 0.023 | +0.50 [0.10, 0.89], p 0.016 |
+| H3 (c) mixed group D, 90% CI | +0.05 [−0.30, 0.41], equivalent | +0.06 [−0.26, 0.38], equivalent |
+| H3 verdict | not supported | not supported |
+| H4 | not supported | not supported |
+| H5 | no evidence of separation | no evidence of separation (negative group p 0.24) |
+| Group means: neutral, negative, positive, mixed | −0.31, −0.10, +0.19, +0.11 | −0.28, −0.10, +0.22, +0.14 |
+
+- **Every verdict is the same as in the main analysis,** and the estimates agree to within 0.03.
+- **The intervals are slightly narrower** (H2: [0.09, 0.64] against [0.05, 0.69]). The tonic
+  changes add a little information, which is what a validated extra observation should do.
+- **The state agrees with the pulses:** the neutral group is −0.28, against a pulse rate of R −0.25.
+- **P178 is still the largest outlier** (−1.7; main −2.1).
+- **Conclusion for the report:**
+  - **This is the first tonic variant to pass validation, and the first on fresh seeds.** It uses
+    the tonic level's 14 s changes, with the link calibrated from the pulse-only state and the
+    balanced floor.
+  - **It confirms the main analysis.** The verdicts are the same and the estimates within 0.03,
+    with slightly tighter intervals.
+  - **It is still not a replacement** for the Part 14 analysis, which was set in advance. It is an
+    exploratory variant reached after three failed ones. It is reported as a robustness check:
+    the pulse-only results hold when the tonic level is added in a validated way.
+  - **The path is itself a result.** The raw tonic level fails on overconfidence and on drift. A
+    weight cap fixes the overconfidence. Differencing fixes the drift. Calibrating the link from
+    the pulses fixes the scale.
+
+## Part 19: the affect slider (H6, and the evaluation of Oliver et al. 2025)
+
+Set 2026-11-23, written before the slider was compared with any state. The professor pointed us to
+Oliver, Zhang, Raju, Murrough & Faghih (2025), *PLOS Mental Health* 2:e0000463. That paper:
+- estimates arousal from skin-conductance pulses with an MPP filter, as we do;
+- uses self-reported arousal only to **evaluate** the state, never as a model input;
+- reports two analyses:
+  1. **High/low agreement.** HAI (High Arousal Index) = P(state > the person's median state). The
+     person's top HAI periods are compared with the highest-rated stimuli, with a per-person rating
+     cutoff tuned in-sample. Accuracy 69%, sensitivity 50%, specificity 73%.
+  2. **Direction of change.** For consecutive stimuli in different rating groups, does the state go
+     up when the rating does? Accuracy 54.5–63.6% across the cutoffs swept, against 50% chance.
+     Their state–rating R² was 0.03.
+
+**Data** (`s2_slider` → `data/stage2_slider_1hz.csv`). The raw files come from Piyush's copy of
+the POPANE Study 6 archive (`study6.zip`, files `<id>_All.csv`). The 50 analysed participants were
+extracted to `data/raw/Study6/S6_P<id>_All.csv` (local only, not shared).
+- **Same recordings as stage 1:** raw EDA matches stage 1's input `y` to within 0.0025 µS on the
+  same clock (P99).
+- **The slider on the stage-2 bins:** its mean in each 1 s bin, and whether it moved in that bin.
+  No bin is missing.
+- **Cross-check against Eleftherios's file** (`slider_study6_all.csv`, shared 2026-11-23, not in
+  the repository: 113 MB):
+  - it holds the slider at 10 Hz on the recording clock, with marker, group and selected flag, for
+    all 187 Study 6 participants;
+  - its `selected` flag picks exactly our 50;
+  - binned the same way, it matches `data/stage2_slider_1hz.csv` (from the 1000 Hz raw files):
+    median difference 0.000, 99th percentile 0.018, worst 0.28. The worst bins (P115, P175) are
+    where the slider moves fast, so 10 Hz and 1000 Hz averages differ;
+  - the analysis uses the 1 Hz table built from the raw files. The 1 Hz table is in the
+    repository (2 MB), so the analysis can be re-run without the raw files.
+
+**What the slider looks like** (the slider alone, before any comparison with a state):
+- **The recorded scale is 0–10, not 1–10:** values run from 0.0 to 9.9. The resting position, the
+  baseline median, is 4.9 (IQR 4.8–5.0).
+- **At baseline the slider mostly stays still:** in the median participant it never moves.
+- **During the films its range has a median of 3.3.** Nine participants move it less than 0.5
+  across all six films: P12, P26, P34, P111, P113, P138, P159, P168 and P179.
+- **Clip means** (valence; intensity measured from 5.5):
+
+  | Emotion | Valence | Intensity |
+  |---|---|---|
+  | anger | 4.1 | 1.7 |
+  | fear | 4.4 | 1.6 |
+  | disgust | 4.3 | 1.4 |
+  | amusement | 6.0 | 1.1 |
+  | tenderness | 5.4 | 1.0 |
+  | neutral | 5.2 | 1.0 |
+  | sadness | 4.7 | 0.9 |
+
+### A. H6, as set in Part 14
+
+- **Run once, as written:** per person, the Spearman r across the 6 clips between the mean state
+  and the mean |a − 5.5|; then Fisher z and a one-sample t.
+- **The reader is fixed, not the test.** Part 14's reader used automatic header detection, which
+  fails on the real files' `#` header. It now finds the header line itself.
+- **Re-running `s2_tests(pwd)` rewrites Part 14's files,** so they are backed up first. Every H1–H5
+  row must come out identical, and only the H6 rows change.
+- **The midpoint issue:** 5.5 assumes a 1–10 scale, but the data are 0–10 and rest at about 4.9. H6
+  stays as written.
+  - **Secondary, labelled as added after seeing the scale:** the same test with intensity measured
+    from the person's own resting position, |a − a_rest|, where a_rest is the median slider value
+    over their baseline.
+
+### B. The paper's evaluation, adapted (exploratory: it judges the state against self-report and cannot change a verdict)
+
+- **Participants:** the 41 whose slider moves at least 0.5 across the films. The 9 above are left
+  out; that was decided from the slider alone.
+- **Slider intensity:** I_k = |a_k − a_rest|, scaled per person to fill 0–100: I′ = 100·I / (the
+  person's maximum I over film bins). This follows the paper's per-person scaling.
+- **HAI:** HAI_k = Φ((x̂_k − m) / √v_k), where m is the median of x̂ over the whole session.
+- **Windows:** non-overlapping 20 s windows inside each film clip, 6 per clip and 36 per person.
+  Each window gets the mean state, the mean HAI and the mean I′.
+  - **Primary: no lag,** as in the paper.
+  - **Secondary: the slider is read 5 s later** (bin k + 5, within the same clip), because a rating
+    trails the feeling.
+
+**Analysis 1, high/low agreement.** HAI-high = the person's 6 windows with the highest mean HAI (the
+top 15%, rounded up). Slider-high is defined three ways:
+- **(i) Primary, rank-matched:** the person's 6 windows with the highest I′. Nothing is tuned.
+  Chance overlap is 1 window in 6.
+- **(ii) Secondary, one cutoff on I′ chosen by leave-one-participant-out:** for each person, the
+  cutoff c ∈ {0, 1, …, 100} with the best median **balanced** accuracy ((sensitivity +
+  specificity)/2) over the other 40, applied to that person.
+  - *Amended before any run:* plain accuracy would pick "everything low", which scores 30/36 =
+    0.83 for nothing. That 0.83 is reported as the reference for every accuracy.
+- **(iii) The paper's in-sample per-person tuning:** c ∈ {50, …, 100}, best accuracy with at least
+  5 slider-high windows. It is reported only to compare with the paper's 69%, and it is optimistic
+  by construction.
+
+Reported for each: summed TP, TN, FP and FN, and the median per-person accuracy, sensitivity and
+specificity.
+
+**Analysis 2, direction of change.** Consecutive film windows in viewing order.
+- Each window gets a level from I′:
+  - **two levels:** split at the person's median;
+  - **three levels:** split at the 20th and 80th percentiles (the paper's example).
+- A transition is a pair of consecutive windows at different levels. It is a success if the mean
+  state moves the same way as I′.
+- Reported: accuracy pooled over all transitions, and for three levels split into low↔high and
+  transitions involving mid.
+- **Clip-level secondary:** the 5 consecutive clip-to-clip changes per person, all counted.
+
+**Chance.** Windows next to each other are not independent, so the null distribution comes from
+2,000 circular shifts of each person's slider-window sequence against their state windows (seed
+19). The cutoff in (ii) is kept at its real value. "Agreement above chance" means p < 0.05 for:
+- analysis 1 (i): the median accuracy;
+- analysis 2: the pooled accuracy, two levels and three levels.
+
+**States:**
+- **Primary:** the main analysis's chosen state (`data/stage2_states_005.csv`).
+- **For comparison:** tonic14c (Part 18), run through the same steps. It changes no decision.
+
+**Self-test, before the real run:**
+- a slider built from the state itself must give accuracy far above chance;
+- a slider built from an unrelated random walk must give about chance.
+
+**Outputs:** `s2_slider_eval` → `data/stage2_slider_eval.csv`, `data/stage2_slider_windows.csv`
+and `results/figures/stage2_slider_eval.png`.
+
+**Self-test: pass** (300 shifts each).
+
+| Self-test | Analysis 1 (i) | Analysis 1 (ii), balanced | Analysis 2, direction (all versions) |
+|---|---|---|---|
+| Slider = the state | 1.00 (p 0.003) | 0.92 (p 0.003) | 0.96–1.00 (p 0.003) |
+| Slider = a random walk | 0.71, the null mean (p 0.76) | 0.50 (p 1) | 0.45–0.50 (p 0.52–0.96) |
+
+- **Three-level low↔high transitions are rare:** 2–4 in the whole sample. Consecutive 20 s windows
+  seldom jump from the bottom 20% to the top 20%. The three-level result therefore rests almost
+  entirely on transitions involving mid.
+- **A leak, recorded:** the self-test run also printed the "H6 as Part 14 on these 41" row computed
+  from the real slider (r 0.12, p 0.11). That row did not switch to the test slider. It was seen
+  before the planned run. The code now skips that row in a self-test. Every analysis and threshold
+  above was already fixed in writing, so nothing was changed because of it.
+
+### Results (2026-11-23, run once)
+
+**A. H6 as set in Part 14** (`s2_tests(pwd)` → `data/stage2_tests.csv`):
+- **Part 14's other results are untouched:** all 168 non-H6 rows and the block summary are
+  identical to the backup.
+
+| | Participants | Mean Spearman r [95% CI] | p (rank p) | Outcome |
+|---|---|---|---|---|
+| **H6:** state vs \|a − 5.5\| across the 6 clips | 42 of 50 (slider varies) | +0.14 [−0.01, +0.28] | 0.074 (0.067) | **not supported** |
+| State vs raw valence (secondary) | 45 | −0.04 [−0.21, +0.12] | 0.60 | reported |
+| H6 secondary, \|a − a_rest\| (`s2_slider_eval`) | 41 | +0.05 [−0.13, +0.23] | 0.56 | reported |
+
+- **H6 is not supported.** The direction is positive, with a 90% interval of [+0.01, +0.26], but
+  p is 0.074.
+- **Measuring intensity from each person's resting position** (the scale fix) weakens it rather
+  than strengthening it.
+
+**B. The paper's evaluation, main analysis's state** (`data/stage2_slider_eval.csv`,
+`results/figures/stage2_slider_eval.png`; 41 participants, 2,000 shifts):
+
+| | No lag | Slider read 5 s later |
+|---|---|---|
+| 1 (i) rank-matched, median accuracy (null mean) | 0.714 (0.711), p 0.90 | 0.714 (0.710), p 0.89 |
+| 1 (i) sensitivity / specificity (median) | 0.17 / 0.83 | 0.17 / 0.83 |
+| 1 (ii) LOPO cutoff, median balanced accuracy | 0.517, p 0.22 (cutoff median 14) | 0.533, p 0.055 |
+| 1 (iii) in-sample cutoff (the paper's way), median accuracy | 0.714 (cutoff median 54) | 0.722 |
+| **2 direction, two levels** | **0.555 of 236, p 0.025** | 0.534 of 249, p 0.097 |
+| **2 direction, three levels** | **0.543 of 289, p 0.048** | 0.505 of 287, p 0.38 |
+| 3 levels: low↔high / involving mid | 0.67 of 9 / 0.54 of 280 | 0.50 of 20 / 0.51 of 267 |
+| 2 direction, clip to clip | 0.547 of 181, p 0.019 | |
+
+**Comparison state, tonic14c** (`data/stage2_slider_eval_tonic14c.csv`):
+- High/low agreement: the same as the main state (no agreement).
+- Direction, two levels: **0.589, p 0.002**.
+- Direction, three levels: 0.547, p 0.043.
+- Clip to clip: 0.514, p 0.16.
+
+**What it shows:**
+- **The state does not pick out a person's highest-slider periods.** The person's 6 top-HAI windows
+  overlap their 6 top-slider windows by 1, which is chance.
+  - The paper's in-sample method gives 0.71 here, close to the paper's 69%. That number is also
+    what chance gives (rank-matched null 0.71), and below "everything low" (0.83). The paper's
+    accuracy should not be read as agreement on its own.
+- **The state tends to move in the same direction as the slider, slightly but above chance:**
+  - 55% of transitions with two levels (p 0.025), 54% with three levels (p 0.048), and 55% from
+    clip to clip (p 0.019);
+  - this is within the paper's 54.5–63.6% range;
+  - it is weaker when the slider is read 5 s later. The secondary lag was a guess and was not
+    tuned.
+- **The tonic14c state does as well or slightly better on direction** (59% with two levels). It
+  is the comparison state only and changes no decision.
+- **How strong this is:** four of the six primary-ish tests pass, at p between 0.002 and 0.05.
+  No correction across them was set in advance. Together with H6 (r 0.14) and the paper's own
+  R² of 0.03, the agreement between self-report and the pulse-based state is real but small.
+- **Limits:**
+  - the slider is valence; intensity is a stand-in for arousal, and sadness and tenderness are
+    clearly valenced but low in arousal;
+  - 9 of 50 hardly use the slider;
+  - the windows within a person are dependent, which is why the null is a circular shift.
+
+**Conclusion for the report:**
+- **H6 is not supported** (r 0.14, p 0.074).
+- **The paper's evaluation, adapted:** the decoded state follows the *direction* of changes in
+  self-reported intensity slightly above chance (54–59%), at the same level the paper reports, but
+  it does not identify the *moments* of highest self-reported intensity.
+- **The slider is used only to evaluate the state, as in the paper.** Using it as a model input
+  would make this evaluation circular (Part 19, B, and the discussion before it).
 
 ## Current status
 
@@ -990,8 +1727,9 @@ Limitations to report:
    on 400 synthetic sessions (C3 failed as first set; C3′, rescored after the result, passed), run on
    the 50. **H1–H6 tests set in writing, then run once (Part 14, 2026-11-16):** H2 supported; H1,
    H3 and H4 not supported; within the mixed group negative and positive are equivalent; H5 no
-   evidence of separation; H6 not tested (needs the raw POPANE files, `eda.dataset.load`). Next: H6
-   if the raw files are obtained, then the report and slides.
+   evidence of separation; H6 not supported (run 2026-11-23 once the raw files were in, r +0.14,
+   p 0.074; Part 19, with the slider evaluation of Oliver et al. 2025). Exploratory tonic variants
+   in Parts 15–18. Next: the report and slides.
 4. Report and slides.
 
 ## How to run a round
