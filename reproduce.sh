@@ -122,6 +122,7 @@ if [ $REBUILD = 1 ]; then
     py raw synth-check            "data/synth50_check.csv data/noise_spectrum50_curves.csv"
     py raw tune50-export          "data/tbme_input/U*_own4.mat data/tbme_synth/U*.npz data/tune50_cohort.csv"
     py raw test50-export          "data/tbme_input/V*_own4.mat data/tbme_synth/V*_own4.npz data/test50_cohort.csv"
+    py raw own-scale              data/own_scale.csv    # reads inputs only the steps above make (U slow, F, T)
 fi
 
 # ------------------------------------- 2. stage 1 from the shipped deconvolution outputs
@@ -132,7 +133,6 @@ py own-score-selected  data/own_tune_scores_selected.csv
 py own-decay-check     "data/own_decay_check.csv data/own_decay_sessions.csv"
 py own-errors          "data/own_errors.csv data/own_errors_summary.csv"
 py round-compare       "data/round8_compare.csv results/figures/round8_tonic.pdf"
-py own-scale           data/own_scale.csv
 py final-score         data/own_final_test_scores.csv
 py test50-score        data/own_test50_scores.csv
 py resynth-export      "data/resynth50_cohort.csv data/tbme_input/R*_own4.mat data/tbme_synth/R*_own4.npz"
