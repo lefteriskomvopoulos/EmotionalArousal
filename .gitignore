@@ -72,5 +72,9 @@ __pycache__/
 !/hpc/own/final/output/own4_p1000_k14_f3_s8/P*_signals.csv
 !/hpc/own/final/output/own4_p1000_k14_f3_s8/V*_signals.csv
 !/hpc/own/resynth/output/own4_p1000_k14_f3_s8/R*_signals.csv
+# Round 8's settings on the 18 tuning sessions: round-compare reads their tonic (REPRODUCE.md)
+!/hpc/own/tune/output/own4_p1000_k14_f3_s8/U*_signals.csv
+!/hpc/own/tune/output/own4_p1000_k20_f3_s8/U*_signals.csv
+!/hpc/own/tune/output/own4_p1000_k28_f3_s8/U*_signals.csv
 
 .DS_Store
