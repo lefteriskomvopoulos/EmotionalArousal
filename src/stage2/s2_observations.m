@@ -27,9 +27,17 @@ function obs = s2_observations(id, min_height, root)
 if nargin < 2, min_height = 0.05; end
 if nargin < 3, root = pwd; end
 
-sig = readtable(fullfile(root, 'hpc', 'own', 'final', 'output', 'own4_p1000_k14_f3_s8', ...
-    sprintf('P%d_own4_signals.csv', id)));
-pul = readtable(fullfile(root, 'data', 'real50_pulses.csv'), 'TextType', 'string');
+% The 50 come from the final run; the other 47 who passed selection from the extra run
+% (docs/EXPERIMENTS.md Part 21), same frozen setting.  A participant in the final run is always
+% read from it, so the 50's input is unchanged.
+f = fullfile(root, 'hpc', 'own', 'final', 'output', 'own4_p1000_k14_f3_s8', sprintf('P%d_own4_signals.csv', id));
+ptab = 'real50_pulses.csv';
+if ~isfile(f)
+    f = fullfile(root, 'hpc', 'own', 'extra', 'output', 'own4_p1000_k14_f3_s8', sprintf('P%d_own4_signals.csv', id));
+    ptab = 'extra47_pulses.csv';
+end
+sig = readtable(f);
+pul = readtable(fullfile(root, 'data', ptab), 'TextType', 'string');
 pul = pul(pul.id == id, :);
 
 t0 = sig.time_s(1);

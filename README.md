@@ -54,6 +54,24 @@ settings were tuned on our data.
     equivalent.
   - **H5:** no evidence of separation.
   - **H6 not supported** (r +0.14, p 0.074; Part 19).
+  - **The reported analysis is the balanced 50, `bal50`** (Parts 20–21).
+    - **The sample:** the 6 participants whose MPP filter did not converge are dropped, on the
+      professor's advice, and replaced from the other 47 who passed selection, by a seeded draw
+      among those whose MPP filter converged. The result is 20 neutral, 10 negative, 10 positive and
+      10 mixed, with every state from the MPP filter.
+    - **Verdicts:** the same as on the first 50, except H5 (separation, p 0.045, from sadness;
+      fragile).
+    - **The swap:** the same as the `new50` swap on `deconvolution`/`submission` (out 15, 106, 111,
+      115, 168, 178; in 74, 92, 94, 145, 148, 166).
+    - **Outputs:** suffix `_bal50`. The intermediate 44 have suffix `_mpp44`.
+  - **To reproduce `bal50`:**
+    - the extra 47's deconvolution output must be in `hpc/own/extra/output/` (from `deconvolution`);
+    - then, in MATLAB, `s2_run(pwd, 'extra47')`;
+    - then `python src/stage2/s2_sample_bal50.py`, which writes the sample and
+      `data/stage2_states_005_bal50.csv`;
+    - then `s2_tests(pwd, 'variant', 'bal50')`;
+    - and, with the raw files, `s2_slider(pwd, 'bal50')` and
+      `s2_slider_eval(pwd, 'variant', 'bal50')`.
 - **The affect slider** (Part 19, the evaluation of Oliver et al. 2025, adapted):
   - the state does not pick out the moments of highest self-reported intensity;
   - it follows the direction of changes slightly above chance (54–59%), the level the paper
@@ -99,7 +117,10 @@ src/stage2/                  STAGE 2: PULSES -> AROUSAL STATE (MATLAB; docs/EXPE
   s2_test_dc.m               reproduces the Data Challenge's saved results (needs its folder)
   s2_observations.m          one participant's 1 s bins: pulse, log height, block code
   s2_synth.m                 validation on 400 synthetic sessions -> data/stage2_synth_scores.csv
-  s2_run.m                   the 50 -> data/stage2_params.csv, data/stage2_states_00{5,2}.csv
+  s2_run.m                   the 50 -> data/stage2_params.csv, data/stage2_states_00{5,2}.csv;
+                             s2_run(pwd, 'extra47'): the other 47 -> the same with _extra47
+  s2_sample_bal50.py         the balanced 50 (Part 21, seed 2611) -> data/stage2_sample_bal50.csv
+  s2_subset.m                a state table without some participants (Part 20: _mpp44)
   s2_plot.m                  one participant's figure -> results/figures/stage2_state_P<id>.png
   s2_plot_all.m              all 50, one page each -> results/figures/stage2_states_real50.pdf
   s2_tests.m                 H1-H6 as set in Part 14 -> data/stage2_tests.csv,
@@ -110,8 +131,8 @@ src/stage2/                  STAGE 2: PULSES -> AROUSAL STATE (MATLAB; docs/EXPE
   s2_tonic_calibrate.m       tonic14c (Part 18): the tonic link from the pulse-only state
   s2_read_raw.m              reads columns of a raw POPANE file (data/raw/Study6, local only)
   s2_slider.m                the slider on the stage-2 bins -> data/stage2_slider_1hz.csv
-  s2_slider_eval.m           state vs slider (Part 19) -> data/stage2_slider_eval[_tonic14c].csv,
-                             results/figures/stage2_slider_eval[_tonic14c].png
+  s2_slider_eval.m           state vs slider (Part 19) -> data/stage2_slider_eval[_<variant>].csv,
+                             results/figures/stage2_slider_eval[_<variant>].png
   s2_synth_tonic.m, s2_run_tonic.m   their synthetic check and real run -> data/*_tonic.csv,
                              data/*_tonic14b.csv (second argument 'tonic14b');
                              s2_tests(pwd, 'variant', 'tonic' | 'tonic14b') -> data/stage2_tests_<v>.csv
