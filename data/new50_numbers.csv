@@ -1,0 +1,16 @@
+number,original 50,new 50
+participants,50,50
+neutral / positive / negative / mixed,20/10/10/10,20/10/10/10
+"fit R2, median",0.9989,0.9988
+"pulses per min, median",11.7,12.9
+"pulses >= 0.05 uS per min, median",9.4,10.3
+"counted peaks per min (>= 0.02 uS), median",7.0,7.1
+"pulses / counted, ratio of medians",1.67,1.81
+"rest: pulses per min, median",13.0,13.1
+"rest: pulses >= 0.05 uS per min, median",10.1,10.4
+"rest: counted >= 0.05 uS per min, median",4.8,4.8
+"rest: counted >= 0.05 uS per min, range",1.2-9.6,1.2-9.6
+rank corr. pulse rate vs counted rate (all),0.74,0.71
+rank corr. pulse rate vs counted rate (>= 0.05 uS),0.67,0.65
+windows with GCV lambda2 at its cap,92%,94%
+pulses in all,12271,12801

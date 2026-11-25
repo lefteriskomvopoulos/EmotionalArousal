@@ -130,11 +130,27 @@ Stage 2's input (runs.py)
                        negative / positive films) and film group, >= 0.05 uS and all; no test.  A
                        first look at what H1-H3 are about, after stage 1 and the threshold were frozen
                        -> data/real50_block_rates.csv
+
+The other 47 (runs.py; exploratory, for stage 2; not in the reported results or H1-H6;
+cluster: src/own/make_own_extra_bundle.sh)
+    extra-export       needs select and the raw recordings.  The real inputs of the 47 who passed both
+                       selection stages but were not drawn, as final-export makes the 50's
+                       -> data/tbme_input/P*_own4.mat (only the 47; existing files are never changed)
+    extra-pulses       needs the 47's cluster output in hpc/own/extra/output/own4_p1000_k14_f3_s8.
+                       Their pulses and window fits, in the format of real-pulses
+                       -> data/extra47_pulses.csv, data/extra47_windows.csv
+
+The new 50 (new50.py): the drawn 50 with the 6 whose MPP state filter did not converge replaced
+from the other 47 (report, Section II-B)
+    new50-numbers      needs real-pulses and extra-pulses.  The real-data numbers the report quotes,
+                       original 50 next to new 50
+                       -> data/new50_numbers.csv, data/new50_participants.csv
 """
 import sys
 
 from . import cohort_profile
 from . import generator
+from . import new50
 from . import preprocess
 from . import runs
 from . import scr_shapes
@@ -180,6 +196,9 @@ COMMANDS = {
     "pulse-check": lambda pid: scr_shapes.pulse_check(),
     "real-pulses": lambda pid: runs.export_pulses(),
     "block-rates": lambda pid: runs.block_rates(),
+    "extra-export": lambda pid: runs.export_extra(),
+    "extra-pulses": lambda pid: runs.export_extra_pulses(),
+    "new50-numbers": lambda pid: new50.main(new50.OUT_IDS, new50.IN_IDS),
 }
 
 

@@ -9,6 +9,8 @@ figures, and the real participants' pulses as one table for stage 2.
   plot_final, plot_resynth   final-plots, resynth-plots: every signal before and after
   plot_fit_panels real50-panels: each real participant's raw signal, input, pulses and fit
   export_pulses   real-pulses: the 50 real participants' pulses and window fits, one table each
+  export_extra    extra-export: real inputs of the other 47 who passed selection (exploratory);
+                  export_extra_pulses: extra-pulses, their pulse tables (hpc/own/extra/output/)
 
 Cluster output, per session <name> in hpc/own/final/output/<setting>/ (P, V) and
 hpc/own/resynth/output/<setting>/ (R):
@@ -260,8 +262,10 @@ def plot_fit_panels(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
                       "real50_fit_panels.pdf")
 
 
-def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
+def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING, ids=None,
+                  pulses_csv=PULSES_CSV, fits_csv=FITS_CSV):
     """real-pulses: the frozen setting's pulses on the 50 real participants, the input of stage 2.
+    With ids, root and the two paths: the same tables for other participants (extra-pulses).
 
     data/real50_pulses.csv, one row per pulse:
       id, group      participant and film group (selection.csv)
@@ -278,7 +282,8 @@ def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
     Reads only the final run's output, so it needs no MATLAB, cluster or raw data."""
     from . import selection
     sel = pd.read_csv(selection.SELECTION_CSV)
-    sel = sel[sel.selected.astype(bool)].sort_values("id")
+    keep = sel.selected.astype(bool) if ids is None else sel.id.isin(ids)
+    sel = sel[keep].sort_values("id")
     pulses, fits = [], []
     for r in sel.itertuples():
         pid, name = int(r.id), f"P{int(r.id)}_{suffix}"
@@ -302,16 +307,66 @@ def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
     f = pd.concat(fits, ignore_index=True)
     lead = ["id", "group"]
     f = f[lead + [c for c in f.columns if c not in lead]]
-    p.to_csv(PULSES_CSV, index=False)
-    f.to_csv(FITS_CSV, index=False)
+    p.to_csv(pulses_csv, index=False)
+    f.to_csv(fits_csv, index=False)
     minutes = (f.groupby("id").t_end.max() - f.groupby("id").t_start.min()) / 60
     rate = p.groupby("id").size().reindex(minutes.index, fill_value=0) / minutes
     # overall only: rates by film group or block are what H1-H3 test, so they are not printed here
     print(f"{len(p)} pulses from {p.id.nunique()} participants ({FINAL6_SETTING}); per minute, median"
           f" {rate.median():.1f} ({rate.min():.1f}-{rate.max():.1f})")
     print(f"height median {p.height_uS.median():.3f} uS, {(p.height_uS >= 0.05).mean():.0%} >= 0.05 uS")
-    print("saved", PULSES_CSV.name, FITS_CSV.name)
+    print("saved", pulses_csv.name, fits_csv.name)
     return p, f
+
+
+# The other 47 (exploratory, for stage 2): the participants who passed both selection stages but
+# were not drawn into the 50 (selection.csv: stage2_pass and not selected).  The frozen setting,
+# unchanged, run once on their real inputs.  Not part of the reported results or of H1-H6.
+EXTRA_OUT = cfg.ROOT / "hpc" / "own" / "extra" / "output"
+EXTRA_PULSES_CSV = cfg.ROOT / "data" / "extra47_pulses.csv"
+EXTRA_FITS_CSV = cfg.ROOT / "data" / "extra47_windows.csv"
+
+
+def extra_ids():
+    """The 47: passed quality (stage 1) and the baseline rule (stage 2), not drawn (stage 3)."""
+    from . import selection
+    sel = pd.read_csv(selection.SELECTION_CSV)
+    return sorted(sel.loc[sel.stage2_pass.astype(bool) & ~sel.selected.astype(bool), "id"].astype(int))
+
+
+def export_extra(suffix="own4"):
+    """extra-export: the real inputs P<pid>_<suffix> of the 47, through the same chain and the same
+    lines as final-export's real inputs (prepare, then tbme_export.save).  Writes nothing else.  An
+    input that already exists is left alone if it is the same signal; if it differs, this stops,
+    because a kept run may have been made from it (AGENTS.md)."""
+    from scipy.io import loadmat
+    from .dataset import load
+    from .preprocess import RAW_FS, prepare, segment_of
+    cutoff, fsy = VARIANTS[suffix]
+    ids = extra_ids()
+    written, same = 0, 0
+    for pid in ids:
+        name = f"P{pid}_{suffix}"
+        d = load(pid, every=1)
+        pr = prepare(d["eda"], d["t"], RAW_FS, segment_of(d["marker"]), cutoff, fsy)
+        path = tx.OUT / f"{name}.mat"
+        if path.exists():
+            old = loadmat(path)["y"].ravel()
+            if len(old) == len(pr["y"]) and np.allclose(old, pr["y"], rtol=0, atol=1e-12):
+                same += 1
+                print(f"  {name}: exists, same signal, kept")
+                continue
+            raise RuntimeError(f"{path} exists and differs from the rebuilt input; not overwritten")
+        tx.save(name, pr["y"], pr["t2"], d["marker"][pr["idx"]], int(pr["gaps"].sum()), fs=fsy)
+        written += 1
+        print(f"  {name}: {len(pr['y'])} samples")
+    print(f"{len(ids)} participants: {written} inputs written, {same} already there -> {tx.OUT}")
+
+
+def export_extra_pulses(suffix="own4"):
+    """extra-pulses: the 47's pulses and window fits, in the format of real-pulses
+    -> data/extra47_pulses.csv, data/extra47_windows.csv"""
+    return export_pulses(suffix, EXTRA_OUT / FINAL6_SETTING, extra_ids(), EXTRA_PULSES_CSV, EXTRA_FITS_CSV)
 
 
 BLOCK_RATES_CSV = cfg.ROOT / "data" / "real50_block_rates.csv"
