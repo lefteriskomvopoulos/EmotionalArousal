@@ -178,9 +178,10 @@ if [ -n "$SOLVER" ]; then
     TAG=$(sed -n 's/^tag=//p' "$WORK/src/own/$BUNDLE")                  # the frozen setting, as run
     ARGS=$(sed -n 's/^args="\(.*\)"$/\1/p' "$WORK/src/own/$BUNDLE")
     SD="$WORK/solver_check"; mkdir -p "$SD/input" "$SD/output"
-    cp "$WORK/data/tbme_input/$SOLVER.mat" "$SD/input/"
-    RUN_DIR="$SD"                                       # own_run reads input/, writes output/<tag>/
-    run_logged "solver_$SOLVER" "$MATLAB" -batch "addpath('$WORK/src/own'); own_run('$SOLVER', 'amin2021', 'tag', '$TAG', $ARGS)"
+    cp "$WORK"/src/own/*.m "$SD/"                       # the cluster bundle's layout: own_run reads
+    cp "$WORK/data/tbme_input/$SOLVER.mat" "$SD/input/" # input/ and writes output/<tag>/ next to itself
+    RUN_DIR="$SD"
+    run_logged "solver_$SOLVER" "$MATLAB" -batch "own_run('$SOLVER', 'amin2021', 'tag', '$TAG', $ARGS)"
     RUN_DIR="$WORK"
     outs=""
     for k in events windows signals; do outs="$outs solver_check/output/$TAG/${SOLVER}_$k.csv=$REF/$TAG/${SOLVER}_$k.csv"; done
