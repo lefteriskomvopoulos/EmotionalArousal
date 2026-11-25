@@ -76,5 +76,7 @@ __pycache__/
 !/hpc/own/tune/output/own4_p1000_k14_f3_s8/U*_signals.csv
 !/hpc/own/tune/output/own4_p1000_k20_f3_s8/U*_signals.csv
 !/hpc/own/tune/output/own4_p1000_k28_f3_s8/U*_signals.csv
+# The other 47 (extra-export, exploratory): stage 2 reads their signals as it does the 50's
+!/hpc/own/extra/output/own4_p1000_k14_f3_s8/P*_signals.csv
 
 .DS_Store
