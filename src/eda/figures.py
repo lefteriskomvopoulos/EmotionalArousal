@@ -276,6 +276,75 @@ def deconv_pages(items, folder, pdf_name, zoom_s=120):
     print(f"saved {cfg.FIG_DIR / pdf_name} and {len(items)} PNGs in {out_dir}")
 
 
+STAGE2_MIN_uS = 0.05         # stage 2 counts pulses at least this high (AGENTS.md, rule 8)
+FIT_ROWS = ("1  raw recording (1000 Hz, every 10th sample drawn)",
+            "2  solver input (1 Hz low-pass, 4 Hz; offset by a constant)",
+            "3  output: pulses, height of each response (µS)",
+            "4  reconstruction (tonic + responses) over the input")
+
+
+def _fit_page(it, zoom_s):
+    """One real participant, four rows (FIT_ROWS); the whole analysed segment on the left, zoom_s
+    from the first film's start on the right."""
+    fig = plt.figure(figsize=(13, 9.5))
+    gs = fig.add_gridspec(4, 2, width_ratios=[2.6, 1], hspace=.5, wspace=.12,
+                          left=.06, right=.99, top=.9, bottom=.06)
+    t, mk = it["t"], np.nan_to_num(np.asarray(it["mk"], float))
+    films = np.flatnonzero((mk >= 100) & (mk < 400))
+    t0 = t[films[0]] if len(films) else t[0]
+    h, big = it["ev_h"], it["ev_h"] >= STAGE2_MIN_uS
+    hmax = 1.08 * (h.max() if len(h) else 0.1)
+    for col, (a, b, scale, off) in enumerate(((t[0], t[-1], 60, 0.0), (t0, t0 + zoom_s, 1, t0))):
+        x = lambda v: (np.asarray(v) - off) / scale
+        top = fig.add_subplot(gs[0, col])
+        axes = [top] + [fig.add_subplot(gs[r, col], sharex=top) for r in range(1, 4)]
+        m = (it["raw_t"] >= a) & (it["raw_t"] <= b)
+        s = (t >= a) & (t <= b)
+        e = (it["ev_t"] >= a) & (it["ev_t"] <= b)
+        axes[0].plot(x(it["raw_t"][m]), it["raw_x"][m], lw=.5, color="0.2", rasterized=True)
+        axes[1].plot(x(t[s]), it["y"][s], lw=.7, color=COLOR_SIGNAL)
+        axes[2].vlines(x(it["ev_t"][e & big]), 0, h[e & big], color=COLOR_EVENTS, lw=1,
+                       label=f"≥ {STAGE2_MIN_uS:g} µS, main analysis ({int(big.sum())})")
+        axes[2].vlines(x(it["ev_t"][e & ~big]), 0, h[e & ~big], color="0.6", lw=1,
+                       label=f"< {STAGE2_MIN_uS:g} µS ({int((~big).sum())})")
+        axes[2].axhline(STAGE2_MIN_uS, color="0.4", ls=":", lw=.8)
+        axes[2].set_ylim(0, hmax)
+        axes[3].plot(x(t[s]), it["y"][s], lw=.7, color=COLOR_SIGNAL, label="input")
+        axes[3].plot(x(t[s]), it["y_rec"][s], lw=.9, color=COLOR_TONIC, label="reconstruction")
+        axes[3].plot(x(t[s]), it["tonic"][s], lw=.8, color="0.35", ls="--", label="tonic")
+        for r, ax in enumerate(axes):
+            if col == 0:
+                _blocks(ax, t / 60, it["mk"], label=r == 0)
+                ax.set_title(FIT_ROWS[r], loc="left", fontsize=8, pad=12 if r == 0 else 4)
+            ax.set_ylabel("µS", fontsize=7)
+            ax.tick_params(labelsize=7, labelbottom=r == 3)
+            ax.grid(axis="y", color="0.9", lw=.5)
+        axes[0].set_xlim(x(a), x(b))
+        axes[3].set_xlabel("min" if col == 0 else "s from the first film's start", fontsize=8)
+        if col == 1:
+            axes[0].set_title(f"zoom: {zoom_s:.0f} s from the first film's start", loc="left", fontsize=8, pad=12)
+        else:
+            axes[2].legend(loc="upper right", fontsize=7, frameon=False, ncol=2)
+            axes[3].legend(loc="upper right", fontsize=7, frameon=False, ncol=3)
+    fig.suptitle(it["title"], fontsize=9, x=.01, ha="left")
+    return fig
+
+
+def fit_pages(items, pdf_name, zoom_s=120):
+    """Real participants' fits to judge by eye, one page each (_fit_page).  items may be a generator,
+    so only one participant's raw recording is in memory at a time.  -> results/figures/<pdf_name>"""
+    from matplotlib.backends.backend_pdf import PdfPages
+    cfg.FIG_DIR.mkdir(parents=True, exist_ok=True)
+    n = 0
+    with PdfPages(cfg.FIG_DIR / pdf_name) as pdf:
+        for it in items:
+            fig = _fit_page(it, zoom_s)
+            pdf.savefig(fig, dpi=150)
+            plt.close(fig)
+            n += 1
+    print(f"saved {cfg.FIG_DIR / pdf_name} ({n} pages)")
+
+
 COLOR_ZOOM = "#e9c46a"       # the stretch shown enlarged on the right
 
 

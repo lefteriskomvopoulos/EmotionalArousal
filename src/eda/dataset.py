@@ -3,7 +3,7 @@ Reading the POPANE Study 6 files.
 
 Each participant has one file, S6_P<id>_All.csv, recorded at 1000 Hz with columns:
 
-    timestamp | affect (1-10 slider) | ECG | EDA (uS) | SBP DBP CO TPR | marker
+    timestamp | affect (0-10 slider) | ECG | EDA (uS) | SBP DBP CO TPR | marker
 
 `marker` is a per-sample block code: -1 is the five-minute resting baseline, 1xx a neutral film,
 2xx a negative film, 3xx a positive film, and an empty value is unlabelled time.  Recordings do
@@ -33,7 +33,7 @@ def read_header(path):
 def load(pid, every=None):
     """One participant -> dict of numpy arrays at cfg.FS Hz.
 
-    Keys: t (seconds), eda (uS), affect (1-10 slider), marker (block code as a string).
+    Keys: t (seconds), eda (uS), affect (0-10 slider), marker (block code as a string).
     `every` is the decimation factor applied to the 1000 Hz file; it simply keeps every n-th
     sample, which is fine for profiling and plotting.  The deconvolution's input is built from
     every sample (every=1) by preprocess.prepare, which low-pass filters first.

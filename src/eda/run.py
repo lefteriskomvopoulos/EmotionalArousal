@@ -105,6 +105,10 @@ The papers' re-synthesis test and the figures (runs.py; src/own/make_own_resynth
                        -> results/figures/test50_deconv.pdf, real50_deconv.pdf (+ PNG folders)
     resynth-plots      needs resynth-score.  The rebuilt signals, as final-plots
                        -> results/figures/resynth50_deconv.pdf (+ PNG folder)
+    real50-panels      needs the final run's real outputs and the raw recordings.  One page per real
+                       participant to judge the fit by eye: raw signal, solver input, pulses with their
+                       heights in uS, reconstruction over the input; whole and a 120 s zoom, ~3 min
+                       -> results/figures/real50_fit_panels.pdf
 
 Model-free SCR shapes (scr_shapes.py)
     scr-shapes         needs the final run (P, for the comparison) and test50-export.  Half-rise and
@@ -171,6 +175,7 @@ COMMANDS = {
     "resynth-score": lambda pid: runs.score_resynth(),
     "final-plots": lambda pid: runs.plot_final(),
     "resynth-plots": lambda pid: runs.plot_resynth(),
+    "real50-panels": lambda pid: runs.plot_fit_panels(),
     "scr-shapes": lambda pid: scr_shapes.run(),
     "pulse-check": lambda pid: scr_shapes.pulse_check(),
     "real-pulses": lambda pid: runs.export_pulses(),

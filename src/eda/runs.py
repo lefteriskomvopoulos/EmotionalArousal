@@ -7,6 +7,7 @@ figures, and the real participants' pulses as one table for stage 2.
   export_resynth  resynth-export: each real signal rebuilt from our deconvolution plus noise at its
                   own fit residual (R<pid>); score_resynth: resynth-score
   plot_final, plot_resynth   final-plots, resynth-plots: every signal before and after
+  plot_fit_panels real50-panels: each real participant's raw signal, input, pulses and fit
   export_pulses   real-pulses: the 50 real participants' pulses and window fits, one table each
 
 Cluster output, per session <name> in hpc/own/final/output/<setting>/ (P, V) and
@@ -141,15 +142,21 @@ def score_resynth(root=RESYNTH_OUT / FINAL6_SETTING):
     return out
 
 
-def _deconv_item(name, root, title, truth=None):
+def _deconv_item(name, root, title, truth=None, split_uS=None):
     """One deconvolved session for figures.deconv_pages: input, reconstruction, tonic, and its
     pulses: with truth, found / missed (true >= 0.02 uS, none within 1 s) / false (estimated, no
-    true one within 1 s), matched as tbme_score does; without, the estimated pulses."""
+    true one within 1 s), matched as tbme_score does; without, the estimated pulses, in two rows
+    by response height (event_heights) when split_uS is given."""
     from . import figures
     from . import tbme_score as sc
     sig = pd.read_csv(root / f"{name}_signals.csv")
-    est_t = pd.read_csv(root / f"{name}_events.csv").time_s.to_numpy()
-    if truth is None:
+    ev = pd.read_csv(root / f"{name}_events.csv")
+    est_t = ev.time_s.to_numpy()
+    if truth is None and split_uS is not None:
+        h = np.asarray(event_heights(ev, pd.read_csv(root / f"{name}_windows.csv")), float)
+        pulses = [(f"pulses ≥ {split_uS:g} µS", est_t[h >= split_uS], figures.COLOR_EVENTS),
+                  (f"pulses < {split_uS:g} µS", est_t[h < split_uS], "0.6")]
+    elif truth is None:
         pulses = [("estimated pulses", est_t, figures.COLOR_EVENTS)]
     else:
         true_t, true_a = np.asarray(truth["ev_t"]), np.asarray(truth["ev_a"])
@@ -196,7 +203,7 @@ def plot_final(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
                  f" {win.tau_rise.median():.2f} / {win.tau_decay.median():.2f} s, fit R2 median"
                  f" {win.r2.median():.3f}, lambda2 median {win.lambda2.median():.2e}"
                  f" ({(win.lambda2 >= 0.95 * win.lambda2_cap).mean():.0%} of windows at its limit)")
-        items.append(_deconv_item(name, root, title))
+        items.append(_deconv_item(name, root, title, split_uS=0.05))  # stage 2's main threshold
     figures.deconv_pages(items, "real50_deconv", "real50_deconv.pdf")
 
 
@@ -214,6 +221,43 @@ def plot_resynth(suffix="own4", root=RESYNTH_OUT / FINAL6_SETTING):
                  f" timing error {r.timing_err_s:.2f} s, size rank {r.amp_spearman:.3f}")
         items.append(_deconv_item(name, root, title, tr))
     figures.deconv_pages(items, "resynth50_deconv", "resynth50_deconv.pdf")
+
+
+def _fit_item(pid, group, suffix, root):
+    """One real participant for figures.fit_pages: raw recording (every 10th sample), the solver's
+    input, reconstruction and tonic, and each pulse's height in uS (event_heights)."""
+    from .dataset import load
+    name = f"P{pid}_{suffix}"
+    sig = pd.read_csv(root / f"{name}_signals.csv")
+    ev = pd.read_csv(root / f"{name}_events.csv")
+    win = pd.read_csv(root / f"{name}_windows.csv")
+    raw = load(pid, every=10)
+    y, rec = sig.y.to_numpy(), sig.y_rec.to_numpy()
+    h = np.asarray(event_heights(ev, win), float)
+    minutes = (sig.time_s.iloc[-1] - sig.time_s.iloc[0]) / 60
+    r2 = 1 - np.sum((y - rec) ** 2) / np.sum((y - y.mean()) ** 2)
+    big = int((h >= 0.05).sum())
+    title = (f"P{pid} (real, {group} films): {len(h)} pulses ({len(h) / minutes:.1f} per min), {big} of them"
+             f" ≥ 0.05 µS ({big / minutes:.1f} per min)\nfit R² {r2:.4f} (window median {win.r2.median():.4f}),"
+             f" residual SD {np.std(y - rec):.4f} µS; fitted τ rise / decay {win.tau_rise.median():.2f} /"
+             f" {win.tau_decay.median():.2f} s (window medians)")
+    print(f"  P{pid}: {len(h)} pulses, R2 {r2:.4f}")
+    return {"title": title, "raw_t": raw["t"], "raw_x": raw["eda"], "t": sig.time_s.to_numpy(), "y": y,
+            "y_rec": rec, "tonic": sig.tonic.to_numpy(), "mk": sig.marker.to_numpy(),
+            "ev_t": ev.time_s.to_numpy(), "ev_h": h}
+
+
+def plot_fit_panels(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):
+    """real50-panels: each real participant's fit, to judge by eye, one page each, by film group:
+    1 the raw recording, 2 the solver's input, 3 the pulses with their heights in uS (>= 0.05 uS,
+    the main analysis, apart from the rest), 4 the reconstruction over the input.  Whole analysed
+    segment and a 120 s zoom from the first film's start.  Reads the final run's output and the raw
+    recordings (data/raw/Study6); writes nothing else.  -> results/figures/real50_fit_panels.pdf"""
+    from . import figures, selection
+    sel = pd.read_csv(selection.SELECTION_CSV)
+    sel = sel[sel.selected.astype(bool)].sort_values(["group", "id"])
+    figures.fit_pages((_fit_item(int(r.id), r.group, suffix, root) for r in sel.itertuples()),
+                      "real50_fit_panels.pdf")
 
 
 def export_pulses(suffix="own4", root=FINAL_OUT / FINAL6_SETTING):

@@ -6,7 +6,7 @@ Paper: Behnke et al. 2022, Sci Data 9:10.
 ## From the file header
 - Channels: timestamp, affect, ECG, EDA, temp, respiration, SBP, DBP, marker — all 1000 Hz
 - EDA: GSR Amp (ADInstruments), microsiemens, finger electrodes (index + ring, left hand per paper)
-- affect: Response Meter (ADInstruments), continuous 1–10 slider
+- affect: Response Meter (ADInstruments), continuous 0–10 slider (corrected 2026-11-23: the Study 6 recordings reach 0; the header gives no range)
 - marker: per-sample block code (-1 = baseline, 3-digit codes = stimulus phases, empty = transitions)
 
 ## Measured on the sample (EDA downsampled to 10 Hz, high-passed 0.05 Hz)
