@@ -23,6 +23,10 @@ from .runs import (EXTRA_FITS_CSV, EXTRA_OUT, EXTRA_PULSES_CSV, FINAL6_SETTING, 
 
 NUMBERS_CSV = cfg.ROOT / "data" / "new50_numbers.csv"
 PEOPLE_CSV = cfg.ROOT / "data" / "new50_participants.csv"
+# The swap made in stage 2 (report, Section II-B): the drawn participants whose MPP state filter did
+# not converge, replaced by participants of the same film group from the other 47
+OUT_IDS = (15, 106, 111, 115, 168, 178)
+IN_IDS = (74, 92, 94, 145, 148, 166)
 
 
 def person(pid, root, pulses, wins, peaks):
@@ -97,7 +101,9 @@ def main(out_ids, in_ids):
 
 if __name__ == "__main__":
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument("--out", required=True, help="the 6 drawn participants taken out, comma-separated ids")
-    a.add_argument("--in", dest="in_", required=True, help="the 6 put in, from the other 47")
+    a.add_argument("--out", default=",".join(map(str, OUT_IDS)),
+                   help="the drawn participants taken out, comma-separated ids (default: OUT_IDS)")
+    a.add_argument("--in", dest="in_", default=",".join(map(str, IN_IDS)),
+                   help="those put in, from the other 47 (default: IN_IDS)")
     args = a.parse_args()
     main([int(x) for x in args.out.split(",")], [int(x) for x in args.in_.split(",")])

@@ -139,11 +139,18 @@ cluster: src/own/make_own_extra_bundle.sh)
     extra-pulses       needs the 47's cluster output in hpc/own/extra/output/own4_p1000_k14_f3_s8.
                        Their pulses and window fits, in the format of real-pulses
                        -> data/extra47_pulses.csv, data/extra47_windows.csv
+
+The new 50 (new50.py): the drawn 50 with the 6 whose MPP state filter did not converge replaced
+from the other 47 (report, Section II-B)
+    new50-numbers      needs real-pulses and extra-pulses.  The real-data numbers the report quotes,
+                       original 50 next to new 50
+                       -> data/new50_numbers.csv, data/new50_participants.csv
 """
 import sys
 
 from . import cohort_profile
 from . import generator
+from . import new50
 from . import preprocess
 from . import runs
 from . import scr_shapes
@@ -191,6 +198,7 @@ COMMANDS = {
     "block-rates": lambda pid: runs.block_rates(),
     "extra-export": lambda pid: runs.export_extra(),
     "extra-pulses": lambda pid: runs.export_extra_pulses(),
+    "new50-numbers": lambda pid: new50.main(new50.OUT_IDS, new50.IN_IDS),
 }
 
 
