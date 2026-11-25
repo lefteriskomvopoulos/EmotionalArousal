@@ -5,6 +5,9 @@
 !/AGENTS.md
 !/CLAUDE.md
 !/requirements.txt
+!/REPRODUCE.md
+!/reproduce.sh
+!/reproduce/
 
 # The IEEE report (LaTeX for Overleaf): text, references, figures
 !/report/

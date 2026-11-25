@@ -1,0 +1,93 @@
+# Reproducing the results
+
+One command recomputes the project's results and compares every recomputed file with the one we
+shipped:
+
+```bash
+./reproduce.sh
+```
+
+It works on a scratch copy, so the delivered folder is never changed. It prints one line per step,
+then a comparison, and ends with `RESULT: every recomputed result matches the shipped one`, or
+with a list of the problems. The full table is written to `reproduce_report.csv`.
+
+## What is in this folder
+
+| Folder | What it holds |
+|---|---|
+| `src/eda/` | Python, stage 1: reading POPANE, the solver's input, synthetic sessions with known truth, scoring, figures. `PYTHONPATH=src python -m eda.run` lists every command. |
+| `src/own/` | MATLAB, stage 1: our implementation of the Amin & Faghih (2021) deconvolution. |
+| `src/stage2/` | MATLAB, stage 2: the arousal state estimated from the pulses, the H1–H6 tests, the slider. |
+| `hpc/own/*/output/` | Every deconvolution run on the cluster: pulses, windows and the per-sample fit. |
+| `data/` | Result tables, the test sessions' truth (`tbme_synth/`) and the solver's inputs (`tbme_input/`). |
+| `results/figures/` | The figures. |
+| `report/` | The paper (`main.tex`, `main.pdf`) and the slides. |
+| `docs/EXPERIMENTS.md` | Every experiment in order: its question, its result, the decision it led to, and the file each number comes from. |
+| `archive/paper_solver/` | The frozen record of the published solver, run unmodified, and its comparison with cvxEDA. It is not rerun here (see below). |
+
+`README.md` gives an overview of the project, and `AGENTS.md` sets the rules that kept the results valid.
+
+## Requirements
+
+- Python 3.9 or newer, with the packages in `requirements.txt`:
+  ```bash
+  python3 -m venv .venv
+  .venv/bin/pip install -r requirements.txt
+  ```
+  `reproduce.sh` uses `.venv/bin/python` if it exists, otherwise `python3`.
+- MATLAB, with the Optimization Toolbox and the Statistics and Machine Learning Toolbox. We used
+  R2025b. The Parallel Computing Toolbox is optional and only speeds up `--solver`. Without MATLAB,
+  the Python part still runs and the stage-2 steps are reported as skipped.
+- `bash` and `rsync` (both standard on macOS and Linux).
+
+## Options
+
+| Command | What it adds |
+|---|---|
+| `./reproduce.sh --fast` | Skips stage 2's synthetic validations, which are the slowest part. |
+| `./reproduce.sh --rebuild` | First rebuilds every solver input, the participant selection and the test sessions' truth from the raw recordings. Needs the raw data (below). The recorded step times add up to about 80 minutes; several steps have no recorded time. |
+| `./reproduce.sh --solver V53_own4` | Also reruns the deconvolution on one session (P, V or R, any id) with the frozen setting, and compares its pulses, windows and fit with the shipped run. |
+| `--work DIR`, `--raw DIR` | Choose the scratch folder, or say where the raw data is. |
+
+**Raw data.** POPANE Study 6 (Behnke et al., *Scientific Data* 9:10, 2022) is on OSF under
+CC-BY, DOI 10.17605/OSF.IO/94BPX (19 GB). Unzip `Study6.zip` to `data/raw/Study6/`, so that the
+files look like `data/raw/Study6/S6_P99_All.csv`. When these files are present, the plain
+`./reproduce.sh` also runs the steps that read them: the H6 test and the slider table.
+
+## How to read the comparison
+
+| Status | Meaning |
+|---|---|
+| IDENTICAL | The same bytes. |
+| MATCH | The same numbers to a relative 10⁻⁶, which is the last printed digits. |
+| CLOSE | The same to 10⁻³ but not to 10⁻⁶, which is rounding on a different machine or MATLAB version. Listed, but not counted as a failure. |
+| PARTIAL | Matches, except for cells left blank because that run's per-sample signals are not shipped (below). |
+| REGENERATED | A figure: rewritten, but not compared pixel by pixel. |
+| NEW | Written, but not shipped, so there is nothing to compare it with. |
+| NO RECORD | A solver input with no per-sample record of the run shipped (the tuning sessions U). |
+| FAIL, NOT REGENERATED, STEP FAILED | A problem. The log of each step is in `logs/` in the scratch folder. |
+| SKIPPED | The step did not run (no MATLAB, no raw data, or `--fast`). |
+
+The check also confirms that every shipped solver input (`data/tbme_input/`) is exactly the signal
+the solver recorded it ran on. At the end it lists the shipped files that no step recomputes in
+the mode used.
+
+## What is not rerun, and why
+
+- **The deconvolution of every session.** The 150 final sessions (50 real participants, 50 test
+  sessions, 50 re-synthesised signals) and the tuning rounds ran on NYU's cluster. One session
+  took 7 to 39 minutes on 4 workers. Their outputs ship in `hpc/own/*/output/`, and every score,
+  table and stage-2 result is recomputed from them. `--solver` reruns any one session from its
+  shipped input.
+- **The tonic measures of tuning rounds 5–7 and of the first final run.** Their per-sample
+  signals were too large to keep, so those cells come out blank (PARTIAL). Their pulse scores are
+  recomputed.
+- **H6 without the raw data.** The H6 test reads the slider from the raw recordings. Without them,
+  those rows are marked "not tested" and left out of the comparison. The slider evaluation itself
+  runs from the shipped 1 Hz table, `data/stage2_slider_1hz.csv`.
+- **Earlier exploratory tables** from steps that were later replaced. They are kept as the record
+  that `docs/EXPERIMENTS.md` cites, and they are counted in the final "not recomputed" list.
+- **`archive/paper_solver/`.** The published solver is encrypted MATLAB, and it ran on the
+  cluster. Its outputs and the cvxEDA comparison are kept there as a record.
+- **`src/stage2/s2_test_dc.m`** checks the filters against the Data Challenge's own saved results,
+  which are not part of this project.
