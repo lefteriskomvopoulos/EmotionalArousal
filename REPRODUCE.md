@@ -47,8 +47,12 @@ with a list of the problems. The full table is written to `reproduce_report.csv`
 | Command | What it adds |
 |---|---|
 | `./reproduce.sh --fast` | Skips stage 2's synthetic validations, which are the slowest part. |
-| `./reproduce.sh --rebuild` | First rebuilds every solver input, the participant selection and the test sessions' truth from the raw recordings. Needs the raw data (below). The recorded step times add up to about 80 minutes; several steps have no recorded time. |
-| `./reproduce.sh --solver V53_own4` | Also reruns the deconvolution on one session (P, V or R, any id) with the frozen setting, and compares its pulses, windows and fit with the shipped run. |
+| `./reproduce.sh --rebuild` | First rebuilds every solver input, the participant selection and the test sessions' truth from the raw recordings. Needs the raw data (below). The recorded step times add up to about 80 minutes; several steps have no recorded time. **Not yet tested end to end.** |
+| `./reproduce.sh --solver V53_own4` | Also reruns the deconvolution on one session (P, V or R, any id) with the frozen setting, and compares its pulses, windows and fit with the shipped run. About an hour per session. **Not yet tested end to end.** |
+
+The plain `./reproduce.sh` was tested from a fresh copy of this folder, both with and without the
+raw data (MATLAB R2026b, Python 3.12), and took 23 to 30 minutes on a laptop. `--fast` runs the
+same steps without the synthetic validations; by the same steps' times, that takes about 10 minutes.
 | `--work DIR`, `--raw DIR` | Choose the scratch folder, or say where the raw data is. |
 
 **Raw data.** POPANE Study 6 (Behnke et al., *Scientific Data* 9:10, 2022) is on OSF under
