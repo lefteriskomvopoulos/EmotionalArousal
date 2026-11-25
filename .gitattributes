@@ -1,5 +1,6 @@
 # Left out of the submission zip (git archive), kept on the branch.
 # The report and slides are submitted separately.
+/report export-ignore
 /report/** export-ignore
 # Cluster logs
 *.out export-ignore
