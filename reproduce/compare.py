@@ -47,8 +47,8 @@ NEEDS_RAW = "raw POPANE files not present"  # s2_tests' H6 rows when data/raw/St
 BLANK = ["", "nan", "NaN", "NA"]
 FIGURES = {".png", ".pdf"}
 TAG = "own4_p1000_k14_f3_s8"
-SOLVER_RECORD = {"P": f"hpc/own/final/output/{TAG}", "V": f"hpc/own/final/output/{TAG}",
-                 "R": f"hpc/own/resynth/output/{TAG}"}
+SOLVER_RECORD = {"P": (f"hpc/own/final/output/{TAG}", f"hpc/own/extra/output/{TAG}"),
+                 "V": (f"hpc/own/final/output/{TAG}",), "R": (f"hpc/own/resynth/output/{TAG}",)}
 FAILED = {"FAIL", "NOT REGENERATED", "STEP FAILED"}
 # Stage 2's filters are iterative; what another MATLAB version may change (REPRODUCE.md):
 DIAGNOSTIC = re.compile(r"(^|_)(stop|iter|iterations)$")              # how a fit got there
@@ -259,9 +259,10 @@ def check_inputs(shipped):
     rows = []
     for f in sorted((shipped / "data" / "tbme_input").glob("*_own4.mat")):
         rel = f"data/tbme_input/{f.name}"
-        rec = SOLVER_RECORD.get(f.name[0])
-        sig = shipped / rec / f"{f.stem}_signals.csv" if rec else None
-        if sig is None or not sig.exists():
+        found = [shipped / d / f"{f.stem}_signals.csv" for d in SOLVER_RECORD.get(f.name[0], ())]
+        found = [s for s in found if s.exists()]
+        sig = found[0] if found else None
+        if sig is None:
             rows.append(("solver inputs", rel, "NO RECORD", "no per-sample solver record shipped"))
             continue
         m = load_arrays(f)

@@ -139,6 +139,8 @@ py resynth-export      "data/resynth50_cohort.csv data/tbme_input/R*_own4.mat da
 py resynth-score       data/own_resynth50_scores.csv
 py real-pulses         "data/real50_pulses.csv data/real50_windows.csv"
 py block-rates         data/real50_block_rates.csv
+py extra-pulses        "data/extra47_pulses.csv data/extra47_windows.csv"
+py new50-numbers       "data/new50_numbers.csv data/new50_participants.csv"
 py final-plots         "results/figures/test50_deconv.pdf results/figures/real50_deconv.pdf"
 py resynth-plots       results/figures/resynth50_deconv.pdf
 if [ $REBUILD = 1 ]; then
@@ -172,7 +174,9 @@ if [ -n "$SOLVER" ]; then
     echo "4. The deconvolution on $SOLVER (51-90 min per session on the cluster's 4 workers; longer on fewer)"
     case "$SOLVER" in
         R*) BUNDLE=make_own_resynth_bundle.sh; REF=hpc/own/resynth/output ;;
-        P*|V*) BUNDLE=make_own_final_bundle.sh; REF=hpc/own/final/output ;;
+        P*|V*) BUNDLE=make_own_final_bundle.sh; REF=hpc/own/final/output
+               ls "$WORK"/hpc/own/final/output/*/"${SOLVER}_events.csv" >/dev/null 2>&1 \
+                   || REF=hpc/own/extra/output ;;         # one of the other 47
         *) echo "--solver takes a P, V or R session"; exit 2 ;;
     esac
     TAG=$(sed -n 's/^tag=//p' "$WORK/src/own/$BUNDLE")                  # the frozen setting, as run

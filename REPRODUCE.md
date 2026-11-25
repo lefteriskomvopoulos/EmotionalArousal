@@ -11,6 +11,17 @@ It works on a scratch copy, so the delivered folder is never changed. It prints 
 then a comparison, and ends with `RESULT: every recomputed result matches the shipped one`, or
 with a list of the problems. The full table is written to `reproduce_report.csv`.
 
+## Which 50 participants
+
+All 97 participants who passed selection were deconvolved with the same frozen setting: the 50
+drawn at random in `hpc/own/final/`, and the other 47 in `hpc/own/extra/`. The report analyses the
+drawn 50 with six of them replaced by participants of the same film group from the other 47,
+because the stage-2 state filter that uses pulse sizes did not converge for those six (report,
+Section II-B; the swap is recorded in `src/eda/new50.py`). The check recomputes the drawn 50's
+tables, the other 47's pulse tables, and the analysed 50's real-data numbers
+(`data/new50_numbers.csv`, the drawn 50 next to the analysed 50). The shipped stage-2 results
+(`data/stage2_*`) are those of the drawn 50.
+
 ## What is in this folder
 
 | Folder | What it holds |
@@ -18,7 +29,7 @@ with a list of the problems. The full table is written to `reproduce_report.csv`
 | `src/eda/` | Python, stage 1: reading POPANE, the solver's input, synthetic sessions with known truth, scoring, figures. `PYTHONPATH=src python -m eda.run` lists every command. |
 | `src/own/` | MATLAB, stage 1: our implementation of the Amin & Faghih (2021) deconvolution. |
 | `src/stage2/` | MATLAB, stage 2: the arousal state estimated from the pulses, the H1–H6 tests, the slider. |
-| `hpc/own/*/output/` | Every deconvolution run on the cluster: pulses, windows and the per-sample fit. |
+| `hpc/own/*/output/` | Every deconvolution run on the cluster: pulses, windows and the per-sample fit (`final`: the 50 drawn and their test sessions; `extra`: the other 47 who passed selection; `resynth`; `tune`). |
 | `data/` | Result tables, the test sessions' truth (`tbme_synth/`) and the solver's inputs (`tbme_input/`). |
 | `results/figures/` | The figures. |
 | `report/` | The paper (`main.tex`, `main.pdf`) and the slides. |
