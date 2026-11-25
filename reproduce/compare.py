@@ -15,6 +15,10 @@ Statuses
                      version.  Listed, but not counted as a failure.
     PARTIAL          as MATCH, except cells left blank because that run's per-sample signals are
                      not shipped (README, Reproducing).  Allowed only for the tables in PARTIAL_OK.
+    VERSION-DEPENDENT  a stage-2 table whose only differences are of the kinds another MATLAB
+                     version may change (version_dependent; REPRODUCE.md): fit diagnostics,
+                     results of filter runs that were not used, the secondary H6 row, and up to 1%
+                     of synthetic sessions.  Listed with the counts, not counted as a failure.
     REGENERATED      a figure: rewritten, not compared pixel by pixel
     NEW              written, but not shipped, so there is nothing to compare it with
     FAIL, NOT REGENERATED, STEP FAILED   counted as failures
@@ -26,6 +30,7 @@ status 1 if anything failed.
 """
 import csv
 import glob
+import re
 import sys
 from collections import Counter, OrderedDict
 from pathlib import Path
@@ -45,6 +50,11 @@ TAG = "own4_p1000_k14_f3_s8"
 SOLVER_RECORD = {"P": f"hpc/own/final/output/{TAG}", "V": f"hpc/own/final/output/{TAG}",
                  "R": f"hpc/own/resynth/output/{TAG}"}
 FAILED = {"FAIL", "NOT REGENERATED", "STEP FAILED"}
+# Stage 2's filters are iterative; what another MATLAB version may change (REPRODUCE.md):
+DIAGNOSTIC = re.compile(r"(^|_)(stop|iter|iterations)$")              # how a fit got there
+VARIANT_FIT = {"ve", "s0", "s1", "vs", "tonic_sd", "info_ratio", "floored", "r2_vs_main"}
+H6_SECONDARY = "state vs raw valence (secondary)"
+SYNTH_SHARE = 0.01
 
 
 def close(a, b, rtol):
@@ -61,6 +71,41 @@ def max_rel(a, b):
     return float(d.max())
 
 
+def version_dependent(rel, a, bad):
+    """Split the cells of a stage-2 table that differ beyond 1e-3 into those another MATLAB version
+    may change (REPRODUCE.md, Known differences between MATLAB versions) and the rest.
+    bad: column -> rows.  -> (the rest, Counter of the allowed cells by reason)"""
+    n = len(a)
+    has_chosen = "chosen" in a
+    chosen = a["chosen"].to_numpy(str) if has_chosen else np.full(n, "")
+    uses_mpp, uses_bin = np.char.startswith(chosen, "mpp"), np.char.startswith(chosen, "bin")
+    h6 = (a["part"].to_numpy(str) == H6_SECONDARY) if "part" in a else np.zeros(n, bool)
+    rest, why = {}, Counter()
+    for c, m in bad.items():
+        allow, reason = np.zeros(n, bool), None
+        if DIAGNOSTIC.search(c):
+            allow[:], reason = True, "fit diagnostics (iteration counts, stop reasons)"
+        elif c.startswith("mpp_") and has_chosen:
+            allow, reason = ~uses_mpp, "results of an MPP filter run that was not used"
+        elif c.startswith("bin_") and has_chosen:
+            allow, reason = ~uses_bin, "results of a binary filter run that was not used"
+        elif c in VARIANT_FIT and has_chosen:
+            allow, reason = chosen == "main", "a variant's own fit where the participant kept the main state"
+        if (m & allow).any():
+            why[reason] += int((m & allow).sum())
+        if (m & ~allow & h6).any():
+            why["the secondary H6 row (exact-equality test on averaged slider values)"] += int((m & ~allow & h6).sum())
+        if (m & ~allow & ~h6).any():
+            rest[c] = m & ~allow & ~h6
+    if rest and Path(rel).name.startswith("stage2_synth"):     # Monte Carlo validations
+        rows = np.logical_or.reduce(list(rest.values()))
+        if rows.sum() <= max(1, int(SYNTH_SHARE * n)):
+            why[f"{int(rows.sum())} of {n} synthetic sessions (up to 1% may differ)"] += \
+                sum(int(m.sum()) for m in rest.values())
+            rest = {}
+    return rest, why
+
+
 def compare_csv(shipped, new, rel):
     a = pd.read_csv(shipped, dtype=str, keep_default_na=False)
     b = pd.read_csv(new, dtype=str, keep_default_na=False)
@@ -71,7 +116,7 @@ def compare_csv(shipped, new, rel):
     raw_rows = np.zeros(len(b), bool)
     for c in b.columns:
         raw_rows |= b[c].str.contains(NEEDS_RAW, regex=False).to_numpy()
-    worst, n_close, n_blank, first_bad = 0.0, 0, 0, None
+    worst, n_close, n_blank, bad_cells = 0.0, 0, 0, {}
     for c in a.columns:
         if c in IGNORE_COLS:
             continue
@@ -92,15 +137,23 @@ def compare_csv(shipped, new, rel):
         m = numeric & diff
         if m.any():
             worst = max(worst, max_rel(fa[m], fb[m]))
-        if bad.any() and first_bad is None:
-            i = int(np.flatnonzero(bad)[0])
-            first_bad = (f"{int(bad.sum())} cells differ in column {c}; first at line {i + 2}: "
-                         f"shipped {sa[i]!r}, new {sb[i]!r}")
+        if bad.any():
+            bad_cells[c] = bad
+    version = Counter()
+    if bad_cells and rel.startswith("data/stage2_"):
+        bad_cells, version = version_dependent(rel, a, bad_cells)
     note = f"; {int(raw_rows.sum())} rows need the raw files (not tested)" if raw_rows.any() else ""
-    if first_bad:
-        return "FAIL", first_bad + note
+    if bad_cells:
+        parts = []
+        for c, m in bad_cells.items():
+            i = int(np.flatnonzero(m)[0])
+            parts.append(f"{c}: {int(m.sum())} cells (line {i + 2}: shipped {a[c].iat[i]!r}, "
+                         f"new {b[c].iat[i]!r})")
+        return "FAIL", "; ".join(parts) + note
     if n_blank and rel not in PARTIAL_OK:
         return "FAIL", f"{n_blank} cells now blank" + note
+    if version:
+        return "VERSION-DEPENDENT", "; ".join(f"{n} cells: {why}" for why, n in version.items()) + note
     status = "PARTIAL" if n_blank else ("CLOSE" if n_close else "MATCH")
     detail = f"max relative difference {worst:.1e}"
     if n_close:
@@ -242,7 +295,9 @@ def main(shipped, work):
         print(f"  {step:32s} " + ", ".join(f"{n} {s}" for s, n in c.most_common()))
     problems = [r for r in rows if r[2] in FAILED]
     closes = [r for r in rows if r[2] == "CLOSE"]
-    for title, group in (("Problems", problems), ("Close but not identical (rounding)", closes)):
+    versions = [r for r in rows if r[2] == "VERSION-DEPENDENT"]
+    for title, group in (("Problems", problems), ("Close but not identical (rounding)", closes),
+                         ("Differences another MATLAB version may cause (REPRODUCE.md)", versions)):
         if group:
             print(f"\n{title}:")
             for r in group:

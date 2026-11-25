@@ -35,9 +35,11 @@ with a list of the problems. The full table is written to `reproduce_report.csv`
   .venv/bin/pip install -r requirements.txt
   ```
   `reproduce.sh` uses `.venv/bin/python` if it exists, otherwise `python3`.
-- MATLAB, with the Optimization Toolbox and the Statistics and Machine Learning Toolbox. We used
-  R2025b. The Parallel Computing Toolbox is optional and only speeds up `--solver`. Without MATLAB,
-  the Python part still runs and the stage-2 steps are reported as skipped.
+- MATLAB, with the Optimization Toolbox and the Statistics and Machine Learning Toolbox. The
+  deconvolution ran on R2025b (NYU's cluster), and the shipped stage-2 results were made with
+  R2025a. We checked the whole folder on R2026b (below). The Parallel Computing Toolbox is optional
+  and only speeds up `--solver`. Without MATLAB, the Python part still runs and the stage-2 steps
+  are reported as skipped.
 - `bash` and `rsync` (both standard on macOS and Linux).
 
 ## Options
@@ -62,6 +64,7 @@ files look like `data/raw/Study6/S6_P99_All.csv`. When these files are present, 
 | MATCH | The same numbers to a relative 10⁻⁶, which is the last printed digits. |
 | CLOSE | The same to 10⁻³ but not to 10⁻⁶, which is rounding on a different machine or MATLAB version. Listed, but not counted as a failure. |
 | PARTIAL | Matches, except for cells left blank because that run's per-sample signals are not shipped (below). |
+| VERSION-DEPENDENT | A stage-2 table that matches except in places another MATLAB version can change (next section). Listed with counts, but not counted as a failure. |
 | REGENERATED | A figure: rewritten, but not compared pixel by pixel. |
 | NEW | Written, but not shipped, so there is nothing to compare it with. |
 | NO RECORD | A solver input with no per-sample record of the run shipped (the tuning sessions U). |
@@ -71,6 +74,27 @@ files look like `data/raw/Study6/S6_P99_All.csv`. When these files are present, 
 The check also confirms that every shipped solver input (`data/tbme_input/`) is exactly the signal
 the solver recorded it ran on. At the end it lists the shipped files that no step recomputes in
 the mode used.
+
+## Known differences between MATLAB versions
+
+Stage 2 estimates the arousal state with two iterative filters (MPP and binary) and keeps the MPP
+filter's state only when that filter converges; otherwise it keeps the binary one. An iterative
+fit can take a slightly different path on another MATLAB version, so a few numbers can change
+without changing any result. The comparison allows these, and only these:
+
+- **How a fit got there:** iteration counts and stop reasons.
+- **Results of a filter run that was not used:** for example, the MPP filter's numbers for a
+  participant whose MPP filter did not converge, where the binary filter's state is the one kept.
+  Which filter is kept is still checked strictly.
+- **The secondary H6 row** (state against raw valence). It includes a participant only if their
+  averaged slider values are not exactly equal, and that last digit can differ between versions.
+- **Up to 1% of sessions in a synthetic validation table**, where a filter that converges slowly
+  stops at a slightly different point.
+
+When we reran the shipped R2025a results on R2026b, every participant's chosen state matched to
+10⁻⁶, and so did every H1–H5 test and the main H6 test. The secondary H6 row went from 45 to 44
+participants (estimate −0.04 to −0.05, p 0.60 to 0.55). This row is reported, but no conclusion
+rests on it. Any other difference is a FAIL.
 
 ## What is not rerun, and why
 
