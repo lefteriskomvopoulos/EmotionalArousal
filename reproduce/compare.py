@@ -114,11 +114,15 @@ def compare_csv(shipped, new, rel):
     raw_rows = np.zeros(len(b), bool)
     for c in b.columns:
         raw_rows |= b[c].str.contains(NEEDS_RAW, regex=False).to_numpy()
+    raw_a = np.zeros(len(a), bool)
+    for c in a.columns:
+        raw_a |= a[c].str.contains(NEEDS_RAW, regex=False).to_numpy()
     note = ""
-    if raw_rows.any() and "hypothesis" in b:
+    if (raw_rows.any() or raw_a.any()) and "hypothesis" in b:
         # s2_tests without the raw files writes one placeholder row in place of that hypothesis's
-        # rows, so the hypothesis is set aside on both sides and the rest compared as usual
-        skip = set(b.loc[raw_rows, "hypothesis"])
+        # rows (in the rerun, or in a shipped table made without them), so the hypothesis is set
+        # aside on both sides and the rest compared as usual
+        skip = set(b.loc[raw_rows, "hypothesis"]) | set(a.loc[raw_a, "hypothesis"])
         drop_a, drop_b = a["hypothesis"].isin(skip).to_numpy(), b["hypothesis"].isin(skip).to_numpy()
         note = f"; {int(drop_a.sum())} {', '.join(sorted(skip))} rows need the raw files (not tested)"
         a, b = a[~drop_a].reset_index(drop=True), b[~drop_b].reset_index(drop=True)

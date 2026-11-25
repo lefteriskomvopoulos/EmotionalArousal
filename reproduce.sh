@@ -169,6 +169,25 @@ m s2_run_tonic14c         "s2_run_tonic(root, 'tonic14c')"   "data/stage2_states
 m s2_tests_tonic14c       "s2_tests(root, 'variant', 'tonic14c')" "data/stage2_tests_tonic14c.csv data/stage2_block_summary_tonic14c.csv results/figures/stage2_hypotheses_tonic14c.png"
 m s2_slider_eval_tonic14c "s2_slider_eval(root, 'variant', 'tonic14c')" "data/stage2_slider_eval_tonic14c.csv data/stage2_slider_windows_tonic14c.csv results/figures/stage2_slider_eval_tonic14c.png"
 
+# The drawn 50 without the six whose MPP filter did not converge (mpp44, a check), then the 47 and
+# the analysed 50 (bal50: the six replaced by a seeded draw; docs/EXPERIMENTS.md Parts 20-21)
+SIX="[15 106 111 115 168 178]"
+m s2_subset_mpp44          "s2_subset(root, 'mpp44', $SIX)" data/stage2_states_005_mpp44.csv
+m s2_tests_mpp44           "s2_tests(root, 'variant', 'mpp44')" "data/stage2_tests_mpp44.csv data/stage2_block_summary_mpp44.csv results/figures/stage2_hypotheses_mpp44.png"
+m s2_slider_eval_mpp44     "s2_slider_eval(root, 'variant', 'mpp44')" "data/stage2_slider_eval_mpp44.csv data/stage2_slider_windows_mpp44.csv results/figures/stage2_slider_eval_mpp44.png"
+m s2_subset_tonic14c_mpp44 "s2_subset(root, 'tonic14c_mpp44', $SIX, 'tonic14c')" data/stage2_states_005_tonic14c_mpp44.csv
+m s2_tests_tonic14c_mpp44  "s2_tests(root, 'variant', 'tonic14c_mpp44')" "data/stage2_tests_tonic14c_mpp44.csv data/stage2_block_summary_tonic14c_mpp44.csv results/figures/stage2_hypotheses_tonic14c_mpp44.png"
+m s2_run_extra47           "s2_run(root, 'extra47')" "data/stage2_params_extra47.csv data/stage2_states_005_extra47.csv data/stage2_states_002_extra47.csv"
+if [ $HAVE_M = 1 ]; then
+    run_logged s2_sample_bal50 "$PY" src/stage2/s2_sample_bal50.py      # the seeded draw (2611)
+    record s2_sample_bal50 "$STATUS" "data/stage2_sample_bal50.csv data/stage2_states_005_bal50.csv"
+else
+    record s2_sample_bal50 "SKIPPED: needs s2_run_extra47 (MATLAB)" "data/stage2_sample_bal50.csv data/stage2_states_005_bal50.csv"
+fi
+m raw s2_slider_bal50      "s2_slider(root, 'bal50')" data/stage2_slider_1hz_bal50.csv
+m s2_tests_bal50           "s2_tests(root, 'variant', 'bal50')" "data/stage2_tests_bal50.csv data/stage2_block_summary_bal50.csv results/figures/stage2_hypotheses_bal50.png"
+m s2_slider_eval_bal50     "s2_slider_eval(root, 'variant', 'bal50')" "data/stage2_slider_eval_bal50.csv data/stage2_slider_windows_bal50.csv results/figures/stage2_slider_eval_bal50.png"
+
 # ----------------------------------------- 4. one session through the deconvolution (--solver)
 if [ -n "$SOLVER" ]; then
     echo "4. The deconvolution on $SOLVER (51-90 min per session on the cluster's 4 workers; longer on fewer)"

@@ -19,8 +19,10 @@ drawn 50 with six of them replaced by participants of the same film group from t
 because the stage-2 state filter that uses pulse sizes did not converge for those six (report,
 Section II-B; the swap is recorded in `src/eda/new50.py`). The check recomputes the drawn 50's
 tables, the other 47's pulse tables, and the analysed 50's real-data numbers
-(`data/new50_numbers.csv`, the drawn 50 next to the analysed 50). The shipped stage-2 results
-(`data/stage2_*`) are those of the drawn 50.
+(`data/new50_numbers.csv`, the drawn 50 next to the analysed 50). Stage 2 is shipped and rerun for
+the drawn 50 (`data/stage2_*.csv` without a suffix), for the drawn 50 without the six (`_mpp44`, a
+check), for the other 47 (`_extra47`), and for the analysed 50 (`_bal50`, the reported analysis;
+the six replacements are drawn with a fixed seed by `src/stage2/s2_sample_bal50.py`).
 
 ## What is in this folder
 
