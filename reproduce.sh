@@ -169,7 +169,7 @@ m s2_slider_eval_tonic14c "s2_slider_eval(root, 'variant', 'tonic14c')" "data/st
 
 # ----------------------------------------- 4. one session through the deconvolution (--solver)
 if [ -n "$SOLVER" ]; then
-    echo "4. The deconvolution on $SOLVER (7-39 min per session on the cluster's 4 workers; longer on fewer)"
+    echo "4. The deconvolution on $SOLVER (51-90 min per session on the cluster's 4 workers; longer on fewer)"
     case "$SOLVER" in
         R*) BUNDLE=make_own_resynth_bundle.sh; REF=hpc/own/resynth/output ;;
         P*|V*) BUNDLE=make_own_final_bundle.sh; REF=hpc/own/final/output ;;

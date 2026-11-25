@@ -100,7 +100,8 @@ rests on it. Any other difference is a FAIL.
 
 - **The deconvolution of every session.** The 150 final sessions (50 real participants, 50 test
   sessions, 50 re-synthesised signals) and the tuning rounds ran on NYU's cluster. One session
-  took 7 to 39 minutes on 4 workers. Their outputs ship in `hpc/own/*/output/`, and every score,
+  took 51 to 90 minutes on 4 workers (real participants; the window times are in each run's
+  `_windows.csv`). Their outputs ship in `hpc/own/*/output/`, and every score,
   table and stage-2 result is recomputed from them. `--solver` reruns any one session from its
   shipped input.
 - **The tonic measures of tuning rounds 5–7 and of the first final run.** Their per-sample
