@@ -5,7 +5,18 @@
 # Cluster logs
 *.out export-ignore
 # Round 6's first attempt, superseded and unused (docs/EXPERIMENTS.md, Round 6)
+/hpc/own/tune_pre export-ignore
 /hpc/own/tune_pre/** export-ignore
+# The first look at the dataset (the metadata workbook stays: the code reads it)
+/docs/dataset_check/README.md export-ignore
+/docs/dataset_check/*.png export-ignore
+# A preview of a generator version that was dropped, and its inspection notes
+/results/figures/tune50_preview export-ignore
+/results/figures/tune50_preview/** export-ignore
+/results/figures/tune50_preview_vs_real.pdf export-ignore
+# The archive's copy of docs/dataset_check
+/archive/paper_solver/docs/dataset_check export-ignore
+/archive/paper_solver/docs/dataset_check/** export-ignore
 # Reading notes and the proposal text kept with the archived branch
 /archive/paper_solver/docs/literature_review_notes.md export-ignore
 /archive/paper_solver/docs/proposal_methods.md export-ignore

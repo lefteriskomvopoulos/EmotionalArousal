@@ -93,7 +93,7 @@ the raw recordings (`eda.dataset.load`).
 
 ```
 docs/EXPERIMENTS.md          the story, every number's source, current status, next steps
-docs/dataset_check/          first look at POPANE, and the metadata the quality screen reads
+docs/dataset_check/          the POPANE metadata workbook the quality screen reads
 src/stage2/                  STAGE 2: PULSES -> AROUSAL STATE (MATLAB; docs/EXPERIMENTS.md Part 13)
   s2_filter_mpp.m, s2_filter_bin.m   the Data Challenge 2 filters, arithmetic unchanged
   s2_test_dc.m               reproduces the Data Challenge's saved results (needs its folder)
