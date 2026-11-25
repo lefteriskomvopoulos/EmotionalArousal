@@ -111,11 +111,22 @@ def compare_csv(shipped, new, rel):
     b = pd.read_csv(new, dtype=str, keep_default_na=False)
     if list(a.columns) != list(b.columns):
         return "FAIL", f"columns differ: shipped {list(a.columns)}, new {list(b.columns)}"
-    if len(a) != len(b):
-        return "FAIL", f"{len(a)} rows shipped, {len(b)} recomputed"
     raw_rows = np.zeros(len(b), bool)
     for c in b.columns:
         raw_rows |= b[c].str.contains(NEEDS_RAW, regex=False).to_numpy()
+    note = ""
+    if raw_rows.any() and "hypothesis" in b:
+        # s2_tests without the raw files writes one placeholder row in place of that hypothesis's
+        # rows, so the hypothesis is set aside on both sides and the rest compared as usual
+        skip = set(b.loc[raw_rows, "hypothesis"])
+        drop_a, drop_b = a["hypothesis"].isin(skip).to_numpy(), b["hypothesis"].isin(skip).to_numpy()
+        note = f"; {int(drop_a.sum())} {', '.join(sorted(skip))} rows need the raw files (not tested)"
+        a, b = a[~drop_a].reset_index(drop=True), b[~drop_b].reset_index(drop=True)
+        raw_rows = np.zeros(len(b), bool)
+    elif raw_rows.any():
+        note = f"; {int(raw_rows.sum())} rows need the raw files (not tested)"
+    if len(a) != len(b):
+        return "FAIL", f"{len(a)} rows shipped, {len(b)} recomputed" + note
     worst, n_close, n_blank, bad_cells = 0.0, 0, 0, {}
     for c in a.columns:
         if c in IGNORE_COLS:
@@ -142,7 +153,6 @@ def compare_csv(shipped, new, rel):
     version = Counter()
     if bad_cells and rel.startswith("data/stage2_"):
         bad_cells, version = version_dependent(rel, a, bad_cells)
-    note = f"; {int(raw_rows.sum())} rows need the raw files (not tested)" if raw_rows.any() else ""
     if bad_cells:
         parts = []
         for c, m in bad_cells.items():
