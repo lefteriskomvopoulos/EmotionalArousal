@@ -21,7 +21,9 @@ if nargin < 1 || isempty(root), root = pwd; end
 sfx = '';  if ~isempty(variant), sfx = ['_' variant]; end
 
 X = readtable(fullfile(root, 'data', ['stage2_states_005' sfx '.csv']), 'TextType', 'string');
-A = readtable(fullfile(root, 'data', 'stage2_slider_1hz.csv'), 'TextType', 'string');
+af = fullfile(root, 'data', ['stage2_slider_1hz' sfx '.csv']);          % Part 21: a variant's own
+if ~isfile(af), af = fullfile(root, 'data', 'stage2_slider_1hz.csv'); end  % participants, if built
+A = readtable(af, 'TextType', 'string');
 ids = unique(X.id, 'stable');
 wlen = 20;  lag = 5;  topq = 0.15;  minrange = 0.5;
 

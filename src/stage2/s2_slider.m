@@ -1,5 +1,7 @@
-function T = s2_slider(root)
-% The affect slider of the 50 participants on the stage-2 bins (docs/EXPERIMENTS.md Part 19).
+function T = s2_slider(root, variant)
+% The affect slider of the 50 participants on the stage-2 bins (docs/EXPERIMENTS.md Part 19), or
+% with variant given, of the participants in data/stage2_states_005_<variant>.csv
+% -> data/stage2_slider_1hz_<variant>.csv (Part 21: 'bal50').
 %
 % Reads data/raw/Study6/S6_P<id>_All.csv (POPANE Study 6, 1000 Hz; not in the repository) and
 % data/stage2_states_005.csv (the bins: t_s is the bin centre, bins are [t_s - 0.5, t_s + 0.5)).
@@ -11,7 +13,8 @@ function T = s2_slider(root)
 %   addpath src/stage2; s2_slider
 
 if nargin < 1, root = pwd; end
-main = readtable(fullfile(root, 'data', 'stage2_states_005.csv'), 'TextType', 'string');
+sfx = '';  if nargin >= 2 && ~isempty(variant), sfx = ['_' variant]; end
+main = readtable(fullfile(root, 'data', ['stage2_states_005' sfx '.csv']), 'TextType', 'string');
 ids = unique(main.id, 'stable');
 S = cell(numel(ids), 1);
 for i = 1:numel(ids)
@@ -29,5 +32,5 @@ for i = 1:numel(ids)
     fprintf('P%-4d bins %d, slider missing in %d bins\n', ids(i), K, sum(isnan(a)));
 end
 T = vertcat(S{:});
-writetable(T, fullfile(root, 'data', 'stage2_slider_1hz.csv'));
+writetable(T, fullfile(root, 'data', ['stage2_slider_1hz' sfx '.csv']));
 end

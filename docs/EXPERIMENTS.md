@@ -1659,6 +1659,265 @@ and `results/figures/stage2_slider_eval.png`.
 - **The slider is used only to evaluate the state, as in the paper.** Using it as a model input
   would make this evaluation circular (Part 19, B, and the discussion before it).
 
+## Part 20: without the six binary-fallback participants (`mpp44`)
+
+Set 2026-11-24, written before it was run.
+
+**What:** the professor recommended dropping the six participants whose MPP filter stopped and
+who therefore use the binary filter's state (Part 13). The other 44 keep their MPP state, which is
+already their chosen state, so no state changes.
+
+| Dropped | Group |
+|---|---|
+| P15 | negative |
+| P106 | mixed |
+| P111 | neutral |
+| P115 | mixed |
+| P168 | neutral |
+| P178 | neutral |
+
+The groups become neutral 17, negative 9, positive 10 and mixed 8.
+
+**Why it makes sense:**
+- in these six, pulse size does not rise with the state (r₁ ≤ 0), so the MPP model does not fit
+  them;
+- keeping them mixes two estimators in one test.
+
+**Its status:** this was recommended after Part 14's results were seen, so it is a post-hoc
+sensitivity analysis. Part 14 stays the analysis that was set in advance, unless Piyush and
+Eleftherios decide otherwise, and both are reported.
+
+**Expected, written before the run:**
+- **P178 is one of the six.** They are the largest single change score in the study (neutral group,
+  S −2.1).
+- Dropping them should raise the neutral group's mean, and so shrink H2 and H3 (b), which compare
+  against neutral.
+- The within-person mixed-group results (H3 (c), H4) lose 2 of 10 people.
+
+**Run:**
+- `s2_subset` writes `data/stage2_states_005_mpp44.csv`: the main state table without the six,
+  otherwise unchanged.
+- `s2_tests(pwd, 'variant', 'mpp44')` runs Part 14's tests unchanged on the main check (S, R, Z;
+  the 0.02 µS, binary and no-P68 checks are not rerun).
+  - **H6 is now included.** Variant runs skipped H6 while the raw files were absent; the code now
+    runs it whenever they are present.
+- `s2_slider_eval(pwd, 'variant', 'mpp44')` repeats Part 19's slider evaluation on the remaining
+  participants.
+- Outputs carry the suffix `_mpp44`, and Part 14's and Part 19's files are not touched.
+
+**Result** (2026-11-24, run once):
+- Outputs: `data/stage2_tests_mpp44.csv`, `data/stage2_block_summary_mpp44.csv`,
+  `results/figures/stage2_hypotheses_mpp44.png` and `data/stage2_slider_eval_mpp44.csv`.
+- Part 14's and Part 19's files are unchanged (checksums match).
+- All figures are the state (S) as change from own baseline.
+
+| | All 50 (Part 14) | The 44 (mpp44) |
+|---|---|---|
+| H1, films − baseline | −0.08, p 0.30: not supported | −0.04, p 0.58: not supported |
+| H2, emotional − neutral | +0.37 [0.05, 0.69], p 0.023: **supported** | +0.29 [0.01, 0.57], p 0.043: **supported** (R p 0.024) |
+| H3 (a) negative − neutral | +0.20, p 0.31 | +0.07, p 0.70 |
+| H3 (b) positive − neutral | +0.50, p 0.023 | +0.42, p 0.041 (R p 0.070) |
+| H3 (c) mixed D, 90% CI | +0.05 [−0.30, 0.41]: **equivalent** (n 10) | +0.08 [−0.35, 0.51]: **not shown equivalent** (TOST p 0.053; n 8) |
+| H3 verdict | not supported | not supported |
+| H4 | not supported (p 0.78) | not supported (p 0.73) |
+| H3/H4 joint reading | the H3 side | **inconclusive** |
+| H5, negative group (Friedman) | p 0.062: no separation | **p 0.040: separation** (R p 0.081, no) |
+| H5, positive group | p 0.54 | p 0.54 |
+| H6 | r +0.14, p 0.074: not supported | r +0.12, p 0.15: not supported (38) |
+| Group means: neutral, negative, positive, mixed | −0.31, −0.10, +0.19, +0.11 | −0.22, −0.15, +0.19, +0.16 |
+
+- **Unchanged:** H1, H2, H3, H4 and H6.
+  - H2 holds but weakens, as predicted: dropping P178 (−2.1) raises the neutral mean from −0.31 to
+    −0.22. The pulse rate R agrees (p 0.024).
+- **Two readings cross their threshold, both by a small margin:**
+  - **The mixed group's equivalence:** with 8 people instead of 10, the 90% interval reaches +0.51,
+    just past the ±0.5 margin. The estimate barely moves (+0.05 → +0.08). The H3/H4 question
+    becomes inconclusive, not a win for H4.
+  - **H5 in the negative group:** p goes from 0.062 to 0.040, so the state now separates the
+    negative emotions. It comes from sadness, which is below the others (−0.63 against −0.15 to
+    −0.01). The pulse rate does not confirm it (R p 0.081). Sadness is a single film, so emotion
+    and film cannot be told apart.
+- **The slider evaluation on 37 participants** (`data/stage2_slider_eval_mpp44.csv`):
+  - high/low agreement is at chance, as before;
+  - direction of change, two levels: 56%, p 0.024;
+  - three levels: 54.5%, p 0.055, against 0.048 before.
+- **Reading:** the main conclusions do not depend on the six. Where verdicts move, they were
+  already the borderline results: the equivalence on 10 people, and H5 at p 0.062. Their verdicts
+  should be reported as fragile whichever sample is primary.
+
+**Decision (2026-11-24, Piyush): the 44 become the reported analysis** in the report and the slides.
+- It is labelled as decided after the results, on the professor's recommendation.
+- The 50 are reported alongside as the analysis set in advance.
+
+**The tonic14c state on the same 44** (`s2_subset(pwd, 'tonic14c_mpp44', [...], 'tonic14c')`,
+then `s2_tests(pwd, 'variant', 'tonic14c_mpp44')`; comparison only):
+
+| Test | tonic14c state, 44 participants |
+|---|---|
+| H1 | −0.03, p 0.65: not supported |
+| H2 | +0.29 [0.04, 0.55], p 0.025: **supported** |
+| H3 (b) | +0.43, p 0.029 |
+| Mixed group D | +0.09, 90% CI [−0.29, 0.47]: **equivalent** (TOST p 0.040) |
+| H5, negative group | p 0.16: no separation |
+| H6 | r +0.08, p 0.39 |
+
+The two fragile results go back to Part 14's verdicts with this state. This confirms they depend on
+small choices: the sample, and how the state is estimated.
+
+## Part 21: restoring the group balance with the other 47 (`bal50`)
+
+Set 2026-11-24, written before the filters were run on the 47.
+
+**Why:** dropping the six binary-fallback participants (Part 20) left the groups unbalanced: 17
+neutral, 9 negative, 10 positive and 8 mixed. The design is 20 / 10 / 10 / 10, with neutral =
+negative + positive.
+
+**The pool:**
+- **Who they are:** Eleftherios ran the frozen deconvolution setting, unchanged, on the 47
+  participants who passed both selection stages (quality, then the baseline response rule) but
+  were not drawn into the 50 (`extra-export`, `extra-pulses`; commit 11d90c5 on `deconvolution`).
+  They come from the same population as the 50.
+- **Where their outputs are:** `data/extra47_pulses.csv` and `hpc/own/extra/output/`.
+
+| Group | Passed selection | First 50 | MPP converged in the 50 | Extra 47 |
+|---|---|---|---|---|
+| Neutral | 24 | 20 | 17 | 4 |
+| Negative | 19 | 10 | 9 | 9 |
+| Positive | 28 | 10 | 10 | 18 |
+| Mixed | 26 | 10 | 8 | 16 |
+
+**Neutral is the bottleneck.** At most 21 neutral participants exist, so with neutral = negative +
+positive, the largest balanced design is 20 / 10 / 10 / 10, the original one, now with every state
+from the MPP filter.
+
+**Step 1, state estimation on the 47:**
+- `s2_run(pwd, 'extra47')` runs Part 13's filters, starting values and choice rule, unchanged, at
+  0.05 µS and 0.02 µS.
+- Outputs: `data/stage2_params_extra47.csv` and `data/stage2_states_00{5,2}_extra47.csv`.
+- `s2_observations` reads the extra run's output only for participants who are not in the final
+  run, so the 50's input is unchanged.
+
+**Step 2, eligibility.** A participant of the 47 is eligible when all of these hold:
+- the MPP filter converged at 0.05 µS, the criterion that removed the six;
+- they have the full design: a 300 s baseline and six 120 s clips;
+- for the mixed group, exactly three negative and three positive clips, needed for the
+  within-person comparison of H3 (c) and H4.
+
+These use no film contrast and no outcome.
+
+**Step 3, the sample:**
+- **The 44 of Part 20 all stay:** they were drawn in the original seeded selection, and all
+  converged.
+- **Each group is filled up to its target** (neutral 20, negative 10, positive 10, mixed 10) from
+  the eligible extra participants of that group, by a seeded random draw within the group
+  (`numpy.random.default_rng(2611)`, groups in the order neutral, negative, positive, mixed, ids
+  sorted). This mirrors selection stage 3.
+- **The shortfall is** neutral 3, negative 1, positive 0 and mixed 2.
+- **If a group has too few eligible participants,** the targets shrink together to the largest n
+  with neutral = 2n and negative = positive = mixed = n, and members are dropped from the larger
+  groups by the same seeded draw. The balance comes first.
+- **The mixed group is kept at 10, like the others.** More converged mixed participants would add
+  power to H3 (c) and H4, but at the cost of the balance. That trade-off is noted, not taken.
+- **Output:** the list goes to `data/stage2_sample_bal50.csv`.
+
+**Status:** the sample is fixed by the rule above before any hypothesis is tested on it. H1–H6 on
+`bal50` is the next step, run with `s2_tests` on a combined state table, and is reported as a new,
+named analysis next to Parts 14 and 20.
+
+**Result, step 1** (`data/stage2_params_extra47.csv`, 2026-11-24):
+- **At 0.05 µS the MPP filter converged for 44 of the 47:**
+
+  | Group | Converged | Stopped on r₁ ≤ 0 |
+  |---|---|---|
+  | Neutral | 4 of 4 | none |
+  | Negative | 9 of 9 | none |
+  | Positive | 17 of 18 | P169 |
+  | Mixed | 14 of 16 | P82, P141 |
+
+- **The size link:** r₁ has a median of 0.52 (range 0.09–3.52), as in the 50.
+- **The binary filter** converged for all 47.
+- **At 0.02 µS** the MPP filter converged for 40.
+- Only convergence was looked at; no block or group contrast was computed.
+
+**Result, steps 2–3** (`python src/stage2/s2_sample_bal50.py` → `data/stage2_sample_bal50.csv`):
+- **Eligible:** 43 of the 47. The three stops above are out, and so is P1 (positive, converged): its
+  last clip is 109 s, because the recording ends early.
+- **Every eligible mixed participant has three negative and three positive clips.**
+- **No group falls short,** so n = 10 and the full design is restored.
+
+| Group | Kept from Part 20 | Eligible extra | Drawn (seed 2611) | bal50 |
+|---|---|---|---|---|
+| Neutral | 17 | 4 | P74, P92, P148 | 20 |
+| Negative | 9 | 9 | P145 | 10 |
+| Positive | 10 | 16 | none | 10 |
+| Mixed | 8 | 14 | P94, P166 | 10 |
+
+`bal50` has 50 participants: 44 from the first 50 and 6 from the extra 47. Every state comes from the
+MPP filter.
+
+**H1–H6 on `bal50`** (2026-11-24, run once).
+- **How it was run:**
+  - the combined state table is `data/stage2_states_005_bal50.csv`: the 44 rows from
+    `stage2_states_005.csv` and the 6 from `stage2_states_005_extra47.csv`, all with chosen = MPP;
+  - the raw files of the six new participants were extracted from `study6.zip` for H6;
+  - `s2_slider(pwd, 'bal50')`, `s2_tests(pwd, 'variant', 'bal50')`,
+    `s2_slider_eval(pwd, 'variant', 'bal50')`.
+- **Outputs:** `data/stage2_tests_bal50.csv`, `data/stage2_block_summary_bal50.csv`,
+  `results/figures/stage2_hypotheses_bal50.png`, `data/stage2_slider_1hz_bal50.csv` and
+  `data/stage2_slider_eval_bal50.csv`.
+- **Earlier outputs are unchanged:** Parts 14, 19 and 20 match their checksums.
+- **Code changes:**
+  - `s2_slider` and `s2_slider_eval` now take a variant and read that variant's own slider table;
+    their defaults are unchanged;
+  - `s2_run` takes a set ('extra47');
+  - `s2_observations` reads the extra run only for participants who are not in the final run.
+
+State (S), change from own baseline:
+
+| | bal50 (20/10/10/10, all MPP) | mpp44 (Part 20) | All 50 (Part 14) |
+|---|---|---|---|
+| H1, everyone | −0.03 [−0.16, 0.11], p 0.68: not supported | −0.04, p 0.58: not supported | −0.08, p 0.30: not supported |
+| H2, emotional − neutral | **+0.29 [0.04, 0.55], p 0.027: supported** (R p 0.012) | +0.29, p 0.043: supported | +0.37, p 0.023: supported |
+| H3 (a) negative − neutral | +0.09 [−0.28, 0.46], p 0.60 | +0.07, p 0.70 | +0.20, p 0.31 |
+| H3 (b) positive − neutral | +0.40 [0.01, 0.79], p 0.046 | +0.42, p 0.041 | +0.50, p 0.023 |
+| H3 (c) mixed D, 90% CI | **+0.07 [−0.26, 0.39]: equivalent** (TOST p 0.019; n 10) | +0.08 [−0.35, 0.51]: not shown (n 8) | +0.05 [−0.30, 0.41]: equivalent |
+| H3 verdict | not supported ((a) fails) | not supported | not supported |
+| H4 | not supported (p 0.73) | not supported | not supported |
+| H3/H4 joint reading | **the H3 side** | inconclusive | the H3 side |
+| H5, negative group (Friedman) | **p 0.045: separation** (R p 0.086, no) | p 0.040: separation | p 0.062: no separation |
+| H5, positive group | p 0.54 | p 0.54 | p 0.54 |
+| H6 | r +0.08 [−0.09, 0.26], p 0.35: not supported (43) | r +0.12, p 0.15 | r +0.14, p 0.074 |
+| Group means: neutral, negative, positive, mixed | −0.20, −0.11, +0.20, +0.18 | −0.22, −0.15, +0.19, +0.16 | −0.31, −0.10, +0.19, +0.11 |
+
+- **H1, H2, H3, H4 and H6 are the same in all three samples.**
+  - H2 is a little firmer on the balanced sample (p 0.027; pulse rate p 0.012).
+  - H2 still comes from the neutral group falling (−0.20, p 0.044), not from the emotional groups
+    rising.
+- **With 10 mixed participants again, the within-person equivalence is back** (90% CI inside
+  ±0.5). The mixed-group question goes back to the H3 side, as on all 50. Part 20's
+  "inconclusive" came from the smaller mixed group.
+- **H5 still shows separation in the negative group** (p 0.045). It comes from the sadness film
+  (−0.55 against −0.09 to +0.01). The pulse rate does not confirm it (p 0.086), and sadness is
+  one film. It stays a fragile result: separation in 2 of 3 samples, each near 0.05.
+- **H6 is weaker** (r +0.08). It is not supported in any sample.
+- **Slider evaluation** (Part 19, 42 participants who moved the slider):
+  - the high moments do not coincide beyond chance (0.714 against 0.711, p 0.89);
+  - the state moves with the rating more often than chance: 55% for two levels (p 0.032), 55% for
+    three levels (p 0.032) and 56% from clip to clip (p 0.012), within the paper's range.
+- **Reading:** on the balanced sample, with every state from one estimator, the conclusions match
+  the analysis written in advance:
+  - emotional > neutral (H2), mainly because neutral films lower arousal;
+  - no rise above baseline (H1);
+  - no negativity bias, and negative = positive within person (H4 not supported; H3 (c)
+    equivalent), although H3 as a whole fails on the negative-vs-neutral comparison;
+  - a fragile sadness effect (H5);
+  - a weak link to self-report (H6).
+
+**Decision (2026-11-24, Piyush): `bal50` is the reported analysis** in the report and the slides,
+replacing the 44 of Part 20.
+- The first 50 (Part 14), set in advance, are reported alongside.
+- The rebalancing is described as made after the first results, by a rule that used no outcome.
+
 ## Current status
 
 **Frozen setting: `own4_p1000_k14_f3_s8`** (Part 9). 4 Hz input with a 1 Hz low-pass; prior weight

@@ -1,5 +1,6 @@
-function P = s2_run(root)
-% Stage 2 on the 50 real participants (docs/EXPERIMENTS.md Part 13).
+function P = s2_run(root, set)
+% Stage 2 on the 50 real participants (docs/EXPERIMENTS.md Part 13), or with set = 'extra47' on the
+% other 47 who passed selection (Part 21): same filters and rule, outputs with the suffix _extra47.
 %
 % For each participant and each pulse threshold (0.05 uS main, 0.02 uS secondary; rule 8):
 % 1 s bins (s2_observations), the MPP filter and the binary filter, and the state chosen by the
@@ -13,9 +14,17 @@ function P = s2_run(root)
 %   addpath src/stage2; s2_run
 
 if nargin < 1, root = pwd; end
+if nargin < 2 || isempty(set), set = 'real50'; end
 
 sel = readtable(fullfile(root, 'data', 'selection.csv'), 'TextType', 'string');
-ids = sel.id(string(sel.selected) == "True");
+switch set
+    case 'real50'
+        ids = sel.id(string(sel.selected) == "True");  sfx = '';
+    case 'extra47'
+        ids = sel.id(string(sel.stage2_pass) == "True" & string(sel.selected) ~= "True");  sfx = '_extra47';
+    otherwise
+        error('unknown set %s', set);
+end
 
 prows = {};
 for th = [0.05 0.02]
@@ -39,11 +48,11 @@ for th = [0.05 0.02]
         fprintf('P%-4d %.2f uS  %4d pulses  MPP %-9s  binary %-9s  -> %s\n', ids(i), th, sum(o.n), ...
             mpp.stop, bin.stop, chosen);
     end
-    writetable(vertcat(S{:}), fullfile(root, 'data', sprintf('stage2_states_%03d.csv', round(100 * th))));
+    writetable(vertcat(S{:}), fullfile(root, 'data', sprintf('stage2_states_%03d%s.csv', round(100 * th), sfx)));
 end
 
 P = cell2table(prows, 'VariableNames', {'id', 'group', 'min_height_uS', 'bins', 'pulses', 'merged', ...
     'mpp_stop', 'mpp_iter', 'b0', 'mpp_ve', 'mpp_r0', 'mpp_r1', 'mpp_vr', ...
     'bin_stop', 'bin_iter', 'bin_ve', 'chosen'});
-writetable(P, fullfile(root, 'data', 'stage2_params.csv'));
+writetable(P, fullfile(root, 'data', ['stage2_params' sfx '.csv']));
 end

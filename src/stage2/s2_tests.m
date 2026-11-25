@@ -59,7 +59,7 @@ for c = checks
     rows = [rows; run_tests(P, c.name, c.th, delta)]; %#ok<AGROW>
     if strcmp(c.name, 'main'), Bmain = B; Pmain = P; end
 end
-rows = [rows; h6(root, Bmain, syn || ~isempty(vsuf))];
+rows = [rows; h6(root, Bmain, syn)];   % Part 20: variants run H6 too when the raw files are present
 
 R = cell2table(rows, 'VariableNames', {'check', 'min_height_uS', 'hypothesis', 'part', 'measure', ...
     'test', 'n1', 'n2', 'estimate', 'ci_lo', 'ci_hi', 'ci90_lo', 'ci90_hi', 'p', 'p_rank', 'p_tost', ...
