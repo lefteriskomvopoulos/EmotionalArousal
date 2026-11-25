@@ -41,8 +41,29 @@ settings were tuned on our data.
   pulses, no better on slow responses, so the frozen setting stays. **Re-synthesis** (the papers'
   test), all 50: F1 0.86, the same in every film group.
 - **Real pulse counts are plausible** for a deconvolution, about 20% high (small doublets on response
-  rises; docs/EXPERIMENTS.md Part 12). **Open:** the rest of the plausibility check (flat stretches,
-  sizes, shapes), a comparison with other methods, stage 2, H1–H6.
+  rises; docs/EXPERIMENTS.md Part 12).
+- **Stage 2 and H1–H6 done** (docs/EXPERIMENTS.md Parts 13–14). The Data Challenge 2 filters were
+  validated on synthetic sessions, then run on the 50. The tests were set in writing first, then
+  run once.
+  - **H2 supported.**
+  - **H1, H3 and H4 not supported.** Within the mixed group, negative and positive films are
+    equivalent.
+  - **H5:** no evidence of separation.
+  - **H6 not supported** (r +0.14, p 0.074; Part 19).
+- **The affect slider** (Part 19, the evaluation of Oliver et al. 2025, adapted):
+  - the state does not pick out the moments of highest self-reported intensity;
+  - it follows the direction of changes slightly above chance (54–59%), the level the paper
+    reports.
+  - **Input:** `data/stage2_slider_1hz.csv`, built from the raw files (local only); the analysis
+    reruns from that table.
+- **The tonic level as a third observation** (Parts 15–16, exploratory variants): both failed
+  validation. The balanced floor (`tonic14b`) fixes the overconfidence, but some drift still
+  leaks in. Neither changes a verdict. The differenced tonic (`tonic14d`, Part 17) handles the
+  drift but narrowly fails on scale, so it was not run on the 50.
+  - **The calibrated version (`tonic14c`, Part 18) passes validation on fresh seeds.** On the 50
+    every verdict matches the main analysis, and the estimates agree to within 0.03.
+- **Open:** the rest of the plausibility check (flat stretches, sizes, shapes), a comparison with
+  other methods.
 
 ## Stage 2: the input
 
@@ -69,6 +90,27 @@ the raw recordings (`eda.dataset.load`).
 ```
 docs/EXPERIMENTS.md          the story, every number's source, current status, next steps
 docs/dataset_check/          first look at POPANE, and the metadata the quality screen reads
+src/stage2/                  STAGE 2: PULSES -> AROUSAL STATE (MATLAB; docs/EXPERIMENTS.md Part 13)
+  s2_filter_mpp.m, s2_filter_bin.m   the Data Challenge 2 filters, arithmetic unchanged
+  s2_test_dc.m               reproduces the Data Challenge's saved results (needs its folder)
+  s2_observations.m          one participant's 1 s bins: pulse, log height, block code
+  s2_synth.m                 validation on 400 synthetic sessions -> data/stage2_synth_scores.csv
+  s2_run.m                   the 50 -> data/stage2_params.csv, data/stage2_states_00{5,2}.csv
+  s2_plot.m                  one participant's figure -> results/figures/stage2_state_P<id>.png
+  s2_plot_all.m              all 50, one page each -> results/figures/stage2_states_real50.pdf
+  s2_tests.m                 H1-H6 as set in Part 14 -> data/stage2_tests.csv,
+                             data/stage2_block_summary.csv, results/figures/stage2_hypotheses.png
+  s2_filter_tonic.m          variants tonic14 (Part 15) and tonic14b (Part 16, opt.floor: the
+                             balanced floor), both failed validation: + tonic level every 14 s
+  s2_tonic_input.m           each tonic variant's input and options (tonic, tonic14b/d/c)
+  s2_tonic_calibrate.m       tonic14c (Part 18): the tonic link from the pulse-only state
+  s2_read_raw.m              reads columns of a raw POPANE file (data/raw/Study6, local only)
+  s2_slider.m                the slider on the stage-2 bins -> data/stage2_slider_1hz.csv
+  s2_slider_eval.m           state vs slider (Part 19) -> data/stage2_slider_eval[_tonic14c].csv,
+                             results/figures/stage2_slider_eval[_tonic14c].png
+  s2_synth_tonic.m, s2_run_tonic.m   their synthetic check and real run -> data/*_tonic.csv,
+                             data/*_tonic14b.csv (second argument 'tonic14b');
+                             s2_tests(pwd, 'variant', 'tonic' | 'tonic14b') -> data/stage2_tests_<v>.csv
 src/own/                     OUR DECONVOLUTION (MATLAB)
   own_config.m               every setting, with where it comes from (paper, DC code, ours)
   own_run.m                  one session: 200 s windows every 100 s, random starts, selection
