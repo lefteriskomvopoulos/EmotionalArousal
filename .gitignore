@@ -1,9 +1,8 @@
 # Branch `deconvolution`.  Allow-list: only what is named here is shared.  Everything else stays local.
 /*
 !/.gitignore
+!/.gitattributes
 !/README.md
-!/AGENTS.md
-!/CLAUDE.md
 !/requirements.txt
 !/REPRODUCE.md
 !/reproduce.sh

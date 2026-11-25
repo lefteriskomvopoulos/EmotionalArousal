@@ -14,7 +14,6 @@ Both stages are done. Stage 2 starts from one table (below).
 2. This README: what exists, where, and how to run it.
 3. **[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)**: the whole story in order. Every experiment, its
    result, and the decision it justified, with the file each number comes from.
-4. [AGENTS.md](AGENTS.md): the rules for working in this repository (for people and coding agents).
 
 ## What this folder combines
 

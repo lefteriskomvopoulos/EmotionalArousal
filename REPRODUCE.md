@@ -32,11 +32,11 @@ tables, the other 47's pulse tables, and the analysed 50's real-data numbers
 | `hpc/own/*/output/` | Every deconvolution run on the cluster: pulses, windows and the per-sample fit (`final`: the 50 drawn and their test sessions; `extra`: the other 47 who passed selection; `resynth`; `tune`). |
 | `data/` | Result tables, the test sessions' truth (`tbme_synth/`) and the solver's inputs (`tbme_input/`). |
 | `results/figures/` | The figures. |
-| `report/` | The paper (`main.tex`, `main.pdf`) and the slides. |
 | `docs/EXPERIMENTS.md` | Every experiment in order: its question, its result, the decision it led to, and the file each number comes from. |
 | `archive/paper_solver/` | The frozen record of the published solver, run unmodified, and its comparison with cvxEDA. It is not rerun here (see below). |
 
-`README.md` gives an overview of the project, and `AGENTS.md` sets the rules that kept the results valid.
+`README.md` gives an overview of the project. The report and slides are submitted separately, and
+the cluster's log files are left out.
 
 ## Requirements
 

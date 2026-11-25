@@ -3,7 +3,7 @@ function obs = s2_observations(id, min_height, root)
 %
 % id          participant number (P<id>)
 % min_height  pulse threshold in uS: 0.05 for the main analysis, 0.02 for the secondary check
-%             (AGENTS.md rule 8)
+%             (docs/EXPERIMENTS.md)
 % root        repository root (default: the current folder)
 %
 % Bins are 1 s wide and start at the segment's first sample, so they cover the baseline, the

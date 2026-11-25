@@ -276,7 +276,7 @@ def deconv_pages(items, folder, pdf_name, zoom_s=120):
     print(f"saved {cfg.FIG_DIR / pdf_name} and {len(items)} PNGs in {out_dir}")
 
 
-STAGE2_MIN_uS = 0.05         # stage 2 counts pulses at least this high (AGENTS.md, rule 8)
+STAGE2_MIN_uS = 0.05         # stage 2 counts pulses at least this high (docs/EXPERIMENTS.md)
 FIT_ROWS = ("1  raw recording (1000 Hz, every 10th sample drawn)",
             "2  solver input (1 Hz low-pass, 4 Hz; offset by a constant)",
             "3  output: pulses, height of each response (µS)",

@@ -338,7 +338,7 @@ def export_extra(suffix="own4"):
     """extra-export: the real inputs P<pid>_<suffix> of the 47, through the same chain and the same
     lines as final-export's real inputs (prepare, then tbme_export.save).  Writes nothing else.  An
     input that already exists is left alone if it is the same signal; if it differs, this stops,
-    because a kept run may have been made from it (AGENTS.md)."""
+    because a kept run may have been made from it."""
     from scipy.io import loadmat
     from .dataset import load
     from .preprocess import RAW_FS, prepare, segment_of

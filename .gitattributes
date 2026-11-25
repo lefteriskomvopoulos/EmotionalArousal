@@ -1,0 +1,13 @@
+# Left out of the submission zip (git archive), kept on the branch.
+# The report and slides are submitted separately.
+/report/** export-ignore
+# Cluster logs
+*.out export-ignore
+# Round 6's first attempt, superseded and unused (docs/EXPERIMENTS.md, Round 6)
+/hpc/own/tune_pre/** export-ignore
+# Reading notes and the proposal text kept with the archived branch
+/archive/paper_solver/docs/literature_review_notes.md export-ignore
+/archive/paper_solver/docs/proposal_methods.md export-ignore
+# Git's own files
+.gitignore export-ignore
+.gitattributes export-ignore
