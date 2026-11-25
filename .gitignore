@@ -76,3 +76,6 @@ __pycache__/
 !/hpc/own/resynth/output/own4_p1000_k14_f3_s8/R*_signals.csv
 
 .DS_Store
+
+# written by reproduce.sh
+/reproduce_report.csv

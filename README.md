@@ -1,25 +1,30 @@
-# Decoding sympathetic arousal from skin conductance — branch `deconvolution`
+# Decoding sympathetic arousal from skin conductance
 
 Course project for BE-GY 9603 / ECE-GY 9153 A, Neural and Physiological Signal Processing.
 Komvopoulos Eleftherios (ek4538) and Piyush More (pm4081).
 
 The pipeline: skin conductance of POPANE Study 6 → **sudomotor impulses** (stage 1, our own
 implementation of Amin & Faghih, IEEE TBME 2021) → **arousal state** (stage 2) → hypotheses H1–H6.
-Stage 1 is done and frozen on this branch. Stage 2 starts from one table (below).
+Both stages are done. Stage 2 starts from one table (below).
 
 ## Start here
 
-1. This README: what exists, where, and how to run it.
-2. **[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)**: the whole story in order. Every experiment, its
+1. **[REPRODUCE.md](REPRODUCE.md)**: one command, `./reproduce.sh`, recomputes the results and
+   compares them with the shipped ones.
+2. This README: what exists, where, and how to run it.
+3. **[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)**: the whole story in order. Every experiment, its
    result, and the decision it justified, with the file each number comes from.
-3. [AGENTS.md](AGENTS.md): the rules for working in this repository (for people and coding agents).
+4. [AGENTS.md](AGENTS.md): the rules for working in this repository (for people and coding agents).
 
-## Two branches
+## What this folder combines
 
-| Branch | What it holds |
-|---|---|
-| `paper_solver` | Everything up to and including the published Amin & Faghih (2021) solver, run unmodified (encrypted MATLAB), and the first stage-2 code (`state.py`). Frozen. |
-| `deconvolution` (this one) | **Our own implementation** of the same algorithm, with every setting under our control, tuned on synthetic sessions with a known truth, then run on the real participants. Runs without anything from `paper_solver`. |
+It is the `submission` branch of the repository, which joins the work of three branches:
+
+| Branch | What it holds | Here |
+|---|---|---|
+| `deconvolution` | Stage 1: **our own implementation** of the Amin & Faghih (2021) algorithm, with every setting under our control, tuned on synthetic sessions with a known truth, then run on the real participants. | `src/eda/`, `src/own/`, `hpc/own/` |
+| `stateestimation` | Stage 2: the arousal state estimated from the pulses, and the H1–H6 tests. | `src/stage2/`, `data/stage2_*` |
+| `paper_solver` | Everything up to and including the published solver, run unmodified (encrypted MATLAB), the cvxEDA comparison, and the first stage-2 code (`state.py`). Frozen. | `archive/paper_solver/` (a record, not used by stages 1 or 2) |
 
 We wrote our own implementation because the black box's settings could not be changed: its
 response shape always stayed at its built-in prior. The algorithm is the published one; its

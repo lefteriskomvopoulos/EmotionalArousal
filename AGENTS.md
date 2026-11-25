@@ -104,8 +104,9 @@ These were each learned the hard way (docs/EXPERIMENTS.md):
 final-run output (README, "Stage 2: the input"). The film group is in `data/selection.csv`; the
 block of each pulse is in its `marker`. The main analysis uses pulses ≥ 0.05 µS (rule 8). The
 affect slider (H6) comes from the raw recordings
-(`eda.dataset.load`, column `affect`). The first stage-2 code (`state.py`) is on branch
-`paper_solver` and has not been brought over yet. Known stage-1 limits that bear on stage 2:
+(`eda.dataset.load`, column `affect`). Stage 2 itself is in `src/stage2/` (docs/EXPERIMENTS.md
+Parts 13–19); the first stage-2 code (`state.py`) is kept in `archive/paper_solver/`. Known stage-1
+limits that bear on stage 2:
 - decays run long on fast and typical shapes and short on slow ones;
 - false pulses gather where the tonic rises fast;
 - about 36% of real isolated responses recover as fast as they rise, a shape the model cannot

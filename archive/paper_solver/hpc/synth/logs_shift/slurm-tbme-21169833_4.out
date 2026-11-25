@@ -1,0 +1,496 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2025 The MathWorks, Inc.
+                  R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                              August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+>> [Warning: Cluster property 'ResourceTemplate' has been removed. To control
+resource selection on the cluster, use 'SubmitArguments' or edit the plugin
+scripts instead.] 
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 12 workers.
+
+ans = 
+
+ ProcessPool with properties: 
+
+            Connected: true
+           NumWorkers: 12
+                 Busy: false
+              Cluster: Processes (Local Cluster)
+        AttachedFiles: {}
+    AutoAddClientPath: true
+            FileStore: [1x1 parallel.FileStore]
+           ValueStore: [1x1 parallel.ValueStore]
+          IdleTimeout: Inf (no automatic shut down)
+          SpmdEnabled: true
+
+>> S14_m2: 2229 samples, 11 windows, 4 starts each
+iteration 1.
+Loop 1 : t1 = 0.641242, t2 = 2.766313iteration 2.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 1 : t1 = 0.641079, t2 = 2.765378iteration 3.
+Loop 3 : t1 = 0.641369, t2 = 2.766248iteration 2.
+Loop 2 : t1 = 0.641270, t2 = 2.765847iteration 2.
+Loop 4 : t1 = 0.640769, t2 = 2.764101iteration 2.
+Loop 1 : t1 = 0.640852, t2 = 2.764527iteration 4.
+Loop 3 : t1 = 0.641262, t2 = 2.765426iteration 3.
+Loop 2 : t1 = 0.641230, t2 = 2.765336iteration 3.
+Loop 4 : t1 = 0.640734, t2 = 2.763683iteration 3.
+Loop 1 : t1 = 0.640647, t2 = 2.764148iteration 5.
+Loop 4 : t1 = 0.640785, t2 = 2.763981iteration 4.
+Loop 3 : t1 = 0.641098, t2 = 2.764760iteration 4.
+Loop 2 : t1 = 0.641069, t2 = 2.764679iteration 4.
+Loop 1 : t1 = 0.640493, t2 = 2.763382iteration 6.
+Loop 4 : t1 = 0.640737, t2 = 2.763449iteration 5.
+Loop 3 : t1 = 0.640968, t2 = 2.764558iteration 5.
+Loop 2 : t1 = 0.640928, t2 = 2.764445iteration 5.
+Loop 1 : t1 = 0.640382, t2 = 2.763005iteration 7.
+Loop 3 : t1 = 0.640826, t2 = 2.763874iteration 6.
+Loop 4 : t1 = 0.640675, t2 = 2.763615iteration 6.
+Loop 2 : t1 = 0.640790, t2 = 2.763813iteration 6.
+Loop 3 : t1 = 0.640697, t2 = 2.763432iteration 7.
+Loop 4 : t1 = 0.640608, t2 = 2.763169iteration 7.
+Loop 2 : t1 = 0.640700, t2 = 2.763469iteration 7.
+Loop 3 : t1 = 0.640649, t2 = 2.763345iteration 8.
+Loop 4 : t1 = 0.640574, t2 = 2.763057iteration 8.
+Loop 2 : t1 = 0.640668, t2 = 2.763341iteration 8.
+Loop 4 : t1 = 0.640495, t2 = 2.762749iteration 9.
+Loop 3 : t1 = 0.640614, t2 = 2.763148iteration 9.
+Loop 2 : t1 = 0.640611, t2 = 2.763134iteration 9.
+Loop 3 : t1 = 0.640536, t2 = 2.762917iteration 10.
+Loop 4 : t1 = 0.640614, t2 = 2.764350iteration 10.
+Loop 3 : t1 = 0.640499, t2 = 2.762790iteration 11.
+Loop 4 : t1 = 0.640303, t2 = 2.763162iteration 11.
+Loop 4 : t1 = 0.640159, t2 = 2.762425iteration 12.
+Loop 3 : t1 = 0.640634, t2 = 2.764427iteration 12.
+Loop 4 : t1 = 0.640094, t2 = 2.762123iteration 13.
+Loop 3 : t1 = 0.640304, t2 = 2.763221iteration 13.
+Loop 4 : t1 = 0.640066, t2 = 2.762083iteration 14.
+Loop 3 : t1 = 0.640167, t2 = 2.762428iteration 14.
+Loop 3 : t1 = 0.640104, t2 = 2.762240iteration 15.
+Loop 4 : t1 = 0.640013, t2 = 2.761943iteration 15.
+Loop 3 : t1 = 0.640064, t2 = 2.762132iteration 16.
+Loop 4 : t1 = 0.639972, t2 = 2.761887iteration 16.
+Loop 3 : t1 = 0.640059, t2 = 2.762137iteration 17.
+Loop 4 : t1 = 0.639991, t2 = 2.761867iteration 17.
+Loop 4 : t1 = 0.639982, t2 = 2.761865iteration 18.
+Loop 3 : t1 = 0.640049, t2 = 2.762093iteration 18.
+Loop 4 : t1 = 0.639972, t2 = 2.761818iteration 19.
+Loop 3 : t1 = 0.640005, t2 = 2.761965iteration 19.
+Loop 4 : t1 = 0.639966, t2 = 2.761832iteration 20.
+Loop 3 : t1 = 0.640020, t2 = 2.762082iteration 20.
+Loop 4 : t1 = 0.639958, t2 = 2.761821iteration 21.
+Loop 3 : t1 = 0.639984, t2 = 2.761893iteration 21.
+Loop 4 : t1 = 0.639939, t2 = 2.761800iteration 22.
+Loop 4 : t1 = 0.639944, t2 = 2.761784iteration 23.
+Loop 4 : t1 = 0.639937, t2 = 2.761793iteration 24.
+Loop 4 : t1 = 0.639981, t2 = 2.761995iteration 25.
+Loop 4 : t1 = 0.639954, t2 = 2.761929iteration 26.
+Loop 2 : t1 = 0.640572, t2 = 2.763090ConvergedLoop 4 : t1 = 0.639962, t2 = 2.761890ConvergedLoop 1 : t1 = 0.640310, t2 = 2.762803ConvergedLoop 3 : t1 = 0.639958, t2 = 2.761812Convergedwindow 1/11: tau 0.641 / 2.763 s, 37 impulses, R2 0.998, authors, 74 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 1 : t1 = 0.624952, t2 = 2.751326iteration 2.
+Loop 3 : t1 = 0.624841, t2 = 2.751165iteration 2.
+Loop 2 : t1 = 0.625034, t2 = 2.751570iteration 2.
+Loop 4 : t1 = 0.625399, t2 = 2.751625iteration 2.
+Loop 3 : t1 = 0.624929, t2 = 2.751174iteration 3.
+Loop 1 : t1 = 0.624961, t2 = 2.750934iteration 3.
+Loop 2 : t1 = 0.625111, t2 = 2.751455iteration 3.
+Loop 4 : t1 = 0.625173, t2 = 2.751662iteration 3.
+Loop 1 : t1 = 0.624904, t2 = 2.750502iteration 4.
+Loop 3 : t1 = 0.624981, t2 = 2.751064iteration 4.
+Loop 2 : t1 = 0.625158, t2 = 2.751314iteration 4.
+Loop 4 : t1 = 0.625712, t2 = 2.754618iteration 4.
+Loop 3 : t1 = 0.624899, t2 = 2.750448iteration 5.
+Loop 1 : t1 = 0.624846, t2 = 2.750180iteration 5.
+Loop 2 : t1 = 0.625029, t2 = 2.750759iteration 5.
+Loop 4 : t1 = 0.625059, t2 = 2.753456iteration 5.
+Loop 3 : t1 = 0.624850, t2 = 2.750145iteration 6.
+Loop 1 : t1 = 0.624786, t2 = 2.749875iteration 6.
+Loop 2 : t1 = 0.624950, t2 = 2.750336iteration 6.
+Loop 4 : t1 = 0.624778, t2 = 2.752099iteration 6.
+Loop 3 : t1 = 0.624779, t2 = 2.749985iteration 7.
+Loop 1 : t1 = 0.624756, t2 = 2.749873iteration 7.
+Loop 2 : t1 = 0.624836, t2 = 2.750168iteration 7.
+Loop 4 : t1 = 0.624595, t2 = 2.751331iteration 7.
+Loop 3 : t1 = 0.624701, t2 = 2.749632iteration 8.
+Loop 2 : t1 = 0.624764, t2 = 2.749808iteration 8.
+Loop 4 : t1 = 0.624563, t2 = 2.750878iteration 8.
+Loop 3 : t1 = 0.624615, t2 = 2.749347iteration 9.
+Loop 2 : t1 = 0.624773, t2 = 2.749755iteration 9.
+Loop 4 : t1 = 0.624506, t2 = 2.750437iteration 9.
+Loop 3 : t1 = 0.624658, t2 = 2.749401iteration 10.
+Loop 3 : t1 = 0.624682, t2 = 2.749420iteration 11.
+Loop 3 : t1 = 0.624691, t2 = 2.749430iteration 12.
+Loop 3 : t1 = 0.624703, t2 = 2.749456iteration 13.
+Loop 3 : t1 = 0.624714, t2 = 2.749478iteration 14.
+Loop 3 : t1 = 0.624716, t2 = 2.749482iteration 15.
+Loop 2 : t1 = 0.624787, t2 = 2.749728ConvergedLoop 4 : t1 = 0.624480, t2 = 2.750229ConvergedLoop 1 : t1 = 0.624754, t2 = 2.749756ConvergedLoop 3 : t1 = 0.624722, t2 = 2.749497Convergedwindow 2/11: tau 0.625 / 2.750 s, 38 impulses, R2 0.987, authors, 49 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 4 : t1 = 0.625666, t2 = 2.751157iteration 2.
+Loop 3 : t1 = 0.625494, t2 = 2.751573iteration 2.
+Loop 2 : t1 = 0.625685, t2 = 2.751530iteration 2.
+Loop 1 : t1 = 0.625582, t2 = 2.751484iteration 2.
+Loop 4 : t1 = 0.625313, t2 = 2.750569iteration 3.
+Loop 3 : t1 = 0.625176, t2 = 2.750601iteration 3.
+Loop 2 : t1 = 0.625246, t2 = 2.750775iteration 3.
+Loop 1 : t1 = 0.625265, t2 = 2.750858iteration 3.
+Loop 2 : t1 = 0.625023, t2 = 2.750015iteration 4.
+Loop 4 : t1 = 0.625074, t2 = 2.749642iteration 4.
+Loop 3 : t1 = 0.624959, t2 = 2.750221iteration 4.
+Loop 1 : t1 = 0.625062, t2 = 2.749888iteration 4.
+Loop 4 : t1 = 0.624875, t2 = 2.748856iteration 5.
+Loop 3 : t1 = 0.624599, t2 = 2.749032iteration 5.
+Loop 2 : t1 = 0.624792, t2 = 2.749009iteration 5.
+Loop 1 : t1 = 0.624948, t2 = 2.749919iteration 5.
+Loop 2 : t1 = 0.624610, t2 = 2.748759iteration 6.
+Loop 4 : t1 = 0.624682, t2 = 2.748323iteration 6.
+Loop 3 : t1 = 0.624440, t2 = 2.748132iteration 6.
+Loop 1 : t1 = 0.624681, t2 = 2.748833iteration 6.
+Loop 2 : t1 = 0.624396, t2 = 2.748301iteration 7.
+Loop 4 : t1 = 0.624636, t2 = 2.748844iteration 7.
+Loop 3 : t1 = 0.624257, t2 = 2.747708iteration 7.
+Loop 1 : t1 = 0.624564, t2 = 2.748215iteration 7.
+Loop 2 : t1 = 0.624404, t2 = 2.747632iteration 8.
+Loop 4 : t1 = 0.624449, t2 = 2.748194iteration 8.
+Loop 3 : t1 = 0.624279, t2 = 2.747174iteration 8.
+Loop 1 : t1 = 0.624450, t2 = 2.747774iteration 8.
+Loop 2 : t1 = 0.624223, t2 = 2.747491iteration 9.
+Loop 4 : t1 = 0.624450, t2 = 2.747699iteration 9.
+Loop 3 : t1 = 0.624137, t2 = 2.747050iteration 9.
+Loop 1 : t1 = 0.624404, t2 = 2.747524iteration 9.
+Loop 2 : t1 = 0.624471, t2 = 2.747550iteration 10.
+Loop 4 : t1 = 0.624290, t2 = 2.747543iteration 10.
+Loop 3 : t1 = 0.624372, t2 = 2.747170iteration 10.
+Loop 1 : t1 = 0.624226, t2 = 2.747376iteration 10.
+Loop 2 : t1 = 0.624450, t2 = 2.747345iteration 11.
+Loop 4 : t1 = 0.624532, t2 = 2.747625iteration 11.
+Loop 3 : t1 = 0.624331, t2 = 2.746998iteration 11.
+Loop 1 : t1 = 0.624448, t2 = 2.747437iteration 11.
+Loop 2 : t1 = 0.624311, t2 = 2.747054iteration 12.
+Loop 4 : t1 = 0.624494, t2 = 2.747429iteration 12.
+Loop 1 : t1 = 0.624394, t2 = 2.747216iteration 12.
+Loop 2 : t1 = 0.624110, t2 = 2.746994iteration 13.
+Loop 4 : t1 = 0.624375, t2 = 2.747188iteration 13.
+Loop 1 : t1 = 0.624274, t2 = 2.746973iteration 13.
+Loop 2 : t1 = 0.623921, t2 = 2.746684iteration 14.
+Loop 4 : t1 = 0.624191, t2 = 2.747145iteration 14.
+Loop 1 : t1 = 0.624098, t2 = 2.746947iteration 14.
+Loop 2 : t1 = 0.623993, t2 = 2.746678iteration 15.
+Loop 4 : t1 = 0.624020, t2 = 2.746875iteration 15.
+Loop 1 : t1 = 0.623933, t2 = 2.746685iteration 15.
+Loop 2 : t1 = 0.624040, t2 = 2.746744iteration 16.
+Loop 4 : t1 = 0.624101, t2 = 2.746929iteration 16.
+Loop 1 : t1 = 0.624008, t2 = 2.746725iteration 16.
+Loop 2 : t1 = 0.624053, t2 = 2.746753iteration 17.
+Loop 4 : t1 = 0.624148, t2 = 2.746974iteration 17.
+Loop 1 : t1 = 0.624046, t2 = 2.746757iteration 17.
+Loop 1 : t1 = 0.624060, t2 = 2.746762iteration 18.
+Loop 1 : t1 = 0.624086, t2 = 2.747669iteration 19.
+Loop 1 : t1 = 0.624138, t2 = 2.747190iteration 20.
+Loop 2 : t1 = 0.624060, t2 = 2.746753ConvergedLoop 4 : t1 = 0.624167, t2 = 2.746989ConvergedLoop 1 : t1 = 0.624132, t2 = 2.747056ConvergedLoop 3 : t1 = 0.624217, t2 = 2.746790Convergedwindow 3/11: tau 0.624 / 2.747 s, 30 impulses, R2 0.991, authors, 58 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 4 : t1 = 0.635469, t2 = 2.759275iteration 2.
+Loop 1 : t1 = 0.635265, t2 = 2.758614iteration 2.
+Loop 3 : t1 = 0.634414, t2 = 2.756052iteration 2.
+Loop 2 : t1 = 0.634480, t2 = 2.755873iteration 2.
+Loop 4 : t1 = 0.635312, t2 = 2.758307iteration 3.
+Loop 1 : t1 = 0.635176, t2 = 2.757645iteration 3.
+Loop 3 : t1 = 0.634517, t2 = 2.755093iteration 3.
+Loop 2 : t1 = 0.634502, t2 = 2.755050iteration 3.
+Loop 4 : t1 = 0.635145, t2 = 2.757455iteration 4.
+Loop 2 : t1 = 0.634465, t2 = 2.754557iteration 4.
+Loop 1 : t1 = 0.634943, t2 = 2.756976iteration 4.
+Loop 3 : t1 = 0.634474, t2 = 2.754597iteration 4.
+Loop 4 : t1 = 0.634991, t2 = 2.756881iteration 5.
+Loop 1 : t1 = 0.634817, t2 = 2.756448iteration 5.
+Loop 3 : t1 = 0.634437, t2 = 2.754281iteration 5.
+Loop 2 : t1 = 0.634428, t2 = 2.754253iteration 5.
+Loop 4 : t1 = 0.634884, t2 = 2.757105iteration 6.
+Loop 1 : t1 = 0.634753, t2 = 2.757191iteration 6.
+Loop 2 : t1 = 0.634435, t2 = 2.755056iteration 6.
+Loop 3 : t1 = 0.634432, t2 = 2.754740iteration 6.
+Loop 4 : t1 = 0.634913, t2 = 2.756718iteration 7.
+Loop 1 : t1 = 0.634557, t2 = 2.755623iteration 7.
+Loop 3 : t1 = 0.634365, t2 = 2.754200iteration 7.
+Loop 2 : t1 = 0.634501, t2 = 2.754058iteration 7.
+Loop 4 : t1 = 0.634742, t2 = 2.755778iteration 8.
+Loop 1 : t1 = 0.634502, t2 = 2.755425iteration 8.
+Loop 2 : t1 = 0.634462, t2 = 2.753881iteration 8.
+Loop 3 : t1 = 0.634488, t2 = 2.753911iteration 8.
+Loop 4 : t1 = 0.634677, t2 = 2.755635iteration 9.
+Loop 1 : t1 = 0.634469, t2 = 2.755417iteration 9.
+Loop 3 : t1 = 0.634459, t2 = 2.753872iteration 9.
+Loop 2 : t1 = 0.634482, t2 = 2.753970iteration 9.
+Loop 4 : t1 = 0.634630, t2 = 2.755609iteration 10.
+Loop 1 : t1 = 0.634504, t2 = 2.755823iteration 10.
+Loop 2 : t1 = 0.634393, t2 = 2.754179iteration 10.
+Loop 4 : t1 = 0.634476, t2 = 2.755639iteration 11.
+Loop 1 : t1 = 0.634468, t2 = 2.755779iteration 11.
+Loop 2 : t1 = 0.634431, t2 = 2.754319iteration 11.
+Loop 4 : t1 = 0.634457, t2 = 2.755634iteration 12.
+Loop 4 : t1 = 0.634345, t2 = 2.755679iteration 13.
+Loop 4 : t1 = 0.634266, t2 = 2.755560iteration 14.
+Loop 4 : t1 = 0.634239, t2 = 2.755631iteration 15.
+Loop 4 : t1 = 0.634178, t2 = 2.755415iteration 16.
+Loop 4 : t1 = 0.634144, t2 = 2.755239iteration 17.
+Loop 4 : t1 = 0.634120, t2 = 2.755107iteration 18.
+Loop 4 : t1 = 0.634103, t2 = 2.755005iteration 19.
+Loop 4 : t1 = 0.634089, t2 = 2.754924iteration 20.
+Loop 2 : t1 = 0.634442, t2 = 2.754332ConvergedLoop 4 : t1 = 0.634076, t2 = 2.754856ConvergedLoop 1 : t1 = 0.634455, t2 = 2.755714ConvergedLoop 3 : t1 = 0.634474, t2 = 2.753969Convergedwindow 4/11: tau 0.634 / 2.754 s, 30 impulses, R2 0.990, authors, 57 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 4 : t1 = 0.651745, t2 = 2.772588iteration 2.
+Loop 3 : t1 = 0.651767, t2 = 2.772802iteration 2.
+Loop 1 : t1 = 0.651701, t2 = 2.772561iteration 2.
+Loop 2 : t1 = 0.652118, t2 = 2.771854iteration 2.
+Loop 4 : t1 = 0.651796, t2 = 2.772229iteration 3.
+Loop 3 : t1 = 0.651863, t2 = 2.772375iteration 3.
+Loop 1 : t1 = 0.651757, t2 = 2.772288iteration 3.
+Loop 2 : t1 = 0.652143, t2 = 2.771769iteration 3.
+Loop 4 : t1 = 0.651913, t2 = 2.772148iteration 4.
+Loop 3 : t1 = 0.652004, t2 = 2.772511iteration 4.
+Loop 1 : t1 = 0.651849, t2 = 2.772184iteration 4.
+Loop 2 : t1 = 0.652170, t2 = 2.771718iteration 4.
+Loop 4 : t1 = 0.651999, t2 = 2.772157iteration 5.
+Loop 3 : t1 = 0.652115, t2 = 2.772431iteration 5.
+Loop 1 : t1 = 0.651686, t2 = 2.771986iteration 5.
+Loop 2 : t1 = 0.652185, t2 = 2.771763iteration 5.
+Loop 4 : t1 = 0.651818, t2 = 2.771975iteration 6.
+Loop 3 : t1 = 0.652185, t2 = 2.772526iteration 6.
+Loop 1 : t1 = 0.652302, t2 = 2.772330iteration 6.
+Loop 2 : t1 = 0.652186, t2 = 2.772392iteration 6.
+Loop 4 : t1 = 0.652387, t2 = 2.772346iteration 7.
+Loop 3 : t1 = 0.652224, t2 = 2.772387iteration 7.
+Loop 1 : t1 = 0.652362, t2 = 2.772641iteration 7.
+Loop 2 : t1 = 0.652052, t2 = 2.772227iteration 7.
+Loop 3 : t1 = 0.652045, t2 = 2.772389iteration 8.
+Loop 4 : t1 = 0.652411, t2 = 2.773461iteration 8.
+Loop 1 : t1 = 0.652376, t2 = 2.772683iteration 8.
+Loop 2 : t1 = 0.652535, t2 = 2.772486iteration 8.
+Loop 4 : t1 = 0.652496, t2 = 2.772996iteration 9.
+Loop 3 : t1 = 0.652539, t2 = 2.772625iteration 9.
+Loop 2 : t1 = 0.652621, t2 = 2.772876iteration 9.
+Loop 3 : t1 = 0.652592, t2 = 2.772949iteration 10.
+Loop 2 : t1 = 0.652612, t2 = 2.772984iteration 10.
+Loop 2 : t1 = 0.652541, t2 = 2.772977iteration 11.
+Loop 2 : t1 = 0.652534, t2 = 2.772888iteration 12.
+Loop 2 : t1 = 0.652535, t2 = 2.773511iteration 13.
+Loop 2 : t1 = 0.652484, t2 = 2.773816iteration 14.
+Loop 2 : t1 = 0.652480, t2 = 2.773652iteration 15.
+Loop 2 : t1 = 0.652474, t2 = 2.773451iteration 16.
+Loop 2 : t1 = 0.652466, t2 = 2.773310iteration 17.
+Loop 2 : t1 = 0.652445, t2 = 2.774033iteration 18.
+Loop 2 : t1 = 0.652502, t2 = 2.773441ConvergedLoop 4 : t1 = 0.652499, t2 = 2.772929ConvergedLoop 1 : t1 = 0.652385, t2 = 2.772677ConvergedLoop 3 : t1 = 0.652568, t2 = 2.773000Convergedwindow 5/11: tau 0.652 / 2.773 s, 20 impulses, R2 0.990, authors, 53 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 3 : t1 = 0.647130, t2 = 2.771867iteration 2.
+Loop 2 : t1 = 0.646945, t2 = 2.771557iteration 2.
+Loop 4 : t1 = 0.646950, t2 = 2.771598iteration 2.
+Loop 1 : t1 = 0.646965, t2 = 2.771635iteration 2.
+Loop 4 : t1 = 0.647095, t2 = 2.771629iteration 3.
+Loop 1 : t1 = 0.647127, t2 = 2.771943iteration 3.
+Loop 3 : t1 = 0.647131, t2 = 2.771752iteration 3.
+Loop 2 : t1 = 0.647052, t2 = 2.771539iteration 3.
+Loop 1 : t1 = 0.647176, t2 = 2.772085iteration 4.
+Loop 3 : t1 = 0.647090, t2 = 2.771620iteration 4.
+Loop 2 : t1 = 0.647084, t2 = 2.771762iteration 4.
+Loop 4 : t1 = 0.647126, t2 = 2.771858iteration 4.
+Loop 2 : t1 = 0.647110, t2 = 2.771665iteration 5.
+Loop 4 : t1 = 0.647172, t2 = 2.772011iteration 5.
+Loop 1 : t1 = 0.647212, t2 = 2.772179iteration 5.
+Loop 2 : t1 = 0.647028, t2 = 2.771388iteration 6.
+Loop 4 : t1 = 0.647178, t2 = 2.771791iteration 6.
+Loop 4 : t1 = 0.647178, t2 = 2.771952iteration 7.
+Loop 2 : t1 = 0.647042, t2 = 2.771306iteration 7.
+Loop 4 : t1 = 0.647216, t2 = 2.772081iteration 8.
+Loop 2 : t1 = 0.647045, t2 = 2.771295ConvergedLoop 4 : t1 = 0.647219, t2 = 2.771852ConvergedLoop 1 : t1 = 0.647211, t2 = 2.771920ConvergedLoop 3 : t1 = 0.647072, t2 = 2.771487Convergedwindow 6/11: tau 0.647 / 2.772 s, 18 impulses, R2 0.996, authors, 36 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 2 : t1 = 0.647066, t2 = 2.773119iteration 2.
+Loop 1 : t1 = 0.646859, t2 = 2.772312iteration 2.
+Loop 4 : t1 = 0.646898, t2 = 2.772874iteration 2.
+Loop 3 : t1 = 0.646971, t2 = 2.773058iteration 2.
+Loop 2 : t1 = 0.646919, t2 = 2.772407iteration 3.
+Loop 1 : t1 = 0.646597, t2 = 2.771218iteration 3.
+Loop 4 : t1 = 0.646681, t2 = 2.772000iteration 3.
+Loop 3 : t1 = 0.646784, t2 = 2.772608iteration 3.
+Loop 1 : t1 = 0.646506, t2 = 2.770820iteration 4.
+Loop 4 : t1 = 0.646457, t2 = 2.771447iteration 4.
+Loop 3 : t1 = 0.646650, t2 = 2.772326iteration 4.
+Loop 1 : t1 = 0.646580, t2 = 2.771339iteration 5.
+Loop 4 : t1 = 0.646414, t2 = 2.771737iteration 5.
+Loop 3 : t1 = 0.646538, t2 = 2.771740iteration 5.
+Loop 1 : t1 = 0.646612, t2 = 2.771466iteration 6.
+Loop 3 : t1 = 0.646340, t2 = 2.771264iteration 6.
+Loop 1 : t1 = 0.646547, t2 = 2.770943iteration 7.
+Loop 3 : t1 = 0.646171, t2 = 2.770772iteration 7.
+Loop 3 : t1 = 0.646187, t2 = 2.771126iteration 8.
+Loop 3 : t1 = 0.646023, t2 = 2.770440iteration 9.
+Loop 3 : t1 = 0.646066, t2 = 2.770830iteration 10.
+Loop 3 : t1 = 0.645922, t2 = 2.770202iteration 11.
+Loop 3 : t1 = 0.645832, t2 = 2.769941iteration 12.
+Loop 3 : t1 = 0.645788, t2 = 2.769836iteration 13.
+Loop 3 : t1 = 0.645711, t2 = 2.769611iteration 14.
+Loop 3 : t1 = 0.645716, t2 = 2.769655iteration 15.
+Loop 3 : t1 = 0.645655, t2 = 2.769475iteration 16.
+Loop 3 : t1 = 0.645601, t2 = 2.769322iteration 17.
+Loop 3 : t1 = 0.645701, t2 = 2.769849iteration 18.
+Loop 3 : t1 = 0.645639, t2 = 2.769494iteration 19.
+Loop 3 : t1 = 0.645715, t2 = 2.769915iteration 20.
+Loop 3 : t1 = 0.645627, t2 = 2.769457iteration 21.
+Loop 3 : t1 = 0.645591, t2 = 2.769313iteration 22.
+Loop 3 : t1 = 0.645550, t2 = 2.769444iteration 23.
+Loop 3 : t1 = 0.645562, t2 = 2.769183iteration 24.
+Loop 3 : t1 = 0.645648, t2 = 2.769700iteration 25.
+Loop 3 : t1 = 0.645698, t2 = 2.769881iteration 26.
+Loop 3 : t1 = 0.645664, t2 = 2.769544iteration 27.
+Loop 3 : t1 = 0.645580, t2 = 2.769262iteration 28.
+Loop 3 : t1 = 0.645540, t2 = 2.769137iteration 29.
+Loop 2 : t1 = 0.646865, t2 = 2.772272ConvergedLoop 4 : t1 = 0.646223, t2 = 2.770939ConvergedLoop 1 : t1 = 0.646512, t2 = 2.770811ConvergedLoop 3 : t1 = 0.645504, t2 = 2.769034Convergedwindow 7/11: tau 0.647 / 2.772 s, 20 impulses, R2 0.990, authors, 73 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 4 : t1 = 0.649319, t2 = 2.774136iteration 2.
+Loop 3 : t1 = 0.649572, t2 = 2.774345iteration 2.
+Loop 2 : t1 = 0.649581, t2 = 2.774365iteration 2.
+Loop 1 : t1 = 0.649577, t2 = 2.774366iteration 2.
+Loop 4 : t1 = 0.649147, t2 = 2.773183iteration 3.
+Loop 3 : t1 = 0.649436, t2 = 2.773671iteration 3.
+Loop 2 : t1 = 0.649426, t2 = 2.773562iteration 3.
+Loop 1 : t1 = 0.649375, t2 = 2.773342iteration 3.
+Loop 4 : t1 = 0.649161, t2 = 2.773304iteration 4.
+Loop 3 : t1 = 0.649404, t2 = 2.773534iteration 4.
+Loop 2 : t1 = 0.649394, t2 = 2.773390iteration 4.
+Loop 1 : t1 = 0.649357, t2 = 2.773285iteration 4.
+Loop 4 : t1 = 0.649143, t2 = 2.773184iteration 5.
+Loop 3 : t1 = 0.649372, t2 = 2.773342iteration 5.
+Loop 2 : t1 = 0.649389, t2 = 2.773363iteration 5.
+Loop 1 : t1 = 0.649373, t2 = 2.773406iteration 5.
+Loop 4 : t1 = 0.649141, t2 = 2.773178iteration 6.
+Loop 2 : t1 = 0.649420, t2 = 2.773521iteration 6.
+Loop 2 : t1 = 0.649423, t2 = 2.773433iteration 7.
+Loop 2 : t1 = 0.649481, t2 = 2.773641iteration 8.
+Loop 2 : t1 = 0.649498, t2 = 2.773688iteration 9.
+Loop 2 : t1 = 0.649502, t2 = 2.773694ConvergedLoop 4 : t1 = 0.649137, t2 = 2.773149ConvergedLoop 1 : t1 = 0.649394, t2 = 2.773463ConvergedLoop 3 : t1 = 0.649370, t2 = 2.773333Convergedwindow 8/11: tau 0.649 / 2.773 s, 15 impulses, R2 0.991, authors, 37 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 2 : t1 = 0.646855, t2 = 2.771145iteration 2.
+Loop 4 : t1 = 0.646574, t2 = 2.770815iteration 2.
+Loop 3 : t1 = 0.646934, t2 = 2.770986iteration 2.
+Loop 1 : t1 = 0.647016, t2 = 2.771527iteration 2.
+Loop 2 : t1 = 0.646929, t2 = 2.771238iteration 3.
+Loop 4 : t1 = 0.646699, t2 = 2.771155iteration 3.
+Loop 3 : t1 = 0.647010, t2 = 2.771136iteration 3.
+Loop 1 : t1 = 0.647038, t2 = 2.771355iteration 3.
+Loop 2 : t1 = 0.646934, t2 = 2.771231iteration 4.
+Loop 4 : t1 = 0.646689, t2 = 2.771114iteration 4.
+Loop 3 : t1 = 0.647013, t2 = 2.771401iteration 4.
+Loop 1 : t1 = 0.647056, t2 = 2.771477iteration 4.
+Loop 2 : t1 = 0.647016, t2 = 2.772066iteration 5.
+Loop 4 : t1 = 0.646827, t2 = 2.772007iteration 5.
+Loop 3 : t1 = 0.647088, t2 = 2.772209iteration 5.
+Loop 1 : t1 = 0.647192, t2 = 2.772438iteration 5.
+Loop 3 : t1 = 0.647084, t2 = 2.771414iteration 6.
+Loop 3 : t1 = 0.647046, t2 = 2.771271iteration 7.
+Loop 2 : t1 = 0.647003, t2 = 2.771233ConvergedLoop 4 : t1 = 0.646759, t2 = 2.771007ConvergedLoop 1 : t1 = 0.647127, t2 = 2.771522ConvergedLoop 3 : t1 = 0.647021, t2 = 2.771178Convergedwindow 9/11: tau 0.647 / 2.771 s, 19 impulses, R2 0.993, authors, 33 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 2 : t1 = 0.645897, t2 = 2.771229iteration 2.
+Loop 4 : t1 = 0.645620, t2 = 2.770846iteration 2.
+Loop 1 : t1 = 0.646601, t2 = 2.774832iteration 2.
+Loop 3 : t1 = 0.645625, t2 = 2.770887iteration 2.
+Loop 2 : t1 = 0.646010, t2 = 2.771259iteration 3.
+Loop 4 : t1 = 0.645626, t2 = 2.769933iteration 3.
+Loop 1 : t1 = 0.645939, t2 = 2.771239iteration 3.
+Loop 3 : t1 = 0.645635, t2 = 2.769980iteration 3.
+Loop 2 : t1 = 0.646050, t2 = 2.771424iteration 4.
+Loop 4 : t1 = 0.645667, t2 = 2.770100iteration 4.
+Loop 1 : t1 = 0.645723, t2 = 2.770766iteration 4.
+Loop 3 : t1 = 0.645673, t2 = 2.770135iteration 4.
+Loop 2 : t1 = 0.645977, t2 = 2.770622iteration 5.
+Loop 4 : t1 = 0.645800, t2 = 2.771115iteration 5.
+Loop 1 : t1 = 0.645697, t2 = 2.770622iteration 5.
+Loop 3 : t1 = 0.645699, t2 = 2.770269iteration 5.
+Loop 2 : t1 = 0.645916, t2 = 2.770358iteration 6.
+Loop 4 : t1 = 0.645750, t2 = 2.770459iteration 6.
+Loop 1 : t1 = 0.645589, t2 = 2.770080iteration 6.
+Loop 3 : t1 = 0.645671, t2 = 2.770151iteration 6.
+Loop 2 : t1 = 0.645886, t2 = 2.770271iteration 7.
+Loop 4 : t1 = 0.645711, t2 = 2.770279iteration 7.
+Loop 3 : t1 = 0.645668, t2 = 2.770145iteration 7.
+Loop 2 : t1 = 0.645864, t2 = 2.770211iteration 8.
+Loop 4 : t1 = 0.645797, t2 = 2.771118iteration 8.
+Loop 3 : t1 = 0.645667, t2 = 2.770143iteration 8.
+Loop 2 : t1 = 0.645727, t2 = 2.769903iteration 9.
+Loop 4 : t1 = 0.645761, t2 = 2.770499iteration 9.
+Loop 3 : t1 = 0.645669, t2 = 2.770153iteration 9.
+Loop 2 : t1 = 0.645736, t2 = 2.769809iteration 10.
+Loop 4 : t1 = 0.645730, t2 = 2.770348iteration 10.
+Loop 3 : t1 = 0.645653, t2 = 2.770093iteration 10.
+Loop 2 : t1 = 0.645803, t2 = 2.770128iteration 11.
+Loop 4 : t1 = 0.645718, t2 = 2.770309iteration 11.
+Loop 3 : t1 = 0.645666, t2 = 2.770163iteration 11.
+Loop 2 : t1 = 0.645770, t2 = 2.770056iteration 12.
+Loop 4 : t1 = 0.645708, t2 = 2.770279iteration 12.
+Loop 3 : t1 = 0.645776, t2 = 2.771057iteration 12.
+Loop 2 : t1 = 0.645826, t2 = 2.770242iteration 13.
+Loop 3 : t1 = 0.645741, t2 = 2.770427iteration 13.
+Loop 2 : t1 = 0.645833, t2 = 2.770277iteration 14.
+Loop 2 : t1 = 0.645839, t2 = 2.770324iteration 15.
+Loop 2 : t1 = 0.645853, t2 = 2.770362iteration 16.
+Loop 2 : t1 = 0.645851, t2 = 2.770342iteration 17.
+Loop 2 : t1 = 0.645852, t2 = 2.770345iteration 18.
+Loop 2 : t1 = 0.645956, t2 = 2.771212iteration 19.
+Loop 2 : t1 = 0.645925, t2 = 2.770637iteration 20.
+Loop 2 : t1 = 0.645899, t2 = 2.770505iteration 21.
+Loop 2 : t1 = 0.645905, t2 = 2.770539iteration 22.
+Loop 2 : t1 = 0.645893, t2 = 2.770510iteration 23.
+Loop 2 : t1 = 0.645882, t2 = 2.770445iteration 24.
+Loop 2 : t1 = 0.645879, t2 = 2.770438ConvergedLoop 4 : t1 = 0.645702, t2 = 2.770262ConvergedLoop 1 : t1 = 0.645547, t2 = 2.769938ConvergedLoop 3 : t1 = 0.645718, t2 = 2.770332Convergedwindow 10/11: tau 0.646 / 2.770 s, 19 impulses, R2 0.995, authors, 63 s
+iteration 1.
+iteration 1.
+iteration 1.
+iteration 1.
+Loop 2 : t1 = 0.648388, t2 = 2.772626iteration 2.
+Loop 4 : t1 = 0.648443, t2 = 2.772858iteration 2.
+Loop 1 : t1 = 0.648399, t2 = 2.772668iteration 2.
+Loop 3 : t1 = 0.648416, t2 = 2.772776iteration 2.
+Loop 2 : t1 = 0.648268, t2 = 2.772001iteration 3.
+Loop 4 : t1 = 0.648290, t2 = 2.772087iteration 3.
+Loop 3 : t1 = 0.648285, t2 = 2.772077iteration 3.
+Loop 1 : t1 = 0.648274, t2 = 2.772021iteration 3.
+Loop 2 : t1 = 0.648294, t2 = 2.771988iteration 4.
+Loop 4 : t1 = 0.648306, t2 = 2.771982iteration 4.
+Loop 1 : t1 = 0.648299, t2 = 2.772002iteration 4.
+Loop 3 : t1 = 0.648304, t2 = 2.772018iteration 4.
+Loop 4 : t1 = 0.648339, t2 = 2.772045iteration 5.
+Loop 2 : t1 = 0.648337, t2 = 2.772106ConvergedLoop 4 : t1 = 0.648375, t2 = 2.772115ConvergedLoop 1 : t1 = 0.648329, t2 = 2.772032ConvergedLoop 3 : t1 = 0.648345, t2 = 2.772138Convergedwindow 11/11: tau 0.648 / 2.772 s, 9 impulses, R2 0.997, authors, 9 s
+S14_m2 done: 138 impulses (7.4/min), R2 0.999, median tau 0.65 / 2.77 s, 11/11 windows by the authors' rule, 542 s
+>> 

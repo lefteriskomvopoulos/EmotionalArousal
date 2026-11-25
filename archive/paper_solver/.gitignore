@@ -1,0 +1,44 @@
+# Allow-list: only what is named here is shared.  Everything else stays local.
+/*
+!/.gitignore
+!/README.md
+!/requirements.txt
+
+# Code
+!/src/
+/src/tools/
+__pycache__/
+*.pyc
+
+# Docs
+!/docs/
+/docs/*
+!/docs/EXPERIMENTS.md
+!/docs/proposal_methods.md
+!/docs/literature_review_notes.md
+!/docs/dataset_check/
+
+# Every result table, and the synthetic truth needed to re-score
+!/data/
+/data/*
+!/data/*.csv
+!/data/tbme_synth/
+
+# Every figure
+!/results/
+/results/*
+!/results/figures/
+!/results/tbme_smoke/
+/results/tbme_smoke/*.mat
+
+# Cluster output: csv and logs.  The .mat files repeat the csv and nothing reads them.
+!/hpc/
+/hpc/*
+!/hpc/real/
+!/hpc/synth/
+!/hpc/results/
+!/hpc/logs_pp/
+/hpc/**/*.mat
+/hpc/**/*.zip
+
+.DS_Store
